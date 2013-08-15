@@ -24,27 +24,11 @@ can replace with other render etc later if the basic octree projection system wo
 
 ajax to get the meshes/norms/color/depthmap
 
-explicit non-rendering... see *where* you are not seeing.
+must be available: explicit non-rendering... see *where* you are not seeing. see where you are getting "tricked" with lazy rendering!
 
 sample-sample-sample (and presample) to keep framerate up.  trust random and trust consistent hashing.
 
 
-
-
-====financials haha====
-startup mid july
-mid-aug, So far I've put in ...  (in case it's relevant for issuing shares or tax purposes)
--old computer 50
--new RAM 75
--SD cards, USB cards, 50
--about 50 hours @ 50/hr
--some fraction of internet connection: how about 50% of ____/month
-
---i do want to issue some type of less-formal "shares". 
---i want to issue them rather liberally as worth "nothing" but potentially worth something if we get big
---i do want people to be able to contribute time or money or ____ and get "paid" in shares.  But I want to be careful with valuations
-
-In round numbers, I'll start with 4000 shares, give 500 each to scott and dad, 3000 to me.
 
 
 
