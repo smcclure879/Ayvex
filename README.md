@@ -31,13 +31,13 @@ sample-sample-sample (and presample) to keep framerate up.  trust random and tru
 
 
 
-====financial plan.====
+====financials haha====
 startup mid july
 mid-aug, So far I've put in ...  (in case it's relevant for issuing shares or tax purposes)
--old computer $50
--new RAM $75
--SD cards, USB cards, $50
--about 50 hours @ $50/hr
+-old computer 50
+-new RAM 75
+-SD cards, USB cards, 50
+-about 50 hours @ 50/hr
 -some fraction of internet connection: how about 50% of ____/month
 
 --i do want to issue some type of less-formal "shares". 
@@ -51,10 +51,6 @@ In round numbers, I'll start with 4000 shares, give 500 each to scott and dad, 3
 
 
 
-other ideas: 
---a database+site where people can track/reconcile obligations, all in public so no issue with govt etc
---a database+site that lets people start company for even a trivial business venture.
-(those two synergize)
 
 
 
