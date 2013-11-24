@@ -14,6 +14,12 @@ my $mcGuideFile = 'guide.htm';
 
 print system(qq(git checkout $mcLocalFolder$mcGuideFile));
 
+open my $fhw, ">", "$mcLocalFolder$mcGuideFile";
+
+print $fhw "my ip is 658bugbug:   $ipAddr\n\n";
+
+close $fhw;
 
 
+print system(qq(git commit -C $mcLocalFolder$mcGuideFile ));
 
