@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 use strict;
 use LWP::Simple;
-my $mcLocalFolder = "C:\\Users\\steve\\Documents\\GitHub\\Ayvex\\web\\mc\\";
+my $mcLocalFolder = "../../web/mc/";
 my $mcGuideFile = 'guide.htm';
 
 
@@ -14,11 +14,13 @@ print "found ip $ipAddr\n";
 ##my $r = Git::Repository->new( work_tree => $mcLocalFolder );
 print system(qq(git checkout $mcLocalFolder$mcGuideFile));
 
+
 open my $fhw, ">", "$mcLocalFolder$mcGuideFile";
 
-print $fhw "my ip is bugbug:   $ipAddr\n\n";
-print $fhw "got that at "+time;
-print "got that at "+time;
+print $fhw "direct connect IP address is:   $ipAddr:25565\n\n";
+print $fhw "timestamp=".time;
+print $fhw "\nbookmark this page!";
+print $fhw "\n\nThere is also a creative-mode server if you use 25566 instead\n";
 
 close $fhw;
 
