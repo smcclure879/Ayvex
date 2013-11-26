@@ -11,22 +11,32 @@ $content =~ /(\d{1,3}\.){3}\d{1,3}/gio;
 my $ipAddr = $&;
 print "found ip $ipAddr\n";
 
-##my $r = Git::Repository->new( work_tree => $mcLocalFolder );
-print system(qq(git checkout $mcLocalFolder$mcGuideFile));
 
 
-open my $fhw, ">", "$mcLocalFolder$mcGuideFile";
+#check old IP before rewriting file
+open my $fhr, "<", "$mcLocalFolder$mcGuideFile";
+while(<$fhr>)
+{
+  next unless /(\d{1,3}\.){3}\d{1,3}/gio;
+  my $oldIp=$&;
+  last;
+}
 
-print $fhw "direct connect IP address is:   $ipAddr:25565\n\n";
-print $fhw "timestamp=".time;
-print $fhw "\nbookmark this page!";
-print $fhw "\n\nThere is also a creative-mode server if you use 25566 instead\n";
+if ($oldIp ne $ipAddr)
+{
+  print system(qq(git checkout $mcLocalFolder$mcGuideFile));
+  
+  open my $fhw, ">", "$mcLocalFolder$mcGuideFile";
+  print $fhw "direct connect IP address is:   $ipAddr:25565\n\n";
+  print $fhw "timestamp=".time;
+  print $fhw "\nbookmark this page!";
+  print $fhw "\n\nThere is also a creative-mode server if you use 25566 instead\n";
+  close $fhw;
+  
+  print system(qq(git commit -m "foobar" $mcLocalFolder$mcGuideFile ));
+  print system(qq(git push ));
+}
 
-close $fhw;
-
-
-print system(qq(git commit -m "foobar" $mcLocalFolder$mcGuideFile ));
-print system(qq(git push ));
 print "file will appear at https://raw.github.com/smcclure879/Ayvex/master/web/mc/guide.htm"
 
-
+  
