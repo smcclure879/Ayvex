@@ -14,11 +14,12 @@ print "found ip $ipAddr\n";
 
 
 #check old IP before rewriting file
+my $oldIp;
 open my $fhr, "<", "$mcLocalFolder$mcGuideFile";
 while(<$fhr>)
 {
   next unless /(\d{1,3}\.){3}\d{1,3}/gio;
-  my $oldIp=$&;
+  $oldIp=$&;
   last;
 }
 
