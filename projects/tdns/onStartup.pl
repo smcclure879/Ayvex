@@ -5,6 +5,11 @@ my $mcLocalFolder = "../../web/mc/";
 my $mcGuideFile = 'guide.htm';
 
 
+my $timeStr = localtime();
+print "running at $timeStr\n";
+
+
+
 # get IP addr
 my $content = get "http://checkip.dyndns.org/";
 $content =~ /(\d{1,3}\.){3}\d{1,3}/gio;
@@ -23,21 +28,21 @@ while(<$fhr>)
   last;
 }
 
-if ($oldIp ne $ipAddr)
-{
-  print system(qq(git checkout $mcLocalFolder$mcGuideFile));
+#bugbugif ($oldIp ne $ipAddr)
+#{
+  print system(qq(git add $mcLocalFolder$mcGuideFile));
   
   open my $fhw, ">", "$mcLocalFolder$mcGuideFile";
   print $fhw "direct connect IP address is:   $ipAddr:25565\n\n";
-  print $fhw "timestamp=".time;
+  print $fhw "timestamp=".$timeStr;
   print $fhw "\nbookmark this page!";
   print $fhw "\n\nThere is also a creative-mode server if you use 25566 instead\n";
   close $fhw;
   
-  print system(qq(git commit -m "foobar" $mcLocalFolder$mcGuideFile ));
-  print system(qq(git push ));
-}
+  system(qq(git commit -m "foobar" $mcLocalFolder$mcGuideFile )) == 0 or print "ERROR: bad commit operation\n";
+  system(qq(git push )) == 0  or print "ERROR: bad push operation\n";
+#}
 
-print "file will appear at https://raw.github.com/smcclure879/Ayvex/master/web/mc/guide.htm"
+print "file will appear at https://raw.github.com/smcclure879/Ayvex/master/web/mc/guide.htm\n\n"
 
   
