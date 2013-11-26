@@ -1,6 +1,5 @@
 at login run the minecrafts (how to do this inside screen?)
 use chron periodic to run the
-dedup the file....if IP address unchanged then don't do the stuff with git
 it still wants my username...duplicate .git filess?  start over?
 new ssh key without the passcode
 get the mc stuff into github (minus the worlds)
