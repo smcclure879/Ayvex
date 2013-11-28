@@ -1,10 +1,8 @@
 
 
+auto backups of world 1x per week?  (to github presumeably)
 
 
 at login run the minecrafts (how to do this inside screen?)
-use chron periodic to run the
-it still wants my username...duplicate .git filess?  start over?
-new ssh key without the passcode
 get the mc stuff into github (minus the worlds)
 remote backup for the worlds (to github or encrypt or???)
