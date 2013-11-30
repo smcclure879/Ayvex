@@ -5,9 +5,8 @@ my $mcLocalFolder = "../../web/mc/";
 my $mcGuideFile = 'guide.htm';
 
 
-my $timeStr = localtime();
+my $timeStr = gmtime()." UTC";
 print "running at $timeStr\n";
-
 
 
 # get IP addr
