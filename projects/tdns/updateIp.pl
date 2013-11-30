@@ -11,11 +11,19 @@ print "running at $timeStr\n";
 
 
 # get IP addr
-my $content = get "http://checkip.dyndns.org/";
-$content =~ /(\d{1,3}\.){3}\d{1,3}/gio;
-my $ipAddr = $&;
-print "found ip $ipAddr\n";
+my $content = get "http://checkip.dyndns.org/" || print "ERROR: where is the internet???\n";
+my $ipAddr='uninit';
+if ($content =~ /(\d{1,3}\.){3}\d{1,3}/gio )
+{
+  $ipAddr = $&;
+  print "found ip $ipAddr\n";
+}
+else
+{
+  print "no IP address: here is start of content:".substr($content,0,300)."\n\n";
+}
 
+exit unless $ipAddr;
 
 
 #check old IP before rewriting file
