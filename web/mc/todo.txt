@@ -1,0 +1,8 @@
+
+
+auto backups of world 1x per week?  (to github presumeably)
+
+
+at login run the minecrafts (how to do this inside screen?)
+get the mc stuff into github (minus the worlds)
+remote backup for the worlds (to github or encrypt or???)

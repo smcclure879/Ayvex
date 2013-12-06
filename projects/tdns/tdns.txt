@@ -1,0 +1,19 @@
+1. crontab should have a line like this
+
+	# 
+	# m h  dom mon dow   command
+	24 * * * *  cd / && run-parts --report /home/steve/cron.hourly
+
+(run at whatever minute you want, instead of the 24??)
+
+
+
+
+2. to run a folder cron.hourly, containing a file like this
+	
+	#!/bin/bash
+	pushd ~/gitstuff/ayvex/projects/tdns
+	perl ./onStartup.pl
+	popd
+
+
