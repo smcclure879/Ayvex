@@ -1,0 +1,144 @@
+menu
+Status #lwjglX
+[http://lwjgl.org || http://cia.lwjgl.org || IRC Logs: http://echelog.com/?lwjgl || http://lwjgl.pastebin.com/]
+[20:19] == steve__ [322e98ee@gateway/web/freenode/ip.50.46.152.238] has joined #lwjgl
+[20:19] -ChanServ- [#lwjgl] This channel is logged: http://echelog.matzon.dk
+[20:35] <steve__> hi...this is the same library used in minecraft, right?
+[20:43] <steve__> the last "shipped" version seems to be almost a year old.  Is there a recommended more stable version?
+[20:43] <steve__> (more recent) stable version?
+[20:47] <jezek2> steve__: we don't provide minecraft support, contact mojang with this
+[20:48] <steve__> no
+[20:48] <steve__> not a minecraft question.  but the point is minecraft is working great, so I should be able to program against this library on this same laptop.
+[20:49] <steve__> but I think they got a different version than me, cause I can't
+[20:49] <steve__> the "stable" version of lwjgl seems to be a year old, but I see that a fix I probably need was put in 2 days later
+[20:50] <steve__> specifically the openGL parts.  
+[20:50] <jezek2> 2.9.1 is the latest and "stable"
+[20:51] <jezek2> it's all on the website
+[20:52] <steve__> http://www.lwjgl.org/wiki/index.php?title=Version_selection  example
+[20:52] <steve__> doesn't work , get this error
+[20:52] <steve__> org.lwjgl.LWJGLException: Could not create context (WGL_ARB_create_context) at org.lwjgl.opengl.WindowsContextImplementation.nCreate(Native Method)
+[20:55] <steve__> this is the laptop model....http://laptops-and-notebooks.findthebest.com/l/647/Portege-R835-P83
+[20:56] <steve__> but logically, since minecraft works, and they are using the latest "stable" build,...the examples for openGL should work?
+[20:56] <steve__> (or do those guys have some mod'd version of lwjgl?)
+[20:57] <steve__> (or they aren't using openGL to do all that?)
+[20:57] <steve__> just trying to eliminate possible issues before resorting to taking a less stable build.
+[21:04] <jezek2> there is no "stable" build of LWJGL... 2.x is stable branch, 3.x is still in early development
+[21:04] <jezek2> so 2.9.1 is the latest and stable
+[21:04] <jezek2> so just use that
+[21:05] <steve__> that's what I did.  
+[21:06] <steve__> latest stuff in GIT seems to be at 2.9.2
+[21:07] <steve__> http://lwjgl.org/forum/index.php?action=printpage;topic=4848.0
+[21:08] <steve__> that url has same error message.    The fix mentioned there would seem to be later by 2 days than the binary available for 2.9.1
+[21:08] <steve__> Are you guys all building lwjgl from  source?
+[21:09] <jezek2> are you trying to get opengl 3.x context or 2.1? minecraft is using 2.1
+[21:09] <jezek2> no we use the prebuild package
+[21:09] <steve__> // Use a specified version of OpenGL - namely version 3.2 private void specifiedCreate() { PixelFormat pixelFormat = new PixelFormat(); ContextAttribs contextAtrributes = new ContextAttribs(3, 2)
+[21:09] <steve__> the example uses 3.2
+[21:10] <steve__> changing the vals gives Exception in thread "main" java.lang.IllegalArgumentException: Profiles are only supported on OpenGL version 3.2 or higher.
+[21:10] <jezek2> the normalCreate() method is for obtaining 2.1 context
+[21:12] <jezek2> of course it's advisable to start developing using 3.x, so if 2.1 is working fine but 3.x not, try posting on the forum with a bug report, or try googling some more maybe there is someone with the same problem
+[21:12] <jezek2> if even 2.1 is not working something is quite bad :)
+[21:12] <steve__> that seemd to work somewhat...
+[21:12] <jezek2> also what OS do you use
+[21:12] <jezek2> ?
+[21:13] <steve__> it now ouputs this.....OpenGL version: 3.0.0 - Build 8.15.10.2353    (which I'm not sure why this didnt' come up 2.1)  (this is Win7pro)
+[21:17] <steve__> so does this mean my laptop only goes up to 3.0 ?  I guess that's what I needed then....THANKS!
+[21:18] <steve__> I just commented out the "specifiedCreate" stuff in that example.
+[21:37] == meoblast001 [~meoblast@dynamic-acs-24-112-252-251.zoominternet.net] has quit [Quit: Leaving]
+[21:38] <jezek2> steve__: you could try upgrading the drivers
+[21:38] == ra4king_home [473b3234@gateway/web/freenode/ip.71.59.50.52] has joined #lwjgl
+[21:38] == ra4king_home [473b3234@gateway/web/freenode/ip.71.59.50.52] has quit [Client Quit]
+[21:38] <jezek2> but I'm not that familiar with intel gpus
+[21:39] == ra4king_ [473b3234@gateway/web/freenode/ip.71.59.50.52] has joined #lwjgl
+[21:39] == ra4king_ has changed nick to ra4king_home
+[21:39] <ra4king_home> hai
+[21:40] <steve__> so I guess I should be looking at the "legacy OpenGL" examples instead of the "openGL 3.2 and newer"  ??
+[21:40] <ra4king_home> steve__: why?
+[21:41] <jezek2> ra4king_home: just looks at the logs just before you connected
+[21:41] <steve__> (not clear where 3.0 falls between "legacy" and "3.2")
+[21:41] <ra4king_home> jezek2: eh, too much work :D
+[21:41] <ra4king_home> steve__: you can still use core with 3.0
+[21:41] <ra4king_home> well, it's technically not core since "core" is 3.1+
+[21:41] <ra4king_home> but with 3.0 you can use shaders + VAO and VBO
+[21:42] <ra4king_home> and that's basically all you need
+[21:42] <steve__> ok, so follow those examples and comment out the "profile" stuff?
+[21:42] <steve__> (and maybe some other nasty surprises along the way)
+[21:42] <ra4king_home> shaders should be version #130
+[21:44] <ra4king_home> steve__: what code uses 3.2 btw? let me take a look at it
+[21:45] <steve__> i think you are saying the shader stuff in "legacy" examples didn't change in 3.x , but maybe I have to use that constant to tell it to use particular kind of shader?
+[21:45] <steve__> public void setupOpenGL() { // Setup an OpenGL context with API version 3.2 try { PixelFormat pixelFormat = new PixelFormat(); ContextAttribs contextAtrributes = new ContextAttribs(3, 0)  //bugbug the highest this laptop goes .withForwardCompatible(true); //.withProfileCore(true);  //not allowed until 3.2
+[21:45] <steve__> .
+[21:46] <ra4king_home> yeah just do Display.create() without any of that stuff
+[21:46] <steve__> reference :    http://lwjgl.org/wiki/index.php?title=The_Quad_with_DrawArrays
+[21:46] <ra4king_home> none of that is necessary since profiles and version selection is usually for 3.1+ stuff
+[21:47] <ra4king_home> steve__: line 60: change to Display.create();
+[21:47] <steve__> yes I got that working in different example, using the simple create.
+[21:48] <ra4king_home> wow that example you linked doesn't even use shaders
+[21:48] <steve__> ok, and I've done it here in the referenced example as well
+[21:48] <ra4king_home> hmm
+[21:48] <steve__> (I am just trying to START a project)
+[21:49] <ra4king_home> I have a tutorial that was built for 3.3+ so I can't exactly link you that
+[21:49] <steve__> (right now, trying to decide to use java/lwjgl   OR   go to just C/C# on Direct3D  (which I've done before)
+[21:50] <steve__> I'll try the other examples and get as much working as I can.  I think I can find a GL 3.0 ref somewhere
+[21:50] == skoskav [s@c-1a9d72d5.035-127-73746f3.cust.bredbandsbolaget.se] has quit [Ping timeout: 246 seconds]
+[21:50] <steve__> (trying to make the game work on more than just Windows)
+[21:51] <ra4king_home> java+lwjgl ftw
+[21:51] <steve__> (need to see it work first, so I'm just prototyping now.  
+[21:55] <steve__> but if community support is the issue, lwjgl already wins..... (and I say this having previously worked at msft)
+[22:01] <ra4king_home> oh wow
+[22:01] <ra4king_home> that's pretty neat!
+[22:07] == ra4king_home [473b3234@gateway/web/freenode/ip.71.59.50.52] has quit [Quit: Page closed]
++lwjglbot
+agro_tablet
+badlogic
+baedert
+balrog
+bgilb
+CharlieM751
+chuckles73
+Danik
+darkfrog
+Dashiva
+delt0r
+djdduty
+Dragonene_
+e0n_
+Emily
+fella7s
+Grum
+Guest57919
+ivan``_
+ivan\
+jezek2
+Jonas__
+jyc
+ksclarke
+l3dx
+langkid1
+MatthiasM
+MatthiasM2
+Mazon
+md_5-
+MMuse
+mononofu
+monty_hall
+monty_slate
+Morgawr
+natte
+nbf
+nephilim_
+Nibato
+Nitram___
+noplamodo
+popey
+quadz_
+ra4king
+Raven67854
+Sam4242
+Scient
+ShaRose
+smiley_
+steve__
+Unimatrix325
+[Neurotic]
+
