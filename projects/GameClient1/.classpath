@@ -12,5 +12,6 @@
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="lib" path="C:/Users/steve/Documents/GitHub/Ayvex/projects/external/lwjgl-2.9.1/jar/lwjgl_util.jar"/>
+	<classpathentry kind="lib" path="C:/Users/steve/Documents/GitHub/Ayvex/projects/external/twl/PNGDecoder.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
