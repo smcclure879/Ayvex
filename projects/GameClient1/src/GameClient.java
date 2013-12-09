@@ -33,10 +33,17 @@ public class GameClient
 	}
 	
 	// Setup variables
-	private final String WINDOW_TITLE = "The Quad: Moving";
-	private final int WIDTH = 320;
-	private final int HEIGHT = 200;
+	private final String WINDOW_TITLE = "GameClient1";  //bugbug
+	private final int WIDTH = 600;
+	private final int HEIGHT = 400;
+	
+	//true constants
 	private final double PI = 3.14159265358979323846;
+	private Vector3f xHat = new Vector3f(1, 0, 0);
+	private Vector3f yHat = new Vector3f(0, 1, 0);
+	private Vector3f zHat = new Vector3f(0, 0, 1);
+	
+	
 	// Quad variables
 	private int vaoId = 0;
 	private int vboId = 0;
@@ -60,6 +67,8 @@ public class GameClient
 	private Vector3f modelAngle = null;
 	private Vector3f modelScale = null;
 	private Vector3f cameraPos = null;
+	private Vector3f cameraAngle = null;
+	private Vector3f cameraScale = null;
 	private FloatBuffer matrix44Buffer = null;
 	
 	public GameClient() 
@@ -90,12 +99,12 @@ public class GameClient
 	{
 		// Setup projection matrix
 		projectionMatrix = new Matrix4f();
-		float fieldOfView = 60f;
+		float fieldOfView = 45f;
 		float aspectRatio = (float)WIDTH / (float)HEIGHT;
 		float near_plane = 0.1f;
 		float far_plane = 100f;
 		
-		float y_scale = this.coTangent(this.degreesToRadians(fieldOfView / 2f));
+		float y_scale = cotanD(fieldOfView / 2f);
 		float x_scale = y_scale / aspectRatio;
 		float frustum_length = far_plane - near_plane;
 		
@@ -160,8 +169,7 @@ public class GameClient
 		vertices = new VertexData[] {v0, v1, v2, v3};
 		
 		// Put each 'Vertex' in one FloatBuffer
-		verticesByteBuffer = BufferUtils.createByteBuffer(vertices.length * 
-				VertexData.stride);				
+		verticesByteBuffer = BufferUtils.createByteBuffer(vertices.length * VertexData.stride);				
 		FloatBuffer verticesFloatBuffer = verticesByteBuffer.asFloatBuffer();
 		for (int i = 0; i < vertices.length; i++) 
 		{
@@ -216,7 +224,12 @@ public class GameClient
 		modelPos = new Vector3f(0, 0, 0);
 		modelAngle = new Vector3f(0, 0, 0);
 		modelScale = new Vector3f(1, 1, 1);
-		cameraPos = new Vector3f(0, 0, -1);
+		
+		//same for camera/user
+		cameraPos = new Vector3f(0, 0, -10);
+		cameraAngle = new Vector3f(0, 0, 0);
+		cameraScale = new Vector3f(1, 1, 1);
+		
 		
 		this.exitOnGLError("setupQuad");
 	}
@@ -254,11 +267,13 @@ public class GameClient
 	private void logicCycle() 
 	{
 		//-- Input processing
-		float rotationDelta = 15f;
-		float scaleDelta = 0.1f;
-		float posDelta = 0.1f;
-		Vector3f scaleAddResolution = new Vector3f(scaleDelta, scaleDelta, scaleDelta);
-		Vector3f scaleMinusResolution = new Vector3f(-scaleDelta, -scaleDelta, -scaleDelta);
+		//float rotationDelta = 15f;
+		//float scaleDelta = 0.1f;
+		float posDelta = 0.5f;
+		float cameraRotDelta = 1f;
+
+		//Vector3f scaleAddResolution = new Vector3f(scaleDelta, scaleDelta, scaleDelta);
+		//Vector3f scaleMinusResolution = new Vector3f(-scaleDelta, -scaleDelta, -scaleDelta);
 		
 		while(Keyboard.next()) 
 		{			
@@ -273,42 +288,51 @@ public class GameClient
 					break;
 				case Keyboard.KEY_2:
 					textureSelector = 1;
-					break;
+					break;	
 	
-	
-				//Camera motion
-				case Keyboard.KEY_A:
-					cameraPos.x += posDelta;
+				//users turns
+				case Keyboard.KEY_LEFT: 
+					cameraAngle.y -= cameraRotDelta;
 					break;
-				case Keyboard.KEY_S:
-					cameraPos.z -= posDelta;
+				case Keyboard.KEY_RIGHT:
+					cameraAngle.y += cameraRotDelta;
 					break;
-				case Keyboard.KEY_D:
-					cameraPos.x -= posDelta;
+					
+				//user steps
+				case Keyboard.KEY_DOWN:  //back
+					cameraPos.x += posDelta*sinD(cameraAngle.y);
+					cameraPos.z -= posDelta*cosD(cameraAngle.y);
 					break;
-				case Keyboard.KEY_W:
-					cameraPos.z += posDelta;
+				case Keyboard.KEY_UP:  //forward
+					cameraPos.x -= posDelta*sinD(cameraAngle.y);
+					cameraPos.z += posDelta*cosD(cameraAngle.y);
+					break;	
+				
+				case Keyboard.KEY_Q: 
 					break;
-	
-	
+				case Keyboard.KEY_W: //turn left
+					cameraAngle.y += cameraRotDelta;
+					break;
+				
+					
 	
 				// model scale, rotation and translation values
 	
 				// model Move
-				case Keyboard.KEY_UP:
-					modelPos.y += posDelta;
-					break;
-				case Keyboard.KEY_DOWN:
-					modelPos.y -= posDelta;
-					break;
+//				case Keyboard.KEY_UP:
+//					modelPos.y += posDelta;
+//					break;
+//				case Keyboard.KEY_DOWN:
+//					modelPos.y -= posDelta;
+//					break;
 
 				// model Rotation
-				case Keyboard.KEY_LEFT:
-					modelAngle.z += rotationDelta;
-					break;
-				case Keyboard.KEY_RIGHT:
-					modelAngle.z -= rotationDelta;
-					break;
+//				case Keyboard.KEY_LEFT:
+//					modelAngle.z += rotationDelta;
+//					break;
+//				case Keyboard.KEY_RIGHT:
+//					modelAngle.z -= rotationDelta;
+//					break;
 					
 			}
 		}
@@ -318,18 +342,12 @@ public class GameClient
 		viewMatrix = new Matrix4f();
 		modelMatrix = new Matrix4f();
 		
-		// Translate camera
-		Matrix4f.translate(cameraPos, viewMatrix, viewMatrix);
 		
-		// Scale, translate and rotate model
-		Matrix4f.scale(modelScale, modelMatrix, modelMatrix);
-		Matrix4f.translate(modelPos, modelMatrix, modelMatrix);
-		Matrix4f.rotate(this.degreesToRadians(modelAngle.z), new Vector3f(0, 0, 1), 
-				modelMatrix, modelMatrix);
-		Matrix4f.rotate(this.degreesToRadians(modelAngle.y), new Vector3f(0, 1, 0), 
-				modelMatrix, modelMatrix);
-		Matrix4f.rotate(this.degreesToRadians(modelAngle.x), new Vector3f(1, 0, 0), 
-				modelMatrix, modelMatrix);
+		
+		
+		// Transform camera and model
+		scaleTransRotCam(viewMatrix, cameraScale, cameraPos, cameraAngle);
+		scaleTransRotObj(modelMatrix, modelScale, modelPos, modelAngle);
 		
 		// Upload matrices to the uniform variables
 		GL20.glUseProgram(pId);
@@ -345,8 +363,28 @@ public class GameClient
 		
 		this.exitOnGLError("logicCycle");
 	}
+
+	private void scaleTransRotObj(Matrix4f matrix, Vector3f scale, Vector3f pos, Vector3f angle)
+	{
+		Matrix4f.scale(scale, matrix, matrix);		
+		Matrix4f.translate(pos, matrix, matrix);
+		Matrix4f.rotate(d2r(angle.z), zHat, matrix, matrix);
+		Matrix4f.rotate(d2r(angle.y), yHat, matrix, matrix);
+		Matrix4f.rotate(d2r(angle.x), xHat, matrix, matrix);
+	}
 	
-	private void renderCycle() {
+	private void scaleTransRotCam(Matrix4f matrix, Vector3f scale, Vector3f pos, Vector3f angle)
+	{
+		Matrix4f.rotate(d2r(angle.x), xHat, matrix, matrix);
+		Matrix4f.rotate(d2r(angle.y), yHat, matrix, matrix);
+		Matrix4f.rotate(d2r(angle.z), zHat, matrix, matrix);
+		Matrix4f.translate(pos, matrix, matrix);
+		Matrix4f.scale(scale, matrix, matrix);	
+	}
+	
+	
+	private void renderCycle() 
+	{
 		GL11.glClear(GL11.GL_COLOR_BUFFER_BIT);
 		
 		GL20.glUseProgram(pId);
@@ -379,7 +417,8 @@ public class GameClient
 		this.exitOnGLError("renderCycle");
 	}
 	
-	private void loopCycle() {
+	private void loopCycle() 
+	{
 		// Update logic
 		this.logicCycle();
 		// Update rendered frame
@@ -388,7 +427,8 @@ public class GameClient
 		this.exitOnGLError("loopCycle");
 	}
 	
-	private void destroyOpenGL() {	
+	private void destroyOpenGL() 
+	{	
 		// Delete the texture
 		GL11.glDeleteTextures(texIds[0]);
 		GL11.glDeleteTextures(texIds[1]);
@@ -518,23 +558,40 @@ public class GameClient
 		return texId;
 	}
 	
-	private float coTangent(float angle) {
+	private float cotanD(float angle)
+	{
+		return cotan(d2r(angle));  //already a float, no cast needed
+	}
+	private float cotan(float angle) 
+	{
 		return (float)(1f / Math.tan(angle));
 	}
 	
-	private float degreesToRadians(float degrees) {
+	private float d2r(float degrees) 
+	{
 		return degrees * (float)(PI / 180d);
 	}
 	
-	private void exitOnGLError(String errorMessage) {
+	private float sinD(float degrees)
+	{
+		return (float) Math.sin(d2r(degrees));		
+	}
+	private float cosD(float degrees)
+	{
+		return (float) Math.cos(d2r(degrees));		
+	}
+	
+	private void exitOnGLError(String errorMessage) 
+	{
 		int errorValue = GL11.glGetError();
 		
-		if (errorValue != GL11.GL_NO_ERROR) {
-			String errorString = GLU.gluErrorString(errorValue);
-			System.err.println("ERROR - " + errorMessage + ": " + errorString);
-			
-			if (Display.isCreated()) Display.destroy();
-			System.exit(-1);
-		}
+		if (errorValue == GL11.GL_NO_ERROR) return;
+		//else handle the error...
+		
+		String errorString = GLU.gluErrorString(errorValue);
+		System.err.println("ERROR - " + errorMessage + ": " + errorString);
+		
+		if (Display.isCreated()) Display.destroy();
+		System.exit(-1);		
 	}
 }
