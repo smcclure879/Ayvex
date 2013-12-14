@@ -1,3 +1,5 @@
+import java.awt.Font;
+import java.awt.GraphicsEnvironment;
 import java.io.File;
 import java.io.BufferedReader;
 import java.io.FileInputStream;
@@ -20,16 +22,28 @@ import org.lwjgl.opengl.GL30;
 import org.lwjgl.util.glu.GLU;
 import org.lwjgl.util.vector.Matrix4f;
 import org.lwjgl.util.vector.Vector3f;
-
 import de.matthiasmann.twl.utils.PNGDecoder;
 import de.matthiasmann.twl.utils.PNGDecoder.Format;
+
 
 public class GameClient 
 {
 	// Entry point for the application
 	public static void main(String[] args) 
 	{
-		new GameClient();
+		try
+		{
+			new GameClient();
+		}
+		catch (LWJGLException ex)
+		{
+			// TODO Auto-generated catch block bugbug
+			ex.printStackTrace();
+		}
+		catch (Exception ex)
+		{
+			ex.printStackTrace();
+		}
 	}
 	
 	// Setup variables
@@ -71,28 +85,37 @@ public class GameClient
 	private Vector3f cameraScale = null;
 	private FloatBuffer matrix44Buffer = null;
 	
-	public GameClient() 
+	private String msg = "initVal";
+	private TrueTypeFont ttf = null;
+	private float qbugbug = 1;
+	
+	public GameClient() throws LWJGLException,Exception //for now  (renderer below requires)  bugbug
 	{
-		// Initialize OpenGL (Display)
-		this.setupOpenGL();
-		
+		this.setupOpenGL();		
 		this.setupQuad();
 		this.setupShaders();
 		this.setupTextures();
 		this.setupMatrices();
 		
+		String fontName = "Arial Unicode MS";
+		if (!TrueTypeFont.isSupported(fontName)) 
+		{  
+		   throw new Exception("font not supported:"+fontName);
+		}
+		Font awtFont = new Font(fontName,java.awt.Font.PLAIN,18);
+		ttf = new TrueTypeFont(awtFont,true,"薰".toCharArray());
+	    
+		
 		while (!Display.isCloseRequested()) 
 		{
-			// Do a single loop (logic/render)
-			this.loopCycle();		
-			
+			loopCycle();
 			Display.sync(60);  // Force a maximum FPS of about 60
-			
 			Display.update();  // Let the CPU synchronize with the GPU if GPU is tagging behind
 		}
 		
-		// Destroy OpenGL (Display)
-		this.destroyOpenGL();
+		ttf.destroy();
+		destroyOpenGL();
+		Display.destroy();
 	}
 
 	private void setupMatrices() 
@@ -125,34 +148,38 @@ public class GameClient
 		matrix44Buffer = BufferUtils.createFloatBuffer(16);
 	}
 
-	private void setupTextures() {
+	private void setupTextures() 
+	{
 		texIds[0] = this.loadPNGTexture("assets/images/stGrid1.png", GL13.GL_TEXTURE0);
-		texIds[1] = this.loadPNGTexture("assets/images/stGrid2.png", GL13.GL_TEXTURE0);
-		
+		texIds[1] = this.loadPNGTexture("assets/images/stGrid2.png", GL13.GL_TEXTURE0);		
 		this.exitOnGLError("setupTexture");
 	}
 
-	private void setupOpenGL() {
-		// Setup an OpenGL context with API version 3.2
-		try {
-			
+	private void setupOpenGL() 
+	{
+		try 
+		{			
 			Display.setDisplayMode(new DisplayMode(WIDTH, HEIGHT));
 			Display.setTitle(WINDOW_TITLE);
 			Display.create();  
-			
-			GL11.glViewport(0, 0, WIDTH, HEIGHT);
-		} catch (LWJGLException e) {
+			GL11.glClearColor(0.2f, 0.2f, 0.2f, 0f); //XNA like background color
+			GL11.glViewport(0, 0, WIDTH, HEIGHT);  // Map the internal OpenGL coordinate system to the screen			
+			setupTransparency();
+		}
+		catch (LWJGLException e) 
+		{
 			e.printStackTrace();
 			System.exit(-1);
 		}
 		
-		// Setup an XNA like background color
-		GL11.glClearColor(0.4f, 0.6f, 0.9f, 0f);
-		
-		// Map the internal OpenGL coordinate system to the entire screen
-		GL11.glViewport(0, 0, WIDTH, HEIGHT);
-		
 		this.exitOnGLError("setupOpenGL");
+	}
+
+	private void setupTransparency()
+	{
+		//do these or the HUD won't have transparency (even if the textures therein are set transparent)
+		GL11.glEnable(GL11.GL_BLEND);
+		GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
 	}
 	
 	private void setupQuad() 
@@ -200,14 +227,11 @@ public class GameClient
 		GL15.glBufferData(GL15.GL_ARRAY_BUFFER, verticesFloatBuffer, GL15.GL_STREAM_DRAW);
 		
 		// Put the position coordinates in attribute list 0
-		GL20.glVertexAttribPointer(0, VertexData.positionElementCount, GL11.GL_FLOAT, 
-				false, VertexData.stride, VertexData.positionByteOffset);
+		GL20.glVertexAttribPointer(0, VertexData.positionElementCount, GL11.GL_FLOAT, false, VertexData.stride, VertexData.positionByteOffset);
 		// Put the color components in attribute list 1
-		GL20.glVertexAttribPointer(1, VertexData.colorElementCount, GL11.GL_FLOAT, 
-				false, VertexData.stride, VertexData.colorByteOffset);
+		GL20.glVertexAttribPointer(1, VertexData.colorElementCount, GL11.GL_FLOAT, false, VertexData.stride, VertexData.colorByteOffset);
 		// Put the texture coordinates in attribute list 2
-		GL20.glVertexAttribPointer(2, VertexData.textureElementCount, GL11.GL_FLOAT, 
-				false, VertexData.stride, VertexData.textureByteOffset);
+		GL20.glVertexAttribPointer(2, VertexData.textureElementCount, GL11.GL_FLOAT, false, VertexData.stride, VertexData.textureByteOffset);
 		
 		GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
 		
@@ -250,7 +274,7 @@ public class GameClient
 		GL20.glBindAttribLocation(pId, 0, "in_Position");
 		// Color information will be attribute 1
 		GL20.glBindAttribLocation(pId, 1, "in_Color");
-		// Textute information will be attribute 2
+		// Texture information will be attribute 2
 		GL20.glBindAttribLocation(pId, 2, "in_TextureCoord");
 
 		GL20.glLinkProgram(pId);
@@ -266,19 +290,50 @@ public class GameClient
 	
 	private void logicCycle() 
 	{
-		//-- Input processing
+		handleInputs();  //keyboard actions and stuff
+		
+		//-- Update matrices
+		// Reset view and model matrices
+		viewMatrix = new Matrix4f();
+		modelMatrix = new Matrix4f();		
+		
+		// Transform camera and model
+		scaleTransRotCam(viewMatrix, cameraScale, cameraPos, cameraAngle);
+		scaleTransRotObj(modelMatrix, modelScale, modelPos, modelAngle);
+		
+		// Upload matrices to the uniform variables
+		GL20.glUseProgram(pId);
+		
+		projectionMatrix.store(matrix44Buffer); matrix44Buffer.flip();
+		GL20.glUniformMatrix4(projectionMatrixLocation, false, matrix44Buffer);
+		viewMatrix.store(matrix44Buffer); matrix44Buffer.flip();
+		GL20.glUniformMatrix4(viewMatrixLocation, false, matrix44Buffer);
+		modelMatrix.store(matrix44Buffer); matrix44Buffer.flip();
+		GL20.glUniformMatrix4(modelMatrixLocation, false, matrix44Buffer);
+		
+		GL20.glUseProgram(0);
+		
+		this.exitOnGLError("logicCycle");
+	}
+
+	private void handleInputs()
+	{
+		//Vector3f scaleAddResolution = new Vector3f(scaleDelta, scaleDelta, scaleDelta);
+		//Vector3f scaleMinusResolution = new Vector3f(-scaleDelta, -scaleDelta, -scaleDelta);		
+
 		//float rotationDelta = 15f;
 		//float scaleDelta = 0.1f;
 		float posDelta = 0.5f;
 		float cameraRotDelta = 1f;
-
-		//Vector3f scaleAddResolution = new Vector3f(scaleDelta, scaleDelta, scaleDelta);
-		//Vector3f scaleMinusResolution = new Vector3f(-scaleDelta, -scaleDelta, -scaleDelta);
 		
 		while(Keyboard.next()) 
 		{			
+			msg = "keyNum="+ Keyboard.getEventKey();			
+			
 			// Only listen to events where the key was pressed (down event)
 			if (!Keyboard.getEventKeyState()) continue;
+			
+//			bugbug keyboard.iskeydown  isrepeateven
 			
 			// Switch textures depending on the key released
 			switch (Keyboard.getEventKey()) 
@@ -314,7 +369,9 @@ public class GameClient
 					cameraAngle.y += cameraRotDelta;
 					break;
 				
-					
+				case Keyboard.KEY_SPACE: //debugging for now
+					qbugbug *= 1.10;
+					break;
 	
 				// model scale, rotation and translation values
 	
@@ -336,32 +393,6 @@ public class GameClient
 					
 			}
 		}
-		
-		//-- Update matrices
-		// Reset view and model matrices
-		viewMatrix = new Matrix4f();
-		modelMatrix = new Matrix4f();
-		
-		
-		
-		
-		// Transform camera and model
-		scaleTransRotCam(viewMatrix, cameraScale, cameraPos, cameraAngle);
-		scaleTransRotObj(modelMatrix, modelScale, modelPos, modelAngle);
-		
-		// Upload matrices to the uniform variables
-		GL20.glUseProgram(pId);
-		
-		projectionMatrix.store(matrix44Buffer); matrix44Buffer.flip();
-		GL20.glUniformMatrix4(projectionMatrixLocation, false, matrix44Buffer);
-		viewMatrix.store(matrix44Buffer); matrix44Buffer.flip();
-		GL20.glUniformMatrix4(viewMatrixLocation, false, matrix44Buffer);
-		modelMatrix.store(matrix44Buffer); matrix44Buffer.flip();
-		GL20.glUniformMatrix4(modelMatrixLocation, false, matrix44Buffer);
-		
-		GL20.glUseProgram(0);
-		
-		this.exitOnGLError("logicCycle");
 	}
 
 	private void scaleTransRotObj(Matrix4f matrix, Vector3f scale, Vector3f pos, Vector3f angle)
@@ -383,10 +414,60 @@ public class GameClient
 	}
 	
 	
-	private void renderCycle() 
+	private void renderCycle()
 	{
-		GL11.glClear(GL11.GL_COLOR_BUFFER_BIT);
+		GL11.glClear(GL11.GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BUFFER_BIT);     // Clear Screen And Depth Buffer
+		render3d();			
+
+		GL11.glBindTexture(GL11.GL_TEXTURE_2D, 0);
+		set2dMode(0f, 0f, 600f, 400f);		
+		render2d();	
 		
+		set3dMode();
+	}
+	
+
+
+	public static void set2dMode(float x, float y, float x2, float y2) 
+	{
+    	GL11.glDisable(GL11.GL_DEPTH_TEST);
+    	GL11.glDisable(GL11.GL_CULL_FACE);
+    	
+    	//temporary stash all the matrices...
+    	GL11.glMatrixMode(GL11.GL_PROJECTION);                   // Select The Projection Matrix
+        GL11.glPushMatrix();                                     // Store The Projection Matrix
+        GL11.glLoadIdentity();     
+
+        GL11.glMatrixMode(GL11.GL_MODELVIEW);                    // Select The Modelview Matrix
+        GL11.glPushMatrix();                                     // Store The Modelview Matrix
+        GL11.glLoadIdentity();                                   // Reset The Modelview Matrix
+
+    	GL11.glMatrixMode(GL11.GL_PROJECTION); 
+        //GL11.glOrtho(x, x+width, y, y-height, -1, 100);                          // Set Up An Ortho Screen
+        GL11.glOrtho(x, x2, y, y2, -1, 100);  
+        GL11.glMatrixMode(GL11.GL_MODELVIEW);
+	}
+	
+	
+    public static void set3dMode() 
+    {
+    	GL11.glMatrixMode(GL11.GL_PROJECTION);                        // Select The Projection Matrix
+        GL11.glPopMatrix();                                      // Restore The Old Projection Matrix
+        
+        GL11.glMatrixMode(GL11.GL_MODELVIEW);                         // Select The Modelview Matrix
+        GL11.glPopMatrix();                                      // Restore The Old Projection Matrix
+        
+        GL11.glEnable(GL11.GL_DEPTH_TEST);
+    }
+    
+	private void render2d()
+	{
+		ttf.drawString(300+qbugbug, 200+qbugbug, "薰"+msg, 1f, 1f);  //bugbug why these numbers so small?    why no text shows??
+		//ttf.drawString(0, ttf.getHeight()*10, "I wrote this song about you!\nIsn't that cliche of me, to do?", 1.5f,1.5f);
+	}
+
+	private void render3d() 
+	{  		
 		GL20.glUseProgram(pId);
 		
 		// Bind the texture
@@ -404,7 +485,7 @@ public class GameClient
 		
 		// Draw the vertices
 		GL11.glDrawElements(GL11.GL_TRIANGLES, indicesCount, GL11.GL_UNSIGNED_BYTE, 0);
-		
+				
 		// Put everything back to default (deselect)
 		GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, 0);
 		GL20.glDisableVertexAttribArray(0);
@@ -413,15 +494,15 @@ public class GameClient
 		GL30.glBindVertexArray(0);
 		
 		GL20.glUseProgram(0);
-		
+	
 		this.exitOnGLError("renderCycle");
 	}
 	
+	
+	
 	private void loopCycle() 
 	{
-		// Update logic
 		this.logicCycle();
-		// Update rendered frame
 		this.renderCycle();
 		
 		this.exitOnGLError("loopCycle");
@@ -429,7 +510,6 @@ public class GameClient
 	
 	private void destroyOpenGL() 
 	{	
-		// Delete the texture
 		GL11.glDeleteTextures(texIds[0]);
 		GL11.glDeleteTextures(texIds[1]);
 		
@@ -539,8 +619,7 @@ public class GameClient
 		GL11.glPixelStorei(GL11.GL_UNPACK_ALIGNMENT, 1);
 		
 		// Upload the texture data and generate mip maps (for scaling)
-		GL11.glTexImage2D(GL11.GL_TEXTURE_2D, 0, GL11.GL_RGB, tWidth, tHeight, 0, 
-				GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, buf);
+		GL11.glTexImage2D(GL11.GL_TEXTURE_2D, 0, GL11.GL_RGB, tWidth, tHeight, 0, GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, buf);
 		GL30.glGenerateMipmap(GL11.GL_TEXTURE_2D);
 		
 		// Setup the ST coordinate system
@@ -548,10 +627,8 @@ public class GameClient
 		GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_T, GL11.GL_REPEAT);
 		
 		// Setup what to do when the texture has to be scaled
-		GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, 
-				GL11.GL_LINEAR);
-		GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, 
-				GL11.GL_LINEAR_MIPMAP_LINEAR);
+		GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_LINEAR);
+		GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_LINEAR_MIPMAP_LINEAR);
 		
 		this.exitOnGLError("loadPNGTexture");
 		
