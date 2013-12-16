@@ -211,7 +211,7 @@ public class TrueTypeFont
 			fontTextureID = loadImage(imgTemp);
 				// .getTexture(font.toString(), imgTemp);
 
-			DebugPersistImage(imgTemp,"C:\\foo\\foo.png");
+			//DebugPersistImage(imgTemp,"C:\\foo\\foo.png");
 			
 			
 		} catch (Exception e) {

@@ -1,5 +1,4 @@
 import java.awt.Font;
-import java.awt.GraphicsEnvironment;
 import java.io.File;
 import java.io.BufferedReader;
 import java.io.FileInputStream;
@@ -48,8 +47,8 @@ public class GameClient
 	
 	// Setup variables
 	private final String WINDOW_TITLE = "GameClient1";  //bugbug
-	private final int WIDTH = 600;
-	private final int HEIGHT = 400;
+	private final int WIDTH = 800;
+	private final int HEIGHT = 600;
 	
 	//true constants
 	private final double PI = 3.14159265358979323846;
@@ -88,11 +87,13 @@ public class GameClient
 	private String msg = "initVal";
 	private TrueTypeFont ttf = null;
 	private float qbugbug = 1;
+	private String positionAndHeading = "";
 	
 	public GameClient() throws LWJGLException,Exception //for now  (renderer below requires)  bugbug
 	{
 		this.setupOpenGL();		
 		this.setupQuad();
+		this.setupModelAndCamera();
 		this.setupShaders();
 		this.setupTextures();
 		this.setupMatrices();
@@ -103,7 +104,7 @@ public class GameClient
 		   throw new Exception("font not supported:"+fontName);
 		}
 		Font awtFont = new Font(fontName,java.awt.Font.PLAIN,18);
-		ttf = new TrueTypeFont(awtFont,true,"薰".toCharArray());
+		ttf = new TrueTypeFont(awtFont,true);  //,"薰".toCharArray());
 	    
 		
 		while (!Display.isCloseRequested()) 
@@ -243,7 +244,13 @@ public class GameClient
 		GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, vboiId);
 		GL15.glBufferData(GL15.GL_ELEMENT_ARRAY_BUFFER, indicesBuffer, GL15.GL_STATIC_DRAW);
 		GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, 0);
+	
 		
+		this.exitOnGLError("setupQuad");
+	}
+
+	private void setupModelAndCamera()
+	{
 		// Set the default quad rotation, scale and position values
 		modelPos = new Vector3f(0, 0, 0);
 		modelAngle = new Vector3f(0, 0, 0);
@@ -253,9 +260,6 @@ public class GameClient
 		cameraPos = new Vector3f(0, 0, -10);
 		cameraAngle = new Vector3f(0, 0, 0);
 		cameraScale = new Vector3f(1, 1, 1);
-		
-		
-		this.exitOnGLError("setupQuad");
 	}
 	
 	private void setupShaders() 
@@ -292,7 +296,8 @@ public class GameClient
 	{
 		handleInputs();  //keyboard actions and stuff
 		
-		//-- Update matrices
+		updateHud();
+
 		// Reset view and model matrices
 		viewMatrix = new Matrix4f();
 		modelMatrix = new Matrix4f();		
@@ -314,6 +319,12 @@ public class GameClient
 		GL20.glUseProgram(0);
 		
 		this.exitOnGLError("logicCycle");
+	}
+
+	private void updateHud()
+	{
+		//extra HUD values
+		positionAndHeading = String.format("pos=%.2f,%.2f,%.2f head=%.1f",cameraPos.x,cameraPos.y,cameraPos.z,cameraAngle.y);
 	}
 
 	private void handleInputs()
@@ -462,8 +473,8 @@ public class GameClient
     
 	private void render2d()
 	{
-		ttf.drawString(300+qbugbug, 200+qbugbug, "薰"+msg, 1f, 1f);  //bugbug why these numbers so small?    why no text shows??
-		//ttf.drawString(0, ttf.getHeight()*10, "I wrote this song about you!\nIsn't that cliche of me, to do?", 1.5f,1.5f);
+		this.tinyHud(0, 1, positionAndHeading);
+		this.tinyHud(0,2,msg);
 	}
 
 	private void render3d() 
@@ -634,6 +645,24 @@ public class GameClient
 		
 		return texId;
 	}
+	
+	
+	//bugbug absorb into the TTF class??
+	private void tinyHud(float col, float row, String txt)
+	{
+		float scale=0.5f;  //for writing HUD tiny info
+		
+		int ttfScaleFactor = 8; //bugbug to fontSize?
+		ttf.drawString(col*ttfScaleFactor, HEIGHT-ttf.getHeight()*(ttfScaleFactor+scale*row), txt, scale, scale);
+		
+		//bugbug the old caller lines
+		//ttf.drawString(0, HEIGHT-8*ttf.getHeight(), positionAndHeading, scale, scale);
+		//ttf.drawString(0, HEIGHT-8.5f*ttf.getHeight(), msg, 0.5f,0.5f);
+	}
+	
+	//WIDTH/2+qbugbug, HEIGHT/2+qbugbug, "薰"+msg, 1f, 1f);
+	
+	
 	
 	private float cotanD(float angle)
 	{
