@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
+import java.util.Date;
 
 import org.lwjgl.BufferUtils;
 import org.lwjgl.LWJGLException;
@@ -21,6 +22,7 @@ import org.lwjgl.opengl.GL30;
 import org.lwjgl.util.glu.GLU;
 import org.lwjgl.util.vector.Matrix4f;
 import org.lwjgl.util.vector.Vector3f;
+
 import de.matthiasmann.twl.utils.PNGDecoder;
 import de.matthiasmann.twl.utils.PNGDecoder.Format;
 
@@ -45,11 +47,19 @@ public class GameClient
 		}
 	}
 	
-	// Setup variables
-	private final String WINDOW_TITLE = "Ayvex"; 
+	
+	// UserConfig variables
 	private final int WIDTH = 800;
 	private final int HEIGHT = 600;
 	private String fontList = "Arial Unicode MS;Verdana;Arial";
+	//float scaleDelta = 0.1f;
+	float posDelta = 0.05f;
+	float cameraRotDelta = 1.5f;
+	
+	//world variables
+	private final String WINDOW_TITLE = "Ayvex"; 
+	private String extraCharacterList="薰";  //keeping this to support notion we'll be fully unicode someday
+	
 	
 	//true constants
 	private final double PI = 3.14159265358979323846;
@@ -87,7 +97,9 @@ public class GameClient
 	
 	private String msg = "initVal";
 	private TrueTypeFont ttf = null;
+	private KeyManager km = null;
 	private String positionAndHeading = "";
+	private long currentLoopTimeStamp=0;
 	
 	public GameClient() throws LWJGLException,Exception //for now  (renderer below requires)  bugbug
 	{
@@ -97,18 +109,8 @@ public class GameClient
 		this.setupShaders();
 		this.setupTextures();
 		this.setupMatrices();
-		
-		for(String fontName : fontList.split(";"))
-		{
-			if (TrueTypeFont.isSupported(fontName)) 
-			{  
-				Font awtFont = new Font(fontName,java.awt.Font.PLAIN,18);
-				ttf = new TrueTypeFont(awtFont,true);  //,"薰".toCharArray());
-				msg="HUD using font:"+fontName;
-				break;
-			}
-			throw new Exception("none of these fonts are supported:"+fontList);
-		}
+		this.setupFont();
+		this.setupKeyManager();
 		
 		while (!Display.isCloseRequested()) 
 		{
@@ -120,6 +122,26 @@ public class GameClient
 		ttf.destroy();
 		destroyOpenGL();
 		Display.destroy();
+	}
+
+	private void setupKeyManager()
+	{
+		km = new KeyManager();		
+	}
+
+	private void setupFont() throws Exception
+	{
+		for(String fontName : fontList.split(";"))
+		{
+			if (!TrueTypeFont.isSupported(fontName)) continue; 
+
+			Font awtFont = new Font(fontName,java.awt.Font.PLAIN,18);  //bugbug const
+			ttf = new TrueTypeFont(awtFont,true,extraCharacterList);
+			msg="HUD using font: "+fontName;
+			return;
+		}
+		
+		throw new Exception("none of these fonts are supported:"+fontList);
 	}
 
 	private void setupMatrices() 
@@ -297,9 +319,9 @@ public class GameClient
 	
 	private void logicCycle() 
 	{
-		handleInputs();  //keyboard actions and stuff
-		
-		updateHud();
+		setTimeStamp();
+		handleInputs();  //kbd,mouse,etc
+		updateHudInfo();
 
 		// Reset view and model matrices
 		viewMatrix = new Matrix4f();
@@ -324,10 +346,15 @@ public class GameClient
 		this.exitOnGLError("logicCycle");
 	}
 
-	private void updateHud()
+	private void setTimeStamp()
 	{
-		//extra HUD values
-		positionAndHeading = String.format("pos=%.2f,%.2f,%.2f head=%.1f",cameraPos.x,cameraPos.y,cameraPos.z,cameraAngle.y);
+		currentLoopTimeStamp=(new Date()).getTime();		
+	}
+
+	private void updateHudInfo()
+	{
+		double ticks2 = ((double)currentLoopTimeStamp)/1000.0;
+		positionAndHeading = String.format(" t=%,.2f pos=%.2f,%.2f,%.2f head=%.1f",ticks2,cameraPos.x,cameraPos.y,cameraPos.z,cameraAngle.y);
 	}
 
 	private void handleInputs()
@@ -335,83 +362,52 @@ public class GameClient
 		//Vector3f scaleAddResolution = new Vector3f(scaleDelta, scaleDelta, scaleDelta);
 		//Vector3f scaleMinusResolution = new Vector3f(-scaleDelta, -scaleDelta, -scaleDelta);		
 
-		//float rotationDelta = 15f;
-		//float scaleDelta = 0.1f;
-		float posDelta = 0.5f;
-		float cameraRotDelta = 1f;
+		handleKeys();
+		handleMouse();
+	}
 		
-		while(Keyboard.next()) 
-		{			
-			msg = "keyNum="+ Keyboard.getEventKey();			
-			
-			// Only listen to events where the key was pressed (down event)
-			if (!Keyboard.getEventKeyState()) continue;
-			
-//			bugbug keyboard.iskeydown  isrepeateven
-			
-			// Switch textures depending on the key released
-			switch (Keyboard.getEventKey()) 
-			{
-				case Keyboard.KEY_1:
-					textureSelector = 0;
-					break;
-				case Keyboard.KEY_2:
-					textureSelector = 1;
-					break;	
-	
-				//users turns
-				case Keyboard.KEY_LEFT: 
-					cameraAngle.y -= cameraRotDelta;
-					break;
-				case Keyboard.KEY_RIGHT:
-					cameraAngle.y += cameraRotDelta;
-					break;
-					
-				//user steps
-				case Keyboard.KEY_DOWN:  //back
-					cameraPos.x += posDelta*sinD(cameraAngle.y);
-					cameraPos.z -= posDelta*cosD(cameraAngle.y);
-					break;
-				case Keyboard.KEY_UP:  //forward
-					cameraPos.x -= posDelta*sinD(cameraAngle.y);
-					cameraPos.z += posDelta*cosD(cameraAngle.y);
-					break;	
-				
-				case Keyboard.KEY_Q: 
-					break;
-				case Keyboard.KEY_W: //turn left
-					cameraAngle.y += cameraRotDelta;
-					break;
-				
-				case Keyboard.KEY_SPACE: //debugging for now
-					actionJump();
-					break;
-	
-				// model scale, rotation and translation values
-	
-				// model Move
-//				case Keyboard.KEY_UP:
-//					modelPos.y += posDelta;
-//					break;
-//				case Keyboard.KEY_DOWN:
-//					modelPos.y -= posDelta;
-//					break;
+	private void handleMouse()
+	{
+		// TODO Auto-generated method stub
+		
+	}
 
-				// model Rotation
-//				case Keyboard.KEY_LEFT:
-//					modelAngle.z += rotationDelta;
-//					break;
-//				case Keyboard.KEY_RIGHT:
-//					modelAngle.z -= rotationDelta;
-//					break;
-					
-			}
-		}
+	private void handleKeys()
+	{		
+		km.bump(currentLoopTimeStamp);  //have it check for keyboard updates
+
+		if (km.isKeyDown(Keyboard.KEY_LEFT))  	actionCamRotLeft();
+		if (km.isKeyDown(Keyboard.KEY_RIGHT)) 	actionCamRotRight();
+		if (km.isKeyDown(Keyboard.KEY_UP)) 		actionCamForward();
+		if (km.isKeyDown(Keyboard.KEY_DOWN))  	actionCamBackward();		
+	}
+
+
+
+	
+
+	private void actionCamBackward()	{		moveCam(-1);	}
+	private void actionCamForward()     {		moveCam(+1);    }
+	private void moveCam(int directionSign)
+	{
+		cameraPos.x -= directionSign*posDelta*sinD(cameraAngle.y);
+		cameraPos.z += directionSign*posDelta*cosD(cameraAngle.y);
+	}
+
+	
+	private void actionCamRotRight()
+	{
+		cameraAngle.y = Helpers.AngleAdd(cameraAngle.y,cameraRotDelta);
+	}
+
+	private void actionCamRotLeft()
+	{
+		cameraAngle.y = Helpers.AngleAdd(cameraAngle.y,-cameraRotDelta);
 	}
 
 	private void actionJump()
 	{
-		// TODO Auto-generated method stub
+		// TODO Auto-generated method stub  bugbug
 		
 	}
 

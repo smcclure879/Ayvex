@@ -78,9 +78,17 @@ public class TrueTypeFont
 
 	public TrueTypeFont(Font font, boolean antiAlias) 
 	{
-		this( font, antiAlias, null );
+		this( font, antiAlias, (char[])null );
 	}
-	
+	public TrueTypeFont(Font font, boolean antiAlias, String additionalChars)
+	{
+		this(
+				font, 
+				antiAlias, 
+				(  (additionalChars==null) ? "" : additionalChars  ).toCharArray()
+				
+			);	
+	}
 	public TrueTypeFont(Font font, boolean antiAlias, char[] additionalChars) 
 	{
 		this.font = font;
