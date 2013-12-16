@@ -46,9 +46,10 @@ public class GameClient
 	}
 	
 	// Setup variables
-	private final String WINDOW_TITLE = "GameClient1";  //bugbug
+	private final String WINDOW_TITLE = "Ayvex"; 
 	private final int WIDTH = 800;
 	private final int HEIGHT = 600;
+	private String fontList = "Arial Unicode MS;Verdana;Arial";
 	
 	//true constants
 	private final double PI = 3.14159265358979323846;
@@ -86,7 +87,6 @@ public class GameClient
 	
 	private String msg = "initVal";
 	private TrueTypeFont ttf = null;
-	private float qbugbug = 1;
 	private String positionAndHeading = "";
 	
 	public GameClient() throws LWJGLException,Exception //for now  (renderer below requires)  bugbug
@@ -98,14 +98,17 @@ public class GameClient
 		this.setupTextures();
 		this.setupMatrices();
 		
-		String fontName = "Arial Unicode MS";
-		if (!TrueTypeFont.isSupported(fontName)) 
-		{  
-		   throw new Exception("font not supported:"+fontName);
+		for(String fontName : fontList.split(";"))
+		{
+			if (TrueTypeFont.isSupported(fontName)) 
+			{  
+				Font awtFont = new Font(fontName,java.awt.Font.PLAIN,18);
+				ttf = new TrueTypeFont(awtFont,true);  //,"薰".toCharArray());
+				msg="HUD using font:"+fontName;
+				break;
+			}
+			throw new Exception("none of these fonts are supported:"+fontList);
 		}
-		Font awtFont = new Font(fontName,java.awt.Font.PLAIN,18);
-		ttf = new TrueTypeFont(awtFont,true);  //,"薰".toCharArray());
-	    
 		
 		while (!Display.isCloseRequested()) 
 		{
@@ -381,7 +384,7 @@ public class GameClient
 					break;
 				
 				case Keyboard.KEY_SPACE: //debugging for now
-					qbugbug *= 1.10;
+					actionJump();
 					break;
 	
 				// model scale, rotation and translation values
@@ -404,6 +407,12 @@ public class GameClient
 					
 			}
 		}
+	}
+
+	private void actionJump()
+	{
+		// TODO Auto-generated method stub
+		
 	}
 
 	private void scaleTransRotObj(Matrix4f matrix, Vector3f scale, Vector3f pos, Vector3f angle)
