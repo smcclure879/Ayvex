@@ -1,0 +1,3 @@
+steps to package for distribution
+1. use eclipse Export functionality (runnable jar, output to buildOutput folder)
+2. also copy all the libJars and natives into the folder with that GameClient.jar
