@@ -24,11 +24,9 @@ public class VertexData
 	public static final int textureByteOffset = colorByteOffset + colorByteCount;
 	
 	// The amount of elements that a vertex has
-	public static final int elementCount = positionElementCount + 
-			colorElementCount + textureElementCount;	
+	public static final int elementCount = positionElementCount + colorElementCount + textureElementCount;	
 	// The size of a vertex in bytes, like in C/C++: sizeof(Vertex)
-	public static final int stride = positionBytesCount + colorByteCount + 
-			textureByteCount;
+	public static final int stride = positionBytesCount + colorByteCount + textureByteCount;
 	
 	// Setters
 	public void setXYZ(float x, float y, float z) {
@@ -81,6 +79,11 @@ public class VertexData
 		return new float[] {this.xyzw[0], this.xyzw[1], this.xyzw[2]};
 	}
 	
+	public void addXYZ(float x, float y, float z)
+	{
+		this.xyzw[0]+=x;  this.xyzw[1]+=y;	this.xyzw[2]+=z;
+	}
+	
 	public float[] getRGBA() {
 		return new float[] {this.rgba[0], this.rgba[1], this.rgba[2], this.rgba[3]};
 	}
@@ -91,5 +94,14 @@ public class VertexData
 	
 	public float[] getST() {
 		return new float[] {this.st[0], this.st[1]};
+	}
+
+	public static VertexData CreateRand(float radius)
+	{
+		VertexData retval = new VertexData();
+		retval.setRGB(0.2f,0.9f,0.7f);
+		retval.setST(0, 0);
+		retval.setXYZ(Helpers.rnd(radius), Helpers.rnd(radius),  Helpers.rnd(radius));
+		return retval;
 	}
 }
