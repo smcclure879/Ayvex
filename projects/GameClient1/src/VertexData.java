@@ -79,10 +79,7 @@ public class VertexData
 		return new float[] {this.xyzw[0], this.xyzw[1], this.xyzw[2]};
 	}
 	
-	public void addXYZ(float x, float y, float z)
-	{
-		this.xyzw[0]+=x;  this.xyzw[1]+=y;	this.xyzw[2]+=z;
-	}
+
 	
 	public float[] getRGBA() {
 		return new float[] {this.rgba[0], this.rgba[1], this.rgba[2], this.rgba[3]};
@@ -103,5 +100,27 @@ public class VertexData
 		retval.setST(0, 0);
 		retval.setXYZ(Helpers.rnd(radius), Helpers.rnd(radius),  Helpers.rnd(radius));
 		return retval;
+	}
+
+	
+	
+	
+	//mutators...
+	
+	public void addXYZ(float x, float y, float z)
+	{
+		this.setXYZ(xyzw[0]+x, xyzw[1]+y, xyzw[2]+z);
+	}
+	
+	//nudge item toward point
+	public void nudge(float cx, float cy, float cz, float fracNew)  //fracNew outside of [0..1] could have strange results!!! 
+	{
+		float fracOld=1.0f-fracNew;
+		this.setXYZ
+				(
+						xyzw[0]*fracOld+cx*fracNew,
+						xyzw[1]*fracOld+cy*fracNew,
+						xyzw[2]*fracOld+cz*fracNew				
+				);
 	}
 }

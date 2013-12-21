@@ -25,8 +25,7 @@ import org.lwjgl.util.glu.GLU;
 import org.lwjgl.util.vector.Matrix4f;
 import org.lwjgl.util.vector.Vector3f;
 
-import de.matthiasmann.twl.utils.PNGDecoder;
-import de.matthiasmann.twl.utils.PNGDecoder.Format;
+
 
 
 public class GameClient 
@@ -112,8 +111,9 @@ public class GameClient
 		}
 		
 		ttf.destroy();
+
+		//bugbug for some reason we don't need this anymore (crashes on exit)  Display.destroy();
 		destroyOpenGL();
-		Display.destroy();
 	}
 
 	private void setupScene()
@@ -265,9 +265,11 @@ public class GameClient
 	
 	private void logicCycle() 
 	{
-		setTimeStamp();
+		setTimeStamp();  //must be first item in logicCycle
+		
 		handleInputs();  //kbd,mouse,etc
 		updateHudInfo();
+		tickAllRitems();
 
 		// Reset view and model matrices
 		viewMatrix = new Matrix4f();
@@ -290,6 +292,15 @@ public class GameClient
 		GL20.glUseProgram(0);
 		
 		ErrorUtil.exitOnGLError("logicCycle");
+	}
+
+	private void tickAllRitems()
+	{
+		for(Ritem r : this.itemsToRender)
+		{
+			r.tick(currentLoopTimeStamp);		
+		}
+		
 	}
 
 	private void setTimeStamp()
@@ -468,8 +479,6 @@ public class GameClient
 		GL20.glDeleteProgram(pId);
 		
 		ErrorUtil.exitOnGLError("destroyOpenGL");
-		
-		Display.destroy();
 	}
 	
 

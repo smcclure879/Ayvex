@@ -5,7 +5,8 @@ import org.lwjgl.opengl.GL13;
 public class PointCloud extends Ritem
 {
 	private int numPoints;
-	private float movementRadius = 3f;
+	private float movementRadius = 0.03f;
+	private float nudgeSize = 0.005f;
 
 
 
@@ -32,15 +33,25 @@ public class PointCloud extends Ritem
 		}
 	}
 	
+	
+	long oldTimeStamp=0;
+	@Override
 	public void tick(long timeStamp)
 	{
-		float r=this.movementRadius;
-		
-		for(int ii=0; ii<numPoints; ii++)
-		{
-			vertices[ii].addXYZ(Helpers.rndSym(r), Helpers.rndSym(r), Helpers.rndSym(r));  //mutates  
+		if (timeStamp-oldTimeStamp>50)
+		{			
+			float r=this.movementRadius;
+			
+			for(int ii=0; ii<numPoints; ii++)
+			{
+				vertices[ii].addXYZ(Helpers.rndSym(r), Helpers.rndSym(r), Helpers.rndSym(r));  //mutates  
+				vertices[ii].nudge(0f,0f,0f,nudgeSize);
+			}
+			refresh();
+			oldTimeStamp=timeStamp;
 		}
-		refresh();  //we moved the points
+		
+		
 	}
 
 

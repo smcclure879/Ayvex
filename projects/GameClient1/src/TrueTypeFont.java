@@ -17,10 +17,13 @@ import java.nio.IntBuffer;
 import java.util.HashMap;
 import java.util.Map;
 import java.awt.GraphicsEnvironment;
+
 import javax.imageio.ImageIO;
+
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.util.glu.GLU;
+
 
 
 /**
@@ -48,7 +51,7 @@ public class TrueTypeFont
 	private IntObject[] charArray = new IntObject[256];    //holds necessary information about the font characters
 	
 	
-	private Map customChars = new HashMap();  /** Map of user defined font characters (Character <-> IntObject) */
+	private Map<Character, IntObject> customChars = new HashMap<Character, IntObject>();  /** Map of user defined font characters (Character <-> IntObject) */
 
 	private boolean antiAlias;
 

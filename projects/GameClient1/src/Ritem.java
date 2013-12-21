@@ -41,23 +41,25 @@ public abstract class Ritem
 	
 	public void setup()
 	{
-		//level 0, so to speak (redoing textures is costly??? bugbug)
+		//level 1
 		setupTextures();
+		setupVertices();		
+		setupIndices();
+		
+		//level 2
 		refresh();	
+		
 	}
 	
 	public void refresh()
-	{	
-		//level 1
-		setupVertices();		
-		setupIndices();
-				
+	{					
 		//level2
 		setupVertexBuffers();
 		setupIndexBuffer();		
-		
+
 		//level pi
 		packIntoGpu();  //into vao's vbo's etc	
+
 	}
 	
 	public void init()
@@ -216,11 +218,11 @@ public abstract class Ritem
 	public void packIntoGpu()  
 	{
 		// Create a new Vertex Array Object in memory and select it (bind)
-		vaoId = GL30.glGenVertexArrays();
+		if (vaoId==0) vaoId = GL30.glGenVertexArrays();
 		GL30.glBindVertexArray(vaoId);
 		
 		// Create a new Vertex Buffer Object in memory and select it (bind)
-		vboId = GL15.glGenBuffers();
+		if (vboId==0) vboId = GL15.glGenBuffers();
 		GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, vboId);
 		GL15.glBufferData(GL15.GL_ARRAY_BUFFER, verticesFloatBuffer, GL15.GL_STREAM_DRAW);
 		
