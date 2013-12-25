@@ -12,8 +12,8 @@ public class Billboard extends Ritem
 	public void setupTextures()
 	{
 		this.texIds=new int[2];
-		texIds[0] = loadPNGTexture("assets/images/stGrid1.png", GL13.GL_TEXTURE0);
-		texIds[1] = loadPNGTexture("assets/images/stGrid2.png", GL13.GL_TEXTURE0);		
+		texIds[0] = TextureLoader.loadFromPng("assets/images/stGrid1.png", GL13.GL_TEXTURE0);
+		texIds[1] = TextureLoader.loadFromPng("assets/images/stGrid2.png", GL13.GL_TEXTURE0);		
 		ErrorUtil.exitOnGLError("setupTexture");
 	}
 

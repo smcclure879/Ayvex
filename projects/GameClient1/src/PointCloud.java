@@ -7,8 +7,8 @@ public class PointCloud extends Ritem
 	private int numPoints;
 	private float movementRadius = 0.03f;
 	private float nudgeSize = 0.005f;
-
-
+	private float ticksBetweenMoves = 30;
+	
 
 	public void init()
 	{
@@ -17,9 +17,8 @@ public class PointCloud extends Ritem
 
 	public void setupTextures()  //bugbug what is the texture for points supposed to be???
 	{
-		this.texIds=new int[2];
-		texIds[0] = loadPNGTexture("assets/images/stGrid1.png", GL13.GL_TEXTURE0);
-		texIds[1] = loadPNGTexture("assets/images/stGrid2.png", GL13.GL_TEXTURE0);		
+		this.texIds=new int[1];
+		texIds[0] = TextureLoader.loadFromPng("assets/images/stGrid1.png", GL13.GL_TEXTURE0);				
 		ErrorUtil.exitOnGLError("setupTexture");		
 	}
 
@@ -38,7 +37,7 @@ public class PointCloud extends Ritem
 	@Override
 	public void tick(long timeStamp)
 	{
-		if (timeStamp-oldTimeStamp>50)
+		if (timeStamp-oldTimeStamp>ticksBetweenMoves)
 		{			
 			float r=this.movementRadius;
 			
