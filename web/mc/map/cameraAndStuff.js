@@ -35,7 +35,7 @@ function start3d()
     renderer.transform.reset();
     renderer.transform.translate(-0.5, 0, 0.5);  // Center over the origin.
     // Elongate our spiral a bit (stretch in the z direction).
-    renderer.transform.scale(1, 5, 1);  //bugbug stretch warranted??
+    renderer.transform.scale(1, 1, 1);  //bugbug stretch warranted??
 
     // White background.
     renderer.ctx.setFillColor(1, 1, 1, 1);
