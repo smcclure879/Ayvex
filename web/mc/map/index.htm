@@ -1,0 +1,94 @@
+<head><comments>first get labels on points working</comments></head>
+<body>
+Trying to build a map for the mc2 world<br>
+this is a prototype...we need to move the lib to an "ext" folder, etc<br>
+<div id="toolbar" style="background:pink"> </div>
+<canvas width="800" height="600" id="c" style="border:1px solid #000000; backgroundColor:beige"/>
+
+bye
+
+<script src="pre3d.js"></script>
+<script src="demoUtils.js"></script>
+<script src="cameraAndStuff.js"></script>
+<script src="mc2data.js"></script>
+
+
+<script>
+
+var toolbar = document.getElementById("toolbar");
+start3d();  //in cameraAndStuff.js
+
+
+function debugAdd(s)
+{
+	toolbar.innerHTML+=s+'<br/>';
+}
+
+
+
+
+function makeBigMap(data)
+{
+	var paths = [ ];
+	
+	var path;
+	var jj=0;  //for the inner loop inside one path
+	var kk=0;  //index into the outputs
+	for(var ii=0, limit=data.length; ii<limit; ++ii)  //bugbug 
+	{
+		pt=data[ii];
+		if (ii==0 || pt[3]!='') //there is text
+		{ //start a new path
+			if (path) 
+			{
+				paths[kk++]=path;
+			}
+			path = new Pre3d.Path();
+			path.starting_point = 0;  //we make this standard
+			path.points = [ ];  //bugbug needed??
+			path.curves = [ ];
+			jj=0;
+		}
+		
+		//debugAdd(ii);
+		var pt = data[ii];
+		path.points[jj]={x:pt[0],y:pt[1],z:pt[2],t:pt[3]};
+		path.curves[jj]=new Pre3d.Curve(jj,jj,jj);
+		jj++;
+	}
+	
+	paths[kk]=path;  //close it out
+
+	return paths;
+ }
+ 
+ 
+ 
+function makeFakeMap()
+{
+	var p0={x:0,y:15,z:20};    var t0='baseCamp';
+	var p1={x:50,y:-15,z:30};  var t1='end of the line';
+	var path = new Pre3d.Path();
+    path.points = 
+	  [
+		  {x: p0.x, y: p0.y, z: p0.z, t:'this one path'},
+		  {x: p1.x, y: p1.y, z: p1.z, t:''},
+		  {x: 45, y:45, z:45, t:''}
+	  ];
+    path.curves = [new Pre3d.Curve(0, 0, 0), new Pre3d.Curve(1,1,1), new Pre3d.Curve(2,2,2)];
+    path.starting_point = 0;
+    return [path];
+}
+
+function getMap()  //callback from the cameraAndStuff.js  
+{
+	var data = getMc2Data(); 
+	//debugAdd(data);
+	var theMap = makeBigMap(data);  //bugbug for now
+	//var theMap=makeFakeMap();
+	
+	return theMap;
+}
+</script>
+
+</body>
