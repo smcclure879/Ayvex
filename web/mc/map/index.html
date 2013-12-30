@@ -10,7 +10,7 @@ bye
 <script src="pre3d.js"></script>
 <script src="demoUtils.js"></script>
 <script src="cameraAndStuff.js"></script>
-<script src="mc2dad1.js"></script>
+<script src="mc2data.js"></script>
 
 
 <script>
@@ -24,10 +24,12 @@ function debugAdd(s)
 	toolbar.innerHTML+=s+'<br/>';
 }
 
-function makeDadMap()
+
+
+
+function makeBigMap(data)
 {
 	var paths = [ ];
-	var data = getDadData();
 	
 	var path;
 	var jj=0;  //for the inner loop inside one path
@@ -60,6 +62,8 @@ function makeDadMap()
 	return paths;
  }
  
+ 
+ 
 function makeFakeMap()
 {
 	var p0={x:0,y:15,z:20};    var t0='baseCamp';
@@ -78,7 +82,9 @@ function makeFakeMap()
 
 function getMap()  //callback from the cameraAndStuff.js  
 {
-	var theMap=makeDadMap();  //bugbug for now
+	var data = getMc2Data(); 
+	//debugAdd(data);
+	var theMap = makeBigMap(data);  //bugbug for now
 	//var theMap=makeFakeMap();
 	
 	return theMap;
