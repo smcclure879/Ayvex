@@ -271,12 +271,12 @@ var DemoUtils = (function() {
     var cur_pending = null;
 
     function handleCameraMouse(info) {
+	
       if (!info.is_clicking)
         return;
 
       if (info.shift && info.ctrl) {
-        renderer.camera.focal_length = clamp(0.05, 10,
-            renderer.camera.focal_length + (info.delta_y * 0.1));
+        renderer.camera.focal_length = clamp(0.05, 10, renderer.camera.focal_length + (info.delta_y * 0.1) );
       } else if (info.shift) {
         camera_state.z += info.delta_y * 0.1;
         if (opts.zAxisLimit !== undefined && camera_state.z > opts.zAxisLimit) {
