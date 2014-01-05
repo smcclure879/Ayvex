@@ -33,11 +33,12 @@ function start3d()
   function draw() 
   {
     renderer.transform.reset();
-    renderer.transform.translate(-0.5, 0, 0.5);  // Center over the origin.
+    //don't translate model at all (bugbug) renderer.transform.translate(0, 0, 0);  // Center over the origin.  //bugbug this is actually the "center of rotation point" for model rotation
     // Elongate our spiral a bit (stretch in the z direction).
     renderer.transform.scale(1, 1, 1);  //bugbug stretch warranted??
-
-    // White background.
+	renderer.transform.translate(0, 0, -10);  //bugbug attempt to 
+    
+	// White background.
     renderer.ctx.setFillColor(1, 1, 1, 1);
     renderer.drawBackground();
 
@@ -48,8 +49,8 @@ function start3d()
 	}
   }
 
-  renderer.camera.focal_length = 1/3;  //bugbug originally 1/2
-  DemoUtils.autoCamera(renderer, 0, 0, -8, 0, 0, 0, draw);
+  renderer.camera.focal_length = 3;  //bugbug originally 1/2
+  DemoUtils.autoCamera(renderer, 0, 0, -100, 0, 0, 0, draw);
 
   var toolbar = new DemoUtils.ToggleToolbar();
   toolbar.addEntry('Debug points', false, function(e) {
@@ -62,5 +63,7 @@ function start3d()
   });
    toolbar.populateDiv(document.getElementById('toolbar'));
 
+
   draw();
+
 }

@@ -1021,6 +1021,8 @@ var Pre3d = (function() {
     return num_quads;
   }
 
+  //bugbug consider removing all the above texturing and curves stuff and just do points, lines, text???
+  
   // Draw a Path.  There is no buffering, because there is no culling or
   // z-sorting.  There is currently no filling, paths are only stroked.  To
   // control the render state, you should modify ctx directly, and set whatever

@@ -1,16 +1,47 @@
-<head><comments>first get labels on points working</comments></head>
-<body>
-Trying to build a map for the mc2 world<br>
-this is a prototype...we need to move the lib to an "ext" folder, etc<br>
-<div id="toolbar" style="background:pink"> </div>
-<canvas width="800" height="600" id="c" style="border:1px solid #000000; backgroundColor:beige"/>
+<head>
+<title>mc2 world map</title>
 
-bye
-
-<script src="pre3d.js"></script>
+<!-- script src="jquery-1.10.2.min.js"></script   bugbug later maybe   -->
+<script src="../../lib/jquery-1.10.2.js"></script>
+<script src="../../lib/pre3d.js"></script>
 <script src="demoUtils.js"></script>
 <script src="cameraAndStuff.js"></script>
 <script src="mc2data.js"></script>
+
+</head>
+
+<body>
+
+
+<table border=0>
+<tr>
+<td style="width:800px" oncontextmenu=";return false"> <!-- disallowing context menu in the map surface only! -->
+<canvas width="800" height="600" id="c" 
+	style="border:2px solid #0000DD; backgroundColor:beige"
+	
+/>
+</td>
+<td valign="top">
+Prototype Map for the <h1>mc2 world</h1><br>
+Copyright 2014<br>
+Ayvex Light Industries<br>
+
+<h2>TODO</h2>
+
+<div style="border:1;backgroundColor:beige;">
+<ul>
+<li>camera motion instead of model motion
+<li>proper UI for same
+<li>colors
+<li>better pathing
+</ul>
+</div>
+<div id="toolbar" style="background:pink;  border:1px solid #000000; padding:10px; spacing:10px; "> </div>
+</td>
+
+</tr>
+</table>
+---
 
 
 <script>
@@ -24,7 +55,12 @@ function debugAdd(s)
 	toolbar.innerHTML+=s+'<br/>';
 }
 
+function debugSet(s)
+{
+	toolbar.innerHTML=s;
+}
 
+isDown = DemoUtils.KeyTracker.isDown
 
 
 function makeBigMap(data)
@@ -89,6 +125,9 @@ function getMap()  //callback from the cameraAndStuff.js
 	
 	return theMap;
 }
+
+
+
 </script>
 
 </body>
