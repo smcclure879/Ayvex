@@ -1,0 +1,10 @@
+--play minecraft
+--try the minecraft map
+--install and learn git to contribute code/"maps"/data
+--clone this repository (or fork it for an extra level of indirection)
+--learn javascript to work on javascript map
+--learn java to work on the 3d game 
+--contribute multidimensional data sets
+--add feature requests and bug reports
+
+
