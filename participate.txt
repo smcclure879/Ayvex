@@ -1,4 +1,4 @@
---play minecraft
+--play minecraft: https://github.com/smcclure879/Ayvex/blob/master/web/mc/guide.htm 
 --try the minecraft map
 --install and learn git to contribute code/"maps"/data
 --clone this repository (or fork it for an extra level of indirection)
