@@ -1,11 +1,27 @@
-<head><title>mc2 world map</title></head>
+<head>
+<title>mc2 world map</title>
+
+<!-- script src="jquery-1.10.2.min.js"></script   bugbug later maybe   -->
+<script src="../../lib/jquery-1.10.2.js"></script>
+<script src="../../lib/pre3d.js"></script>
+<script src="demoUtils.js"></script>
+<script src="cameraAndStuff.js"></script>
+<script src="mc2data.js"></script>
+
+</head>
+
 <body>
+
+
 <table border=0>
 <tr>
-<td style="width:800px">
-<canvas width="800" height="600" id="c" style="border:2px solid #0000DD; backgroundColor:beige"/>
+<td style="width:800px" oncontextmenu=";return false"> <!-- disallowing context menu in the map surface only! -->
+<canvas width="800" height="600" id="c" 
+	style="border:2px solid #0000DD; backgroundColor:beige"
+	
+/>
 </td>
-<td align="top">
+<td valign="top">
 Prototype Map for the <h1>mc2 world</h1><br>
 Copyright 2014<br>
 Ayvex Light Industries<br>
@@ -25,12 +41,7 @@ Ayvex Light Industries<br>
 
 </tr>
 </table>
-bye
-
-<script src="pre3d.js"></script>
-<script src="demoUtils.js"></script>
-<script src="cameraAndStuff.js"></script>
-<script src="mc2data.js"></script>
+---
 
 
 <script>
@@ -44,7 +55,12 @@ function debugAdd(s)
 	toolbar.innerHTML+=s+'<br/>';
 }
 
+function debugSet(s)
+{
+	toolbar.innerHTML=s;
+}
 
+isDown = DemoUtils.KeyTracker.isDown
 
 
 function makeBigMap(data)
@@ -109,6 +125,9 @@ function getMap()  //callback from the cameraAndStuff.js
 	
 	return theMap;
 }
+
+
+
 </script>
 
 </body>

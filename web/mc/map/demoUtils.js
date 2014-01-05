@@ -120,7 +120,8 @@ var DemoUtils = (function() {
       // We need one event to get calibrated.
       if (state.first_event) {
         state.first_event = false;
-      } else {
+      } else {  //this is where main "info" is constructed
+		debugSet
         var info = {
           is_clicking: state.is_clicking,
           canvas_x: state.last_x,
@@ -129,7 +130,8 @@ var DemoUtils = (function() {
           delta_y: delta_y,
           touch: true,
           shift: false,
-          ctrl: false
+          ctrl: false,
+		  isRightClick: (e.which!=0)  
         };
 
         listener(info);
@@ -140,6 +142,25 @@ var DemoUtils = (function() {
       return false;
     }, false);
   }
+  
+  
+  // function registerKeyListener(canvas, listener)  { bugbug
+	// window.AddEventListener('keydown',function(e){
+		// debugSet("bugbug38");  //bugbug need keys working
+		// switch(e.keyCode) {
+			// case 38: 
+				// break;
+			// default:
+				// break;
+		// }
+	
+	// }
+	// );
+  
+  // }
+  
+  
+  
 
   // Registers some mouse listeners on a <canvas> element, to help you with
   // things like dragging, clicking, etc.  Your callback will get called on
@@ -203,6 +224,10 @@ var DemoUtils = (function() {
       state.last_x = rel.x;
       state.last_y = rel.y;
 
+	  
+	  //bugbug try to see if "which" is working...
+	  if (e.which!=0) debugSet("which"+e.which);
+	  
       // We need one event to get calibrated.
       if (state.first_event) {
         state.first_event = false;
@@ -214,7 +239,8 @@ var DemoUtils = (function() {
           delta_x: delta_x,
           delta_y: delta_y,
           shift: e.shiftKey,
-          ctrl: e.ctrlKey
+          ctrl: e.ctrlKey,
+		  isRightClick: (e.button!=0)
         };
 
         listener(info);
@@ -261,12 +287,57 @@ var DemoUtils = (function() {
     function set_camera() {
       var ct = renderer.camera.transform;
       ct.reset();
+	  ct.translate(camera_state.x, camera_state.y, camera_state.z);
       ct.rotateZ(camera_state.rotate_z);
       ct.rotateY(camera_state.rotate_y);
-      ct.rotateX(camera_state.rotate_x);
-      ct.translate(camera_state.x, camera_state.y, camera_state.z);
+      ct.rotateX(camera_state.rotate_x);      
     }
 
+	cos=Math.cos;
+	sin=Math.sin;
+	
+	//bugbug needed???
+	// pi=3.14159265;
+	// halfPi=pi/2;
+	// twoPi=pi*2;
+	
+	timeStepAng=100;
+	timeStepU=1;
+	function pitch(ang) { camera_state.rotate_x += ang/timeStepAng; dirtyCam=true;}
+	function yaw(ang) { camera_state.rotate_y += ang/timeStepAng; dirtyCam=true;}
+	function panLeftRight(u)   { u/=timeStepU; a=camera_state.rotate_y; camera_state.x += u*cos(a); camera_state.z += u*sin(a); dirtyCam=true;}
+	function panForwardBack(u) { u/=timeStepU; a=camera_state.rotate_y; camera_state.x -= u*sin(a); camera_state.z += u*cos(a); dirtyCam=true;}
+	function panUpDown(u) { u/=timeStepU; camera_state.y += u; dirtyCam=true;}
+	
+	
+	
+	var dirtyCam=false;
+	function myTick(frameNum)
+	{
+		debugSet("k=" + DemoUtils.KeyTracker.AsString())
+		zstep=0.001;
+		dirtyCam=false;
+		if (isDown(40))  pitch(-1); //down arrow
+		if (isDown(38))  pitch( 1); //up arrow
+		if (isDown(37))  yaw(-1);  //left arrow
+		if (isDown(39))  yaw( 1);  //right arrow
+		if (isDown(81))  panLeftRight(1); //q
+		if (isDown(69))  panLeftRight(-1); //e
+		if (isDown(87))  panForwardBack( 1);   //w
+		if (isDown(83))  panForwardBack(-1);   //s
+		if (isDown(82))  panUpDown(-1);  //r
+		if (isDown(70))  panUpDown( 1);  //f
+		
+		if (dirtyCam) {set_camera(); draw_callback();}  //bugbug too many places we call this?  one dirty bit for all?
+	}
+	
+	fps=30;  //bugbug settings
+	var ticker=new Ticker(fps,myTick);
+	ticker.start();
+	
+	
+	
+	
     // We debounce fast mouse movements so we don't paint a million times.
     var cur_pending = null;
 
@@ -287,12 +358,15 @@ var DemoUtils = (function() {
           // TODO(deanm): This only limits in one direction.
         }
       } else if (info.ctrl) {
-        camera_state.x -= info.delta_x * 4;  //bugbug need to work with scaling consts mastered in cameraAndStuff 
+        camera_state.x -= info.delta_x * 1;  //bugbug need to work with scaling consts mastered in cameraAndStuff 
         camera_state.y += info.delta_y * 1;
-      } else {  //plain
+      } else if (info.isRightClick) { 
         camera_state.rotate_y -= info.delta_x * 0.01;
-        camera_state.rotate_x -= info.delta_y * 0.01;
-      }
+        camera_state.rotate_x -= info.delta_y * 0.01;  //right drag not working  bugbug you are here
+      } else {  
+		//plain bugbug nothing for now 
+	  }
+	  
 
       if (cur_pending != null)
         clearTimeout(cur_pending);
@@ -309,20 +383,21 @@ var DemoUtils = (function() {
     }
 
     registerMouseListener(renderer.canvas, handleCameraMouse);
+
     if (opts.touchDrawCallback !== undefined)
       registerTouchListener(renderer.canvas, handleCameraMouse);
 
     if (opts.panZOnMouseWheel === true) {
       var wheel_scale = opts.panZOnMouseWheelScale !== undefined ?
                           opts.panZOnMouseWheelScale : 30;
-      registerMouseWheelListener(renderer.canvas, function(delta_y) {
+      registerMouseWheelListener(renderer.canvas, function(delta_wheel) {
         // Create a fake info to act as if shift + drag happened.
         var fake_info = {
           is_clicking: true,
           canvas_x: null,
           canvas_y: null,
           delta_x: 0,
-          delta_y: delta_y * wheel_scale,
+          delta_y: delta_wheel * wheel_scale,
           shift: true,
           ctrl: false
         };
@@ -368,9 +443,51 @@ var DemoUtils = (function() {
     var pops = element.parentNode;
     pops.insertBefore(div, pops.firstChild);
   };
+  
+  
+	//bugbug move to separate file
+	function KeyTracker()
+	{
+	}
+
+	KeyTracker._daKeys={};
+	KeyTracker.isDown=function(c) {return (c in KeyTracker._daKeys);}
+	KeyTracker.shouldSkip=function(ev) {return (ev.which==116);}  //F5 ...bugbug others?
+	
+	KeyTracker.onKeyDown=function(ev)
+	{
+		if (KeyTracker.shouldSkip(ev)) return; 
+		KeyTracker._daKeys[ev.which]=1;
+		ev.preventDefault();
+	}
+	
+	KeyTracker.onKeyUp=function(ev)
+	{
+		if (KeyTracker.shouldSkip(ev)) return; 
+		delete KeyTracker._daKeys[ev.which];
+		ev.preventDefault();		
+	}
+
+	KeyTracker.AsString = function()
+	{
+		retval = "";
+		for(c=0; c<400; c++)
+		{
+			retval += (  (KeyTracker.isDown(c))  ?  c+","  :  ""  );
+		}
+		return retval;
+	}
+	
+		
+	$(document)
+		.keydown(KeyTracker.onKeyDown)
+		.keyup(  KeyTracker.onKeyUp);
+
+
 
   return {
     Ticker: Ticker,
+	KeyTracker: KeyTracker,
     registerMouseListener: registerMouseListener,
     autoCamera: autoCamera,
     ToggleToolbar: ToggleToolbar
