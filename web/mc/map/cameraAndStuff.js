@@ -49,8 +49,19 @@ function start3d()
 	}
   }
 
+  
   renderer.camera.focal_length = 3;  //bugbug originally 1/2
-  DemoUtils.autoCamera(renderer, 0, 0, -100, 0, 0, 0, draw);
+  
+  //"this looks like a good spot"--found by flying around the model
+  camX=-157;
+  camY=-176;
+  camZ=-39;
+  camRotX=0.42;
+  camRotY=-1.13;
+  camRotZ=0;
+  
+  
+  DemoUtils.autoCamera(renderer, camX, camY, camZ, camRotX, camRotY, camRotZ, draw);
 
   var toolbar = new DemoUtils.ToggleToolbar();
   toolbar.addEntry('Debug points', false, function(e) {

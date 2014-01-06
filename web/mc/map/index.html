@@ -17,16 +17,41 @@
 <tr>
 <td style="width:800px" oncontextmenu=";return false"> <!-- disallowing context menu in the map surface only! -->
 <canvas width="800" height="600" id="c" 
-	style="border:2px solid #0000DD; backgroundColor:beige"
+	style="border:2px solid #0000DD;background-color:beige;"
 	
 />
 </td>
 <td valign="top">
-Prototype Map for the <h1>mc2 world</h1><br>
+Map for the <h1>mc2 world</h1><br>
 Copyright 2014<br>
 Ayvex Light Industries<br>
 
-<h2>TODO</h2>
+<div id="controlPanel" style="border:2px solid #000000;background-color:lightGray; font-family:Arial;font-size:12">
+<h3><b>Control Panel</b></h3>
+<input type="checkbox" value="animate" id="animate" checked>animate</input>
+</div>
+<div id="readout" style="font-family:Arial;font-size:12;background-color:yellow">
+<table>
+<tr><td></td
+<tr>
+<td>
+frame<input type="text" id="frameNum" value="x"/><br>
+camX<input type="text" id="camX" value="x"/><br>
+camY<input type="text" id="camY" value="x"/><br>
+camZ<input type="text" id="camZ" value="x"/><br>
+</td>
+<td>
+<br>
+camRotX<input type="text" id="camRotX" value="x"/><br>
+camRotY<input type="text" id="camRotY" value="x"/><br>
+camRotZ<input type="text" id="camRotZ" value="x"/><br>
+</td>
+</tr>
+</table>
+</div>
+
+
+<h2>TODO LIST</h2>
 
 <div style="border:1;backgroundColor:beige;">
 <ul>
@@ -59,8 +84,6 @@ function debugSet(s)
 {
 	toolbar.innerHTML=s;
 }
-
-isDown = DemoUtils.KeyTracker.isDown
 
 
 function makeBigMap(data)
@@ -127,7 +150,18 @@ function getMap()  //callback from the cameraAndStuff.js
 }
 
 
+//used to track what keys are down
+isDown = DemoUtils.KeyTracker.isDown
 
+$(document).ready(function() {
+		$("#animate").click( function(event)
+			{
+				DemoUtils.Notify("animate",animate.checked );
+			}
+		);
+		DemoUtils.Notify("animate",animate.checked );  //and do it once right now for good measure
+	}
+)
 </script>
 
 </body>
