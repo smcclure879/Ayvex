@@ -272,6 +272,7 @@ var DemoUtils = (function() {
   //   Mouse + ctrl -> pan x / y.
   //   Mouse + shift -> pan z.
   //   Mouse + ctrl + shift -> adjust focal length.
+  var animate = false;
   function autoCamera(renderer, ix, iy, iz, tx, ty, tz, draw_callback, opts) {
     var camera_state = {
       rotate_x: tx,
@@ -281,13 +282,16 @@ var DemoUtils = (function() {
       y: iy,
       z: iz
     };
+	
+	var dirtyCam=true;
 
     opts = opts !== undefined ? opts : { };
 
+	var dx,dy,dz=0.0;  //to support animation
     function set_camera() {
       var ct = renderer.camera.transform;
       ct.reset();
-	  ct.translate(camera_state.x, camera_state.y, camera_state.z);
+	  ct.translate(camera_state.x+dx, camera_state.y+dy, camera_state.z+dz);
       ct.rotateZ(camera_state.rotate_z);
       ct.rotateY(camera_state.rotate_y);
       ct.rotateX(camera_state.rotate_x);      
@@ -311,12 +315,12 @@ var DemoUtils = (function() {
 	
 	
 	
-	var dirtyCam=false;
+	
 	function myTick(frameNum)
 	{
-		debugSet("k=" + DemoUtils.KeyTracker.AsString())
+		//debugSet("k=" + DemoUtils.KeyTracker.AsString())
 		zstep=0.001;
-		dirtyCam=false;
+		dirtyCam=(frameNum<20 || frameNum%fps==0);
 		if (isDown(40))  pitch(-1); //down arrow
 		if (isDown(38))  pitch( 1); //up arrow
 		if (isDown(37))  yaw(-1);  //left arrow
@@ -328,12 +332,52 @@ var DemoUtils = (function() {
 		if (isDown(82))  panUpDown(-1);  //r
 		if (isDown(70))  panUpDown( 1);  //f
 		
-		if (dirtyCam) {set_camera(); draw_callback();}  //bugbug too many places we call this?  one dirty bit for all?
+		if (animate) animateIt(frameNum);
+		
+		
+		redoTheCam(frameNum);
 	}
 	
-	fps=30;  //bugbug settings
+	function redoTheCam(frameNum)
+	{
+		if (!dirtyCam) return; //no point
+		
+		//update control panel
+		$("#frameNum").val(frameNum);
+		$("#camX").val(camera_state.x);
+		$("#camY").val(camera_state.y);
+		$("#camZ").val(camera_state.z);
+		$("#camRotX").val(camera_state.rotate_x);
+		$("#camRotY").val(camera_state.rotate_y);
+		$("#camRotZ").val(camera_state.rotate_z);
+		
+		set_camera(); 
+		draw_callback();
+		dirtyCam=false;
+	}
+	
+	function rnd(n)
+	{
+		return Math.floor((Math.random()*n)+1);
+	}
+	
+	
+	function animateIt(frameNum)
+	{
+		oscSize=4.0;
+		var ang=frameNum/1.0;
+		dx=4*oscSize*cos(ang/17);
+		dy=2*oscSize*sin(ang/13);
+		dz=oscSize*sin(ang/7);
+
+		dirtyCam=true;
+	}
+	
+	fps=60;  //bugbug settings
 	var ticker=new Ticker(fps,myTick);
+	dirtyCam=true;
 	ticker.start();
+	
 	
 	
 	
@@ -407,6 +451,7 @@ var DemoUtils = (function() {
 
     // Set up the initial camera.
     set_camera();
+	dirtyCam=true;
   }
 
   function ToggleToolbar() {
@@ -484,12 +529,23 @@ var DemoUtils = (function() {
 		.keyup(  KeyTracker.onKeyUp);
 
 
+	function Notify(item,state)
+	{
+		if (item=="animate") 
+		{
+			animate=state;
+		}
+	}
+	
+	
 
   return {
     Ticker: Ticker,
 	KeyTracker: KeyTracker,
     registerMouseListener: registerMouseListener,
     autoCamera: autoCamera,
-    ToggleToolbar: ToggleToolbar
+    ToggleToolbar: ToggleToolbar,
+	Notify: Notify
   };
 })();
+
