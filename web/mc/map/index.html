@@ -96,9 +96,9 @@ function makeBigMap(data)
 	for(var ii=0, limit=data.length; ii<limit; ++ii)  //bugbug 
 	{
 		pt=data[ii];
-		if (ii==0 || pt[3]!='') //there is text
-		{ //start a new path
-			if (path) 
+		if (ii==0 || pt[3]!='') //there is text so start a new path
+		{
+			if (path) //store the old path if there is one
 			{
 				paths[kk++]=path;
 			}
@@ -116,12 +116,37 @@ function makeBigMap(data)
 		jj++;
 	}
 	
-	paths[kk]=path;  //close it out
+	paths[kk++]=path;  //close it out
+	
+	//landmarks
+	landmarkSpacing=500;
+	for(var xx=-10000; xx<10000; xx+=landmarkSpacing)
+	{
+		for(var zz=-10000; zz<10000; zz+=landmarkSpacing)
+		{
+			paths[kk++] = markerPole(xx,zz);
+		}
+	}
+		
 
 	return paths;
  }
  
+ function markerPole(xx,zz)
+ {
+	return linePath(xx,-1000,zz,
+					xx,-950 ,zz);
+ }
  
+ function linePath(x1,y1,z1,x2,y2,z2)  //bugbug use this for the user paths as well!
+ {
+	var path=new Pre3d.Path();
+	path.starting_point=0;
+	path.points[0]={x:x1,y:y1,z:z1,t:""};  //""+x1+","+y1
+	path.points[1]={x:x2,y:y2,z:z2	};
+	path.curves[0]=new Pre3d.Curve(0,1,1);  //to make it a line, everything looks at 0th point.
+	return path;
+ }
  
 function makeFakeMap()
 {
