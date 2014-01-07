@@ -1,3 +1,10 @@
+
+//many changes by smcclure
+//need to break this up into separate camera etc classes
+
+
+
+
 // (c) Dean McNamee <dean@gmail.com>, Dec 2008.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -131,7 +138,7 @@ var DemoUtils = (function() {
           touch: true,
           shift: false,
           ctrl: false,
-		  isRightClick: (e.which!=0)  
+		  isRightClick: (e.which!=0)
         };
 
         listener(info);
@@ -142,25 +149,25 @@ var DemoUtils = (function() {
       return false;
     }, false);
   }
-  
-  
+
+
   // function registerKeyListener(canvas, listener)  { bugbug
 	// window.AddEventListener('keydown',function(e){
 		// debugSet("bugbug38");  //bugbug need keys working
 		// switch(e.keyCode) {
-			// case 38: 
+			// case 38:
 				// break;
 			// default:
 				// break;
 		// }
-	
+
 	// }
 	// );
-  
+
   // }
-  
-  
-  
+
+
+
 
   // Registers some mouse listeners on a <canvas> element, to help you with
   // things like dragging, clicking, etc.  Your callback will get called on
@@ -224,10 +231,10 @@ var DemoUtils = (function() {
       state.last_x = rel.x;
       state.last_y = rel.y;
 
-	  
+
 	  //bugbug try to see if "which" is working...
 	  if (e.which!=0) debugSet("which"+e.which);
-	  
+
       // We need one event to get calibrated.
       if (state.first_event) {
         state.first_event = false;
@@ -282,7 +289,7 @@ var DemoUtils = (function() {
       y: iy,
       z: iz
     };
-	
+
 	var dirtyCam=true;
 
     opts = opts !== undefined ? opts : { };
@@ -294,17 +301,19 @@ var DemoUtils = (function() {
 	  ct.translate(camera_state.x+dx, camera_state.y+dy, camera_state.z+dz);
       ct.rotateZ(camera_state.rotate_z);
       ct.rotateY(camera_state.rotate_y);
-      ct.rotateX(camera_state.rotate_x);      
+      ct.rotateX(camera_state.rotate_x);
     }
 
 	cos=Math.cos;
 	sin=Math.sin;
-	
+	pi=3.14159265;
+	deg=function(rad) { return rad/pi*180; }
+
 	//bugbug needed???
 	// pi=3.14159265;
 	// halfPi=pi/2;
 	// twoPi=pi*2;
-	
+
 	timeStepAng=100;
 	timeStepU=1;
 	function pitch(ang) { camera_state.rotate_x += ang/timeStepAng; dirtyCam=true;}
@@ -312,10 +321,10 @@ var DemoUtils = (function() {
 	function panLeftRight(u)   { u/=timeStepU; a=camera_state.rotate_y; camera_state.x += u*cos(a); camera_state.z += u*sin(a); dirtyCam=true;}
 	function panForwardBack(u) { u/=timeStepU; a=camera_state.rotate_y; camera_state.x -= u*sin(a); camera_state.z += u*cos(a); dirtyCam=true;}
 	function panUpDown(u) { u/=timeStepU; camera_state.y += u; dirtyCam=true;}
-	
-	
-	
-	
+
+
+
+
 	function myTick(frameNum)
 	{
 		//debugSet("k=" + DemoUtils.KeyTracker.AsString())
@@ -331,37 +340,37 @@ var DemoUtils = (function() {
 		if (isDown(83))  panForwardBack(-1);   //s
 		if (isDown(82))  panUpDown(-1);  //r
 		if (isDown(70))  panUpDown( 1);  //f
-		
+
 		if (animate) animateIt(frameNum);
-		
-		
+
+
 		redoTheCam(frameNum);
 	}
-	
+
 	function redoTheCam(frameNum)
 	{
 		if (!dirtyCam) return; //no point
-		
+
 		//update control panel
 		$("#frameNum").val(frameNum);
 		$("#camX").val(camera_state.x);
 		$("#camY").val(camera_state.y);
 		$("#camZ").val(camera_state.z);
-		$("#camRotX").val(camera_state.rotate_x);
-		$("#camRotY").val(camera_state.rotate_y);
-		$("#camRotZ").val(camera_state.rotate_z);
-		
-		set_camera(); 
+		$("#camRotX").val(deg(camera_state.rotate_x));  //degrees for display only
+		$("#camRotY").val(deg(camera_state.rotate_y));
+		$("#camRotZ").val(deg(camera_state.rotate_z));
+
+		set_camera();
 		draw_callback();
 		dirtyCam=false;
 	}
-	
+
 	function rnd(n)
 	{
 		return Math.floor((Math.random()*n)+1);
 	}
-	
-	
+
+
 	function animateIt(frameNum)
 	{
 		oscSize=4.0;
@@ -372,21 +381,21 @@ var DemoUtils = (function() {
 
 		dirtyCam=true;
 	}
-	
+
 	fps=60;  //bugbug settings
 	var ticker=new Ticker(fps,myTick);
 	dirtyCam=true;
 	ticker.start();
-	
-	
-	
-	
-	
+
+
+
+
+
     // We debounce fast mouse movements so we don't paint a million times.
     var cur_pending = null;
 
     function handleCameraMouse(info) {
-	
+
       if (!info.is_clicking)
         return;
 
@@ -402,15 +411,15 @@ var DemoUtils = (function() {
           // TODO(deanm): This only limits in one direction.
         }
       } else if (info.ctrl) {
-        camera_state.x -= info.delta_x * 1;  //bugbug need to work with scaling consts mastered in cameraAndStuff 
+        camera_state.x -= info.delta_x * 1;  //bugbug need to work with scaling consts mastered in cameraAndStuff
         camera_state.y += info.delta_y * 1;
-      } else if (info.isRightClick) { 
+      } else if (info.isRightClick) {
         camera_state.rotate_y -= info.delta_x * 0.01;
         camera_state.rotate_x -= info.delta_y * 0.01;  //right drag not working  bugbug you are here
-      } else {  
-		//plain bugbug nothing for now 
+      } else {
+		//plain bugbug nothing for now
 	  }
-	  
+
 
       if (cur_pending != null)
         clearTimeout(cur_pending);
@@ -488,8 +497,8 @@ var DemoUtils = (function() {
     var pops = element.parentNode;
     pops.insertBefore(div, pops.firstChild);
   };
-  
-  
+
+
 	//bugbug move to separate file
 	function KeyTracker()
 	{
@@ -498,19 +507,19 @@ var DemoUtils = (function() {
 	KeyTracker._daKeys={};
 	KeyTracker.isDown=function(c) {return (c in KeyTracker._daKeys);}
 	KeyTracker.shouldSkip=function(ev) {return (ev.which==116);}  //F5 ...bugbug others?
-	
+
 	KeyTracker.onKeyDown=function(ev)
 	{
-		if (KeyTracker.shouldSkip(ev)) return; 
+		if (KeyTracker.shouldSkip(ev)) return;
 		KeyTracker._daKeys[ev.which]=1;
 		ev.preventDefault();
 	}
-	
+
 	KeyTracker.onKeyUp=function(ev)
 	{
-		if (KeyTracker.shouldSkip(ev)) return; 
+		if (KeyTracker.shouldSkip(ev)) return;
 		delete KeyTracker._daKeys[ev.which];
-		ev.preventDefault();		
+		ev.preventDefault();
 	}
 
 	KeyTracker.AsString = function()
@@ -522,8 +531,8 @@ var DemoUtils = (function() {
 		}
 		return retval;
 	}
-	
-		
+
+
 	$(document)
 		.keydown(KeyTracker.onKeyDown)
 		.keyup(  KeyTracker.onKeyUp);
@@ -531,13 +540,13 @@ var DemoUtils = (function() {
 
 	function Notify(item,state)
 	{
-		if (item=="animate") 
+		if (item=="animate")
 		{
 			animate=state;
 		}
 	}
-	
-	
+
+
 
   return {
     Ticker: Ticker,
@@ -549,3 +558,4 @@ var DemoUtils = (function() {
   };
 })();
 
+
