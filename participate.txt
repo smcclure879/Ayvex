@@ -8,3 +8,4 @@
 --add feature requests and bug reports
 
 
+The folder "xp" will record participation/contributions in the project. 
