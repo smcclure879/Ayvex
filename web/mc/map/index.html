@@ -124,7 +124,7 @@ function makeBigMap(data)
 	{
 		for(var zz=-10000; zz<10000; zz+=landmarkSpacing)
 		{
-			paths[kk++] = markerPole(xx,zz);
+			if (rnd(3)==1) paths[kk++] = markerPole(xx,zz);
 		}
 	}
 		
@@ -134,17 +134,31 @@ function makeBigMap(data)
  
  function markerPole(xx,zz)
  {
-	return linePath(xx,-1000,zz,
-					xx,-950 ,zz);
+	//return linePath(xx,-1000,zz,    					xx,-950 ,zz);
+	return twoSegmentPath(xx,-1000,zz,
+						  xx,-950 ,zz,
+						  xx,-960 ,zz-10);
  }
  
- function linePath(x1,y1,z1,x2,y2,z2)  //bugbug use this for the user paths as well!
+ function linePath(x1,y1,z1,x2,y2,z2)  //bugbug use this for the user paths as well??
  {
 	var path=new Pre3d.Path();
 	path.starting_point=0;
 	path.points[0]={x:x1,y:y1,z:z1,t:""};  //""+x1+","+y1
 	path.points[1]={x:x2,y:y2,z:z2	};
 	path.curves[0]=new Pre3d.Curve(0,1,1);  //to make it a line, everything looks at 0th point.
+	return path;
+ }
+
+ function twoSegmentPath(x1,y1,z1,x2,y2,z2,x3,y3,z3)
+ {
+	var path=new Pre3d.Path();
+	path.starting_point=0;
+	path.points[0]={x:x1,y:y1,z:z1,t:""};  //""+x1+","+y1
+	path.points[1]={x:x2,y:y2,z:z2,t:""	};
+	path.points[2]={x:x3,y:y3,z:z3,t:""  };
+	path.curves[0]=new Pre3d.Curve(1,1,1);  //to make it a line, everything looks at 0th point.
+	path.curves[1]=new Pre3d.Curve(2,2,2);  //to make it a line, everything looks at 0th point.
 	return path;
  }
  
