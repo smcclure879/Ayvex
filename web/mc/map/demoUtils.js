@@ -29,22 +29,52 @@
 // mostly consists of UI helpers, like a toolbar for toggling modes, mouse
 // and camera handling, etc.
 
+
+//bugbug move to a helpers class?
+
+
+
+cos=Math.cos;
+sin=Math.sin;
+pi=3.14159265;
+halfPi=pi/2;
+twoPi=pi*2;
+function deg(rad) { return rad/pi*180; }
+
+
+function rnd(n)
+{
+	return Math.floor((Math.random()*n)+1);
+}
+
+function min(a, b) {
+	if (a < b) return a;
+	return b;
+}
+
+function max(a, b) {
+	if (a > b) return a;
+	return b;
+}
+
+// Keep c >= a && c <= b.   enforce  a <= c <= b
+function clamp(a, b, c) {
+	return min(b, max(a, c));
+}
+
+//there are only 360 degrees in a circle
+function loop(a, b, c) {  //enforce a<=c<=b by "looping around"
+	while(c<a) { c+=b; }  //only optimum if not ever exceeding one of these by much
+	while(c>b) { c-=b; }
+	return c;
+}
+
+
+
+
+
 var DemoUtils = (function() {
 
-  function min(a, b) {
-    if (a < b) return a;
-    return b;
-  }
-
-  function max(a, b) {
-    if (a > b) return a;
-    return b;
-  }
-
-  // Keep c >= a && c <= b.
-  function clamp(a, b, c) {
-    return min(b, max(a, c));
-  }
 
   // A Ticker helps you keep a beat, calling a callback based on a target
   // frames-per-second.  You can stop and start the ticker, change the step
@@ -304,20 +334,10 @@ var DemoUtils = (function() {
       ct.rotateX(camera_state.rotate_x);
     }
 
-	cos=Math.cos;
-	sin=Math.sin;
-	pi=3.14159265;
-	deg=function(rad) { return rad/pi*180; }
-
-	//bugbug needed???
-	// pi=3.14159265;
-	// halfPi=pi/2;
-	// twoPi=pi*2;
-
 	timeStepAng=100;
 	timeStepU=1;
-	function pitch(ang) { camera_state.rotate_x += ang/timeStepAng; dirtyCam=true;}
-	function yaw(ang) { camera_state.rotate_y += ang/timeStepAng; dirtyCam=true;}
+	function pitch(ang) { camera_state.rotate_x = clamp(-halfPi,+halfPi,camera_state.rotate_x+ang/timeStepAng); dirtyCam=true;}
+	function yaw(ang) { camera_state.rotate_y = loop(0,twoPi,camera_state.rotate_y+ang/timeStepAng); dirtyCam=true;}
 	function panLeftRight(u)   { u/=timeStepU; a=camera_state.rotate_y; camera_state.x += u*cos(a); camera_state.z += u*sin(a); dirtyCam=true;}
 	function panForwardBack(u) { u/=timeStepU; a=camera_state.rotate_y; camera_state.x -= u*sin(a); camera_state.z += u*cos(a); dirtyCam=true;}
 	function panUpDown(u) { u/=timeStepU; camera_state.y += u; dirtyCam=true;}
@@ -363,11 +383,6 @@ var DemoUtils = (function() {
 		set_camera();
 		draw_callback();
 		dirtyCam=false;
-	}
-
-	function rnd(n)
-	{
-		return Math.floor((Math.random()*n)+1);
 	}
 
 
