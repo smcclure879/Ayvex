@@ -330,8 +330,8 @@ var DemoUtils = (function() {
 		//debugSet("k=" + DemoUtils.KeyTracker.AsString())
 		zstep=0.001;
 		dirtyCam=(frameNum<20 || frameNum%fps==0);
-		if (isDown(40))  pitch(-1); //down arrow
-		if (isDown(38))  pitch( 1); //up arrow
+		if (isDown(40))  pitch( 1); //down arrow
+		if (isDown(38))  pitch(-1); //up arrow
 		if (isDown(37))  yaw(-1);  //left arrow
 		if (isDown(39))  yaw( 1);  //right arrow
 		if (isDown(81))  panLeftRight(1); //q
