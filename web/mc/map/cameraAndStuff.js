@@ -33,13 +33,13 @@ function start3d()
   function draw() 
   {
     renderer.transform.reset();
-    //don't translate model at all (bugbug) renderer.transform.translate(0, 0, 0);  // Center over the origin.  //bugbug this is actually the "center of rotation point" for model rotation
-    // Elongate our spiral a bit (stretch in the z direction).
-    renderer.transform.scale(1, 1, 1);  //bugbug stretch warranted??
-	//renderer.transform.translate(0, 0, -10);  //bugbug attempt to 
+    //here, we could be translating model, but don't
+	//renderer.transform.translate(0, 0, 0);  // Center over the origin.  //bugbug this is actually the "center of rotation point" for model rotation
+    
+    renderer.transform.scale(1, 1, 1);  //todo consider if need stretch in Z
     
 	// White background.
-    renderer.ctx.setFillColor(1, 1, 1, 1);
+    renderer.ctx.setFillColor(1, 1, 1, 1);  //bugbug settings
     renderer.drawBackground();
 
 	for(var ii=0,lim=theDrawings.length; ii<lim; ii++)
@@ -50,7 +50,7 @@ function start3d()
   }
 
   
-  renderer.camera.focal_length = 3;  //bugbug originally 1/2
+  renderer.camera.focal_length = 3;  //bugbug settings originally 1/2
   
   //"this looks like a good spot"--found by flying around the model
   // camX=-157;

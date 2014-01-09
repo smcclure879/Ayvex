@@ -31,7 +31,8 @@ The list of XP owners.
 12: dad: map testing and game testing (dec '13)
 13: scott: map testing and game testing (dec '13)
 14: steve: setting up github
-
+15: steve: fixing the camera to not use negative Z values in projected space
+16: steve: smoothing view in the map
 
 
 
