@@ -1,16 +1,23 @@
 Ayvex
 =====
 
-short name I'll use for the project
 
-"Ayvex Industries"  company name
+need to start with a 3d engine about this capable...
+http://www.youtube.com/watch?v=HOfll06X16c
 
-have a cartoon character reminiscent of a Bond villain as the "mascot"?
+in eventual game, users should be able to BUILD stuff like this for themselves, IN GAME.
+
+starting project with more immediate business application: Build a good 3d render engine 
+in-browser, so we can get the math etc right.  Use minecraft map data as intial data set.
+Move to a business set soon.  move to higher dimensions soon (fork project when ready).
 
 
-the goal is to enable the level of editing you get in minecraft, but with meshes not blocks
-the editing should work like "magic" or "nanotech", or "earthbending" or whathave you.
-render distances shall be infinite.
+
+the goal in the eventual game is to enable the level of editing you get in minecraft, but with meshes not blocks
+(for that we'll use standalone java client and openGL (the way minecraft does, but possibly a newer openGL version)
+
+the editing should work like "magic" or "nanotech", or "earthbending" or whathave you. (not
+render distances shall be infinite
 there shall be an octree looking thingy (or voronoi cells in space formulation) ,
 which shall have the forward propagation of compressed-information views. (snow globes)
 
