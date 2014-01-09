@@ -185,23 +185,6 @@ var DemoUtils = (function() {
   }
 
 
-  // function registerKeyListener(canvas, listener)  { bugbug
-	// window.AddEventListener('keydown',function(e){
-		// debugSet("bugbug38");  //bugbug need keys working
-		// switch(e.keyCode) {
-			// case 38:
-				// break;
-			// default:
-				// break;
-		// }
-
-	// }
-	// );
-
-  // }
-
-
-
 
   // Registers some mouse listeners on a <canvas> element, to help you with
   // things like dragging, clicking, etc.  Your callback will get called on
@@ -264,10 +247,6 @@ var DemoUtils = (function() {
       // I should make a shim, but you have to do some DOM walking...
       state.last_x = rel.x;
       state.last_y = rel.y;
-
-
-	  //bugbug try to see if "which" is working...
-	  if (e.which!=0) debugSet("which"+e.which);
 
       // We need one event to get calibrated.
       if (state.first_event) {
@@ -430,11 +409,11 @@ var DemoUtils = (function() {
           // TODO(deanm): This only limits in one direction.
         }
       } else if (info.ctrl) {
-        camera_state.x -= info.delta_x * 1;  //bugbug need to work with scaling consts mastered in cameraAndStuff
-        camera_state.y += info.delta_y * 1;
+        camera_state.x -= info.delta_x;
+        camera_state.y += info.delta_y;
       } else if (info.isRightClick) {
-        camera_state.rotate_y -= info.delta_x * 0.01;
-        camera_state.rotate_x -= info.delta_y * 0.01;  //right drag not working  bugbug you are here
+        camera_state.rotate_y -= info.delta_x * 0.01;  //bugbug const
+        camera_state.rotate_x -= info.delta_y * 0.01;  
       } else {
 		//plain bugbug nothing for now
 	  }
