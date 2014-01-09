@@ -703,34 +703,46 @@ var Pre3d = (function() {
   //
   // Project the 3d point |p| to a point in 2d.
   // Takes the current focal_length_ in account.
-  Renderer.prototype.projectPointToCanvas = function projectPointToCanvas(p) {
+  Renderer.prototype.projectPointToCanvas = function projectPointToCanvas(p,skipOffscreenPoint) {
     // We're looking down the z-axis in the negative direction...
-    var v = this.camera.focal_length / -p.z;
+    var v = this.camera.focal_length / -p.z;  //bugbug removed negative on p.z but that's wrong too apparently
     var scale = this.scale_;
-    // Map the height to -1 .. 1, and the width to maintain aspect.
-    return {x: p.x * v * scale + this.xoff_,
-            y: p.y * v * -scale + scale};
+	
+	// Map the height to -1 .. 1, and the width to maintain aspect.
+	var x = p.x * v * scale + this.xoff_;
+	var y = p.y * v * -scale + scale;
+	
+	if (skipOffscreenPoint)
+	{
+		if (p.x*v<-2 || p.x*v>2) return null;
+		if (p.y*v<-2 || p.y*v>2) return null;
+		if (p.z>0)  return null;  //this culls out stuff behind the camera  (it's already projected into camera space
+	}
+	
+    
+    return { x:x, y:y };
   };
 
   // Project a 3d point onto the 2d canvas surface (pixel coordinates).
   // Takes the current focal_length in account.
   // TODO: flatten this calculation so we don't need make a method call.
   Renderer.prototype.projectPointsToCanvas =
-      function projectPointsToCanvas(ps) {
+      function projectPointsToCanvas(ps,skipOffscreenPoint) {
     var il = ps.length;
     var out = Array(il);
     for (var i = 0; i < il; ++i) {
-      out[i] = this.projectPointToCanvas(ps[i]);
+      out[i] = this.projectPointToCanvas(ps[i],skipOffscreenPoint);
+	  if (skipOffscreenPoint && out[i]==null) return null;  //skip the whole "shape"
     }
     return out;
   };
 
   Renderer.prototype.projectQuadFaceToCanvasIP = function(qf) {
-    qf.i0 = this.projectPointToCanvas(qf.i0);
-    qf.i1 = this.projectPointToCanvas(qf.i1);
-    qf.i2 = this.projectPointToCanvas(qf.i2);
+    qf.i0 = this.projectPointToCanvas(qf.i0,false);
+    qf.i1 = this.projectPointToCanvas(qf.i1,false);
+    qf.i2 = this.projectPointToCanvas(qf.i2,false);
     if (!qf.isTriangle())
-      qf.i3 = this.projectPointToCanvas(qf.i3);
+      qf.i3 = this.projectPointToCanvas(qf.i3,false);
     return qf;
   };
 
@@ -998,9 +1010,8 @@ var Pre3d = (function() {
       var n2r = obj.normal2_rgba;
       if (n1r !== null) {
         ctx.setStrokeColor(n1r.r, n1r.g, n1r.b, n1r.a);
-        var screen_centroid = this.projectPointToCanvas(qf.centroid);
-        var screen_point = this.projectPointToCanvas(
-            addPoints3d(qf.centroid, unitVector3d(qf.normal1)));
+        var screen_centroid = this.projectPointToCanvas(qf.centroid,false);
+        var screen_point = this.projectPointToCanvas(addPoints3d(qf.centroid, unitVector3d(qf.normal1)),false);
         ctx.beginPath();
         ctx.moveTo(screen_centroid.x, screen_centroid.y);
         ctx.lineTo(screen_point.x, screen_point.y);
@@ -1008,9 +1019,8 @@ var Pre3d = (function() {
       }
       if (n2r !== null) {
         ctx.setStrokeColor(n2r.r, n2r.g, n2r.b, n2r.a);
-        var screen_centroid = this.projectPointToCanvas(qf.centroid);
-        var screen_point = this.projectPointToCanvas(
-            addPoints3d(qf.centroid, unitVector3d(qf.normal2)));
+        var screen_centroid = this.projectPointToCanvas(qf.centroid,false);
+        var screen_point = this.projectPointToCanvas(addPoints3d(qf.centroid, unitVector3d(qf.normal2)),false);
         ctx.beginPath();
         ctx.moveTo(screen_centroid.x, screen_centroid.y);
         ctx.lineTo(screen_point.x, screen_point.y);
@@ -1031,16 +1041,17 @@ var Pre3d = (function() {
     var ctx = this.ctx;
     opts = opts || { };
 
-    var t = multiplyAffine(this.camera.transform.m,
-                           this.transform.m);
+    var t = multiplyAffine(this.camera.transform.m, this.transform.m);
 
-    var screen_points = this.projectPointsToCanvas(
-        transformPoints(t, path.points));
+    var screen_points = this.projectPointsToCanvas(transformPoints(t, path.points),true);
+	
+	//skip drawing the entire path if parts of it are behind the camera--a little overzealous perhaps, but let's try this
+	if (screen_points==null) return;
+	
 
-    // Start the path at (0, 0, 0) unless there is an explicit starting point.
-    var start_point = (path.starting_point === null ?
-        this.projectPointToCanvas(transformPoint(t, {x: 0, y: 0, z: 0})) :
-        screen_points[path.starting_point]);
+    // default the starting point
+	if (path.starting_point==null) path.starting_point=0;
+    var start_point = screen_points[path.starting_point];
 
     ctx.beginPath();
     ctx.moveTo(start_point.x, start_point.y);

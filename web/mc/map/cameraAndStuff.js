@@ -26,9 +26,9 @@ function start3d()
 
   var theDrawings = getMap();
 
-  // Setup the canvas context for stroking the spiral blue and double thick.
+  
   renderer.ctx.setStrokeColor(0x52 / 255, 0xbb / 255, 0x5c / 255, 1);
-  renderer.ctx.lineWidth = 2;
+  renderer.ctx.lineWidth = 1;
 
   function draw() 
   {
@@ -36,7 +36,7 @@ function start3d()
     //don't translate model at all (bugbug) renderer.transform.translate(0, 0, 0);  // Center over the origin.  //bugbug this is actually the "center of rotation point" for model rotation
     // Elongate our spiral a bit (stretch in the z direction).
     renderer.transform.scale(1, 1, 1);  //bugbug stretch warranted??
-	renderer.transform.translate(0, 0, -10);  //bugbug attempt to 
+	//renderer.transform.translate(0, 0, -10);  //bugbug attempt to 
     
 	// White background.
     renderer.ctx.setFillColor(1, 1, 1, 1);
@@ -53,11 +53,17 @@ function start3d()
   renderer.camera.focal_length = 3;  //bugbug originally 1/2
   
   //"this looks like a good spot"--found by flying around the model
-  camX=-157;
-  camY=-176;
-  camZ=-39;
-  camRotX=0.42;
-  camRotY=-1.13;
+  // camX=-157;
+  // camY=-176;
+  // camZ=-39;
+  // camRotX=0.42;
+  // camRotY=rad(250);
+  // camRotZ=0;
+  camX=165;
+  camY=-656;
+  camZ=-683;
+  camRotX=rad(52);
+  camRotY=rad(351);
   camRotZ=0;
   
   
