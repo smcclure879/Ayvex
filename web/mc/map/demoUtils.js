@@ -1,6 +1,9 @@
 
-//many changes by smcclure
-//need to break this up into separate camera etc classes
+//many changes by smcclure 2013 & 2014 (c)
+
+
+
+//bugbug need to break this up into separate camera etc classes
 
 
 
@@ -39,8 +42,9 @@ sin=Math.sin;
 pi=3.14159265;
 halfPi=pi/2;
 twoPi=pi*2;
-function deg(rad) { return rad/pi*180; }
 
+function deg(rd) { return rd/pi*180.0; }
+function rad(dg) { return dg*pi/180.0; }
 
 function rnd(n)
 {
@@ -334,8 +338,8 @@ var DemoUtils = (function() {
       ct.rotateX(camera_state.rotate_x);
     }
 
-	timeStepAng=100;
-	timeStepU=1;
+	timeStepAng=50;
+	timeStepU=1/4;
 	function pitch(ang) { camera_state.rotate_x = clamp(-halfPi,+halfPi,camera_state.rotate_x+ang/timeStepAng); dirtyCam=true;}
 	function yaw(ang) { camera_state.rotate_y = loop(0,twoPi,camera_state.rotate_y+ang/timeStepAng); dirtyCam=true;}
 	function panLeftRight(u)   { u/=timeStepU; a=camera_state.rotate_y; camera_state.x += u*cos(a); camera_state.z += u*sin(a); dirtyCam=true;}
@@ -349,8 +353,8 @@ var DemoUtils = (function() {
 	{
 		//debugSet("k=" + DemoUtils.KeyTracker.AsString())
 		zstep=0.001;
-		dirtyCam=(frameNum<20 || frameNum%fps==0);
-		if (isDown(40))  pitch( 1); //down arrow
+		dirtyCam=(frameNum<20 || frameNum%fps==0);  //start out false (most of the time)
+		if (isDown(40))  pitch(1); //down arrow
 		if (isDown(38))  pitch(-1); //up arrow
 		if (isDown(37))  yaw(-1);  //left arrow
 		if (isDown(39))  yaw( 1);  //right arrow
@@ -388,11 +392,11 @@ var DemoUtils = (function() {
 
 	function animateIt(frameNum)
 	{
-		oscSize=4.0;
-		var ang=frameNum/1.0;
-		dx=4*oscSize*cos(ang/17);
-		dy=2*oscSize*sin(ang/13);
-		dz=oscSize*sin(ang/7);
+		oscSize=1.0;  //bugbug these and many other speeds depend on the fps.  separate that!
+		var ang=frameNum/0.5;
+		dx=2.3*oscSize*cos(ang/17);
+		dy=2.0*oscSize*sin(ang/13);
+		dz=1.2*oscSize*sin(ang/7);
 
 		dirtyCam=true;
 	}
@@ -521,7 +525,16 @@ var DemoUtils = (function() {
 
 	KeyTracker._daKeys={};
 	KeyTracker.isDown=function(c) {return (c in KeyTracker._daKeys);}
-	KeyTracker.shouldSkip=function(ev) {return (ev.which==116);}  //F5 ...bugbug others?
+	KeyTracker.shouldSkip=function(ev) 
+	{
+		switch(ev.which)
+		{
+			case 116: return true; // F5
+			case 74: return true;  // J  ...  the "j-hook" (mainly we want shift-ctrl-J to work)
+			default: return false;
+		}
+	};
+
 
 	KeyTracker.onKeyDown=function(ev)
 	{
@@ -529,6 +542,7 @@ var DemoUtils = (function() {
 		KeyTracker._daKeys[ev.which]=1;
 		ev.preventDefault();
 	}
+
 
 	KeyTracker.onKeyUp=function(ev)
 	{

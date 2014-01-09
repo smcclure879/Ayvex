@@ -111,7 +111,7 @@ function makeBigMap(data)
 		
 		//debugAdd(ii);
 		var pt = data[ii];
-		path.points[jj]={x:pt[0],y:pt[1],z:pt[2],t:pt[3]};
+		path.points[jj]={x:pt[0],y:pt[1],z:pt[2],t:pt[3]};   
 		path.curves[jj]=new Pre3d.Curve(jj,jj,jj);
 		jj++;
 	}
@@ -120,11 +120,12 @@ function makeBigMap(data)
 	
 	//landmarks
 	landmarkSpacing=500;
-	for(var xx=-10000; xx<10000; xx+=landmarkSpacing)
+	abs=Math.abs;
+	for(var xx=-20000; xx<20000; xx+=landmarkSpacing)
 	{
-		for(var zz=-10000; zz<10000; zz+=landmarkSpacing)
+		for(var zz=-20000; zz<20000; zz+=landmarkSpacing)
 		{
-			if (rnd(3)==1) paths[kk++] = markerPole(xx,zz);
+			if (rnd(abs(xx)+abs(zz))<2000) paths[kk++] = markerPole(xx,zz);
 		}
 	}
 		
@@ -135,9 +136,9 @@ function makeBigMap(data)
  function markerPole(xx,zz)
  {
 	//return linePath(xx,-1000,zz,    					xx,-950 ,zz);
-	return twoSegmentPath(xx,-1000,zz,
+	return twoSegmentPath(xx,-1000,zz,  //the floor is at -1000 until scott says otherwise.
 						  xx,-950 ,zz,
-						  xx,-960 ,zz-10);
+						  xx,-960 ,zz-10);  //minus Z is north
  }
  
  function linePath(x1,y1,z1,x2,y2,z2)  //bugbug use this for the user paths as well??
@@ -192,13 +193,21 @@ function getMap()  //callback from the cameraAndStuff.js
 //used to track what keys are down
 isDown = DemoUtils.KeyTracker.isDown
 
-$(document).ready(function() {
-		$("#animate").click( function(event)
+$(document).ready(function() 
+	{
+		anim = $("#animate");
+		anim.click( function(event)
 			{
+				//turn on the animation
 				DemoUtils.Notify("animate",animate.checked );
+			});
+		setTimeout(function()
+			{
+				anim.click();
 			}
-		);
+			,5*60*1000);//milliseconds  //bugbug settings		
 		DemoUtils.Notify("animate",animate.checked );  //and do it once right now for good measure
+		
 	}
 )
 </script>
