@@ -1059,6 +1059,9 @@ var Pre3d = (function() {
 	ctx.fillStyle="black";
 	ctx.fillText(path.points[path.starting_point].t,start_point.x,start_point.y);  //bugbug redo startingPoint logic we inherited here
 
+	ctx.strokeStyle=path.color;  //bugbug why this no work
+	ctx.lineWidth=path.width;
+	
     var curves = path.curves;
     for (var j = 0, jl = curves.length; j < jl; ++j) {
       var curve = curves[j];
