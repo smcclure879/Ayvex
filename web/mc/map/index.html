@@ -110,13 +110,15 @@ function makeBigMap(data)
 	paths[kk++]=path;  //close it out
 	
 	//landmarks
-	landmarkSpacing=500;
+	landmarkSpacing=200;
 	abs=Math.abs;
 	for(var xx=-20000; xx<20000; xx+=landmarkSpacing)
 	{
 		for(var zz=-20000; zz<20000; zz+=landmarkSpacing)
 		{
-			if (rnd(abs(xx)+abs(zz))<2000) paths[kk++] = markerPole(xx,zz);
+			var d=abs(xx)+abs(zz);
+			if (d>1000 && d<4000 && rnd(d)<800) paths[kk++] = markerPole(xx,zz);
+			if (d>2000 && rnd(d)<2000) paths[kk++] = waterMarker(xx+rnd(500),zz+rnd(500));
 		}
 	}
 		
@@ -124,25 +126,41 @@ function makeBigMap(data)
 	return paths;
  }
  
+ 
+ function waterMarker(xx,zz, waveHeight, waveLength)
+ {
+	if (waveHeight===undefined) waveHeight=rnd(8)-4;
+	if (waveLength===undefined) waveLength=rnd(7)+13;
+	return twoSegmentPath(	'blue',
+							xx,62,zz,
+							xx,64+waveHeight,zz+waveLength/3,
+							xx,62,zz+waveLength
+						); 
+ }
+ 
  function markerPole(xx,zz)
  {
 	//return linePath(xx,-1000,zz,    					xx,-950 ,zz);
-	return twoSegmentPath(xx,-1000,zz,  //the floor is at -1000 until scott says otherwise.
-						  xx,-950 ,zz,
-						  xx,-960 ,zz-10);  //minus Z is north
+	return twoSegmentPath( 'green',
+						  xx,62,zz,   //the floor is at 62  //bugbug var or setting or ???
+						  xx,162,zz,
+						  xx,162 ,zz-10);  //minus Z is north
  }
  
- function linePath(x1,y1,z1,x2,y2,z2)  //todo: consider using this for the user paths as well??
+
+ //bugbug 
+ function linePath(color,x1,y1,z1,x2,y2,z2)  //todo: consider using this for the user paths as well??
  {
 	var path=new Pre3d.Path();
 	path.starting_point=0;
 	path.points[0]={x:x1,y:y1,z:z1,t:""};  //""+x1+","+y1
 	path.points[1]={x:x2,y:y2,z:z2	};
 	path.curves[0]=new Pre3d.Curve(0,1,1);  //to make it a line, everything looks at 0th point.
+	path.color=color;
 	return path;
  }
 
- function twoSegmentPath(x1,y1,z1,x2,y2,z2,x3,y3,z3)
+ function twoSegmentPath(color,x1,y1,z1,x2,y2,z2,x3,y3,z3)
  {
 	var path=new Pre3d.Path();
 	path.starting_point=0;
@@ -151,6 +169,7 @@ function makeBigMap(data)
 	path.points[2]={x:x3,y:y3,z:z3,t:""  };
 	path.curves[0]=new Pre3d.Curve(1,1,1);  //to make it a line, everything looks at 0th point.
 	path.curves[1]=new Pre3d.Curve(2,2,2);  //to make it a line, everything looks at 0th point.
+	path.color=color;
 	return path;
  }
  
@@ -167,6 +186,7 @@ function makeFakeMap()
 	  ];
     path.curves = [new Pre3d.Curve(0, 0, 0), new Pre3d.Curve(1,1,1), new Pre3d.Curve(2,2,2)];
     path.starting_point = 0;
+	path.color='red';
     return [path];
 }
 

@@ -371,7 +371,7 @@ var DemoUtils = (function() {
 
 	function animateIt(frameNum)
 	{
-		oscSize=1.0;  //bugbug these and many other speeds depend on the fps.  separate that!
+		oscSize=2.0;  //bugbug these and many other speeds depend on the fps.  separate that!
 		var ang=frameNum/0.5;
 		dx=2.3*oscSize*cos(ang/17);
 		dy=2.0*oscSize*sin(ang/13);
