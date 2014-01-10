@@ -104,6 +104,8 @@ function makeBigMap(data)
 		var pt = data[ii];
 		path.points[jj]={x:pt[0],y:pt[1],z:pt[2],t:pt[3]};   
 		path.curves[jj]=new Pre3d.Curve(jj,jj,jj);
+		path.color='brown';
+		path.width=2;
 		jj++;
 	}
 	
@@ -132,6 +134,7 @@ function makeBigMap(data)
 	if (waveHeight===undefined) waveHeight=rnd(8)-4;
 	if (waveLength===undefined) waveLength=rnd(7)+13;
 	return twoSegmentPath(	'blue',
+							1,
 							xx,62,zz,
 							xx,64+waveHeight,zz+waveLength/3,
 							xx,62,zz+waveLength
@@ -140,27 +143,28 @@ function makeBigMap(data)
  
  function markerPole(xx,zz)
  {
-	//return linePath(xx,-1000,zz,    					xx,-950 ,zz);
 	return twoSegmentPath( 'green',
+						  1,
 						  xx,62,zz,   //the floor is at 62  //bugbug var or setting or ???
 						  xx,162,zz,
 						  xx,162 ,zz-10);  //minus Z is north
  }
  
 
- //bugbug 
- function linePath(color,x1,y1,z1,x2,y2,z2)  //todo: consider using this for the user paths as well??
- {
-	var path=new Pre3d.Path();
-	path.starting_point=0;
-	path.points[0]={x:x1,y:y1,z:z1,t:""};  //""+x1+","+y1
-	path.points[1]={x:x2,y:y2,z:z2	};
-	path.curves[0]=new Pre3d.Curve(0,1,1);  //to make it a line, everything looks at 0th point.
-	path.color=color;
-	return path;
- }
+ //bugbug needed???
+// function linePath(color,x1,y1,z1,x2,y2,z2)  //todo: consider using this for the user paths as well??
+// {
+//	var path=new Pre3d.Path();
+//	path.starting_point=0;
+//	path.points[0]={x:x1,y:y1,z:z1,t:""};  //""+x1+","+y1
+//	path.points[1]={x:x2,y:y2,z:z2	};
+//	path.curves[0]=new Pre3d.Curve(0,1,1);  //to make it a line, everything looks at 0th point.
+//	path.color=color;
+//	path.width=1;
+//	return path;
+// }
 
- function twoSegmentPath(color,x1,y1,z1,x2,y2,z2,x3,y3,z3)
+ function twoSegmentPath(color,width,x1,y1,z1,x2,y2,z2,x3,y3,z3)
  {
 	var path=new Pre3d.Path();
 	path.starting_point=0;
@@ -170,6 +174,7 @@ function makeBigMap(data)
 	path.curves[0]=new Pre3d.Curve(1,1,1);  //to make it a line, everything looks at 0th point.
 	path.curves[1]=new Pre3d.Curve(2,2,2);  //to make it a line, everything looks at 0th point.
 	path.color=color;
+	path.width=width;
 	return path;
  }
  
