@@ -1,11 +1,5 @@
---play minecraft: https://github.com/smcclure879/Ayvex/blob/master/web/mc/guide.htm 
---try the minecraft map
---install and learn git to contribute code/"maps"/data
---clone this repository (or fork it for an extra level of indirection)
---learn javascript to work on javascript map
---learn java to work on the 3d game 
---contribute multidimensional data sets
---add feature requests and bug reports
+--play minecraft:    new shortened URL...
 
+http://bit.ly/1eqAJ9N   or  https://github.com/smcclure879/Ayvex/blob/master/web/mc/guide.htm 
 
-The folder "xp" will record participation/contributions in the project. (see file "theList.txt")
+--check out the wiki:  https://github.com/smcclure879/Ayvex/wiki
