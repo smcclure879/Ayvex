@@ -1,0 +1,228 @@
+<head>
+<title>mc2 world map</title>
+
+<!-- script src="jquery-1.10.2.min.js"></script   bugbug later maybe   -->
+<script src="../../lib/jquery-1.10.2.js"></script>
+<script src="../../lib/pre3d.js"></script>
+<script src="demoUtils.js"></script>
+<script src="cameraAndStuff.js"></script>
+<script src="mc2data.js"></script>
+
+</head>
+
+<body>
+
+
+<table border=0>
+<tr>
+<td style="width:800px" oncontextmenu=";return false"> <!-- disallowing context menu in the map surface only! -->
+<canvas width="800" height="600" id="c" 
+	style="border:2px solid #0000DD;background-color:beige;"
+	
+/>
+</td>
+<td valign="top">
+Map for the <h1>mc2 world</h1><br>
+<div id="controlPanel" style="border:2px solid #000000;background-color:lightGray; font-family:Arial;font-size:12">
+<h3><b>Control Panel</b></h3>
+<input type="checkbox" value="animate" id="animate" checked>animate</input>
+</div>
+<div id="readout" style="font-family:Arial;font-size:12;background-color:yellow">
+<table>
+<tr><td></td
+<tr>
+<td>
+frame<input type="text" id="frameNum" value="x"/><br>
+camX<input type="text" id="camX" value="x"/><br>
+camY<input type="text" id="camY" value="x"/><br>
+camZ<input type="text" id="camZ" value="x"/><br>
+</td>
+<td>
+<br>
+camRotX<input type="text" id="camRotX" value="x"/><br>
+camRotY<input type="text" id="camRotY" value="x"/><br>
+camRotZ<input type="text" id="camRotZ" value="x"/><br>
+</td>
+</tr>
+</table>
+</div>
+
+
+<div id="toolbar" style="border:1px solid #000000; padding:10px; spacing:10px; "> </div>
+<div border="1" valign="bottom"><br><br>
+<span style="position: absolute; bottom: 0;">Copyright 2014
+<h2>Ayvex Light Industries<h1><br></span>
+</div>
+</td>
+
+</tr>
+</table>
+---
+
+
+<script>
+
+var toolbar = document.getElementById("toolbar");
+start3d();  //in cameraAndStuff.js
+
+
+function debugAdd(s)
+{
+	toolbar.innerHTML+=s+'<br/>';
+}
+
+function debugSet(s)
+{
+	toolbar.innerHTML=s;
+}
+
+
+function makeBigMap(data)
+{
+	var paths = [ ];
+	
+	var path;
+	var jj=0;  //for the inner loop inside one path
+	var kk=0;  //index into the outputs
+	for(var ii=0, limit=data.length; ii<limit; ++ii)  
+	{
+		pt=data[ii];
+		if (ii==0 || pt[3]!='') //there is text so start a new path
+		{
+			if (path) //store the old path if there is one
+			{
+				paths[kk++]=path;
+			}
+			path = new Pre3d.Path();
+			path.starting_point = 0;  //we make this standard
+			path.points = [ ];  
+			path.curves = [ ];
+			jj=0;
+		}
+		
+		//debugAdd(ii);
+		var pt = data[ii];
+		path.points[jj]={x:pt[0],y:pt[1],z:pt[2],t:pt[3]};   
+		path.curves[jj]=new Pre3d.Curve(jj,jj,jj);
+		path.color='brown';
+		path.width=2;
+		jj++;
+	}
+	
+	paths[kk++]=path;  //close it out
+	
+	//landmarks
+	landmarkSpacing=200;
+	abs=Math.abs;
+	for(var xx=-20000; xx<20000; xx+=landmarkSpacing)
+	{
+		for(var zz=-20000; zz<20000; zz+=landmarkSpacing)
+		{
+			var d=abs(xx)+abs(zz);
+			if (d>1000 && d<4000 && rnd(d)<800) paths[kk++] = markerPole(xx,zz);
+			if (d>2000 && rnd(d)<2000) paths[kk++] = waterMarker(xx+rnd(500),zz+rnd(500));
+		}
+	}
+		
+
+	return paths;
+ }
+ 
+ 
+ function waterMarker(xx,zz, waveHeight, waveLength)
+ {
+	if (waveHeight===undefined) waveHeight=rnd(8)-4;
+	if (waveLength===undefined) waveLength=rnd(7)+13;
+	return twoSegmentPath(	'blue',
+							1,
+							xx,62,zz,
+							xx,64+waveHeight,zz+waveLength/3,
+							xx,62,zz+waveLength
+						); 
+ }
+ 
+ function markerPole(xx,zz)
+ {
+	return twoSegmentPath( 'green',
+						  1,
+						  xx,62,zz,   //the floor is at 62  //bugbug var or setting or ???
+						  xx,162,zz,
+						  xx,162 ,zz-10);  //minus Z is north
+ }
+ 
+
+ //bugbug needed???
+// function linePath(color,x1,y1,z1,x2,y2,z2)  //todo: consider using this for the user paths as well??
+// {
+//	var path=new Pre3d.Path();
+//	path.starting_point=0;
+//	path.points[0]={x:x1,y:y1,z:z1,t:""};  //""+x1+","+y1
+//	path.points[1]={x:x2,y:y2,z:z2	};
+//	path.curves[0]=new Pre3d.Curve(0,1,1);  //to make it a line, everything looks at 0th point.
+//	path.color=color;
+//	path.width=1;
+//	return path;
+// }
+
+ function twoSegmentPath(color,width,x1,y1,z1,x2,y2,z2,x3,y3,z3)
+ {
+	var path=new Pre3d.Path();
+	path.starting_point=0;
+	path.points[0]={x:x1,y:y1,z:z1,t:""};  //""+x1+","+y1
+	path.points[1]={x:x2,y:y2,z:z2,t:""	};
+	path.points[2]={x:x3,y:y3,z:z3,t:""  };
+	path.curves[0]=new Pre3d.Curve(1,1,1);  //to make it a line, everything looks at 0th point.
+	path.curves[1]=new Pre3d.Curve(2,2,2);  //to make it a line, everything looks at 0th point.
+	path.color=color;
+	path.width=width;
+	return path;
+ }
+ 
+function makeFakeMap()
+{
+	var p0={x:0,y:15,z:20};    var t0='baseCamp';
+	var p1={x:50,y:-15,z:30};  var t1='end of the line';
+	var path = new Pre3d.Path();
+    path.points = 
+	  [
+		  {x: p0.x, y: p0.y, z: p0.z, t:'this one path'},
+		  {x: p1.x, y: p1.y, z: p1.z, t:''},
+		  {x: 45, y:45, z:45, t:''}
+	  ];
+    path.curves = [new Pre3d.Curve(0, 0, 0), new Pre3d.Curve(1,1,1), new Pre3d.Curve(2,2,2)];
+    path.starting_point = 0;
+	path.color='red';
+    return [path];
+}
+
+function getMap()  //callback from the cameraAndStuff.js  
+{
+	var data = getMc2Data(); 
+	var theMap = makeBigMap(data);	
+	return theMap;
+}
+
+
+//used to track what keys are down
+isDown = DemoUtils.KeyTracker.isDown
+
+$(document).ready(function() 
+	{
+		anim = $("#animate");
+		anim.click( function(event)
+			{
+				//turn on the animation
+				DemoUtils.Notify("animate",animate.checked );
+			});
+		setTimeout(function()
+			{
+				anim.click();
+			}
+			,5*60*1000);//milliseconds  //bugbug settings		
+		DemoUtils.Notify("animate",animate.checked );  //and do it once right now for good measure
+		
+	}
+)
+</script>
+
+</body>

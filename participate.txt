@@ -1,0 +1,5 @@
+--play minecraft:    new shortened URL...
+
+http://bit.ly/1eqAJ9N   or  https://github.com/smcclure879/Ayvex/blob/master/web/mc/guide.htm 
+
+--check out the wiki:  https://github.com/smcclure879/Ayvex/wiki

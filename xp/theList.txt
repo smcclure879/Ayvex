@@ -1,0 +1,53 @@
+This is an attempt to use gamification at a very deep level in the company.  
+Lets people trade their free time for upside, without need to pay cash right now.
+
+Each serial number below is a 'coupon' given for work on the project.  In physical space they might look like this...
+
+
+//---------------------------------------------------------------------//
+// 1 XP share
+//
+//
+//  Certificate of Upside Participation in the Ayvex Corporation
+//
+//
+//    1 XP : if we e*X*perience *P*rofit, so will you.
+//
+//    
+//    cash redemption value 1¢
+//     
+//
+//---------------------------------------------------------------------//
+
+
+The list of XP owners.
+1,2: steve: setting up minecraft server
+3,4: steve: hosting minecraft server for first year
+5,6: steve: prototype game development
+7,8: steve: prototype map development
+9: dad: original map data
+10: dad: playtesting minecraft
+11: scott: playtesting minecraft
+12: dad: map testing and game testing (dec '13)
+13: scott: map testing and game testing (dec '13)
+14: steve: setting up github
+15: steve: fixing the camera to not use negative Z values in projected space
+16: steve: smoothing view in the map
+
+
+
+
+
+Ayvex Corporation is an experimental corporation dedicated to democratizing the 3d gaming experience
+and applying gaming technology outside the traditional gaming world (e.g. bringing gamelike UI to business
+applications, scientific visualization, etc)
+
+We don't think there is benefit in secret dealings, secret source code, etc etc.  It will all be on github.
+We aren't allergic to money.  We intend to make a profit. Just not right away.  If/When we become profitable,
+we want to share with everyone who helped.  This might be in the form of shares in an eventual  IPO, or 
+extra kickstarter bonus (if we go that route), or cash dividend.  Things are still loose so this will be steve's 
+call about the reward structure.  Worst case scenario you can trade these coupons in for the face redemption value.
+
+These *are* intended to be negotiable:  See steve to transfer XP. It will be done via edits to this file in
+the master branch of the Ayvex project.
+

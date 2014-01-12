@@ -1,0 +1,207 @@
+menu
+Status #lwjglX
+[http://lwjgl.org || http://cia.lwjgl.org || IRC Logs: http://echelog.com/?lwjgl || http://lwjgl.pastebin.com/]
+[20:19] == steve__ [322e98ee@gateway/web/freenode/ip.50.46.152.238] has joined #lwjgl
+[20:19] -ChanServ- [#lwjgl] This channel is logged: http://echelog.matzon.dk
+[20:35] <steve__> hi...this is the same library used in minecraft, right?
+[20:43] <steve__> the last "shipped" version seems to be almost a year old.  Is there a recommended more stable version?
+[20:43] <steve__> (more recent) stable version?
+[20:47] <jezek2> steve__: we don't provide minecraft support, contact mojang with this
+[20:48] <steve__> no
+[20:48] <steve__> not a minecraft question.  but the point is minecraft is working great, so I should be able to program against this library on this same laptop.
+[20:49] <steve__> but I think they got a different version than me, cause I can't
+[20:49] <steve__> the "stable" version of lwjgl seems to be a year old, but I see that a fix I probably need was put in 2 days later
+[20:50] <steve__> specifically the openGL parts.  
+[20:50] <jezek2> 2.9.1 is the latest and "stable"
+[20:51] <jezek2> it's all on the website
+[20:52] <steve__> http://www.lwjgl.org/wiki/index.php?title=Version_selection  example
+[20:52] <steve__> doesn't work , get this error
+[20:52] <steve__> org.lwjgl.LWJGLException: Could not create context (WGL_ARB_create_context) at org.lwjgl.opengl.WindowsContextImplementation.nCreate(Native Method)
+[20:55] <steve__> this is the laptop model....http://laptops-and-notebooks.findthebest.com/l/647/Portege-R835-P83
+[20:56] <steve__> but logically, since minecraft works, and they are using the latest "stable" build,...the examples for openGL should work?
+[20:56] <steve__> (or do those guys have some mod'd version of lwjgl?)
+[20:57] <steve__> (or they aren't using openGL to do all that?)
+[20:57] <steve__> just trying to eliminate possible issues before resorting to taking a less stable build.
+[21:04] <jezek2> there is no "stable" build of LWJGL... 2.x is stable branch, 3.x is still in early development
+[21:04] <jezek2> so 2.9.1 is the latest and stable
+[21:04] <jezek2> so just use that
+[21:05] <steve__> that's what I did.  
+[21:06] <steve__> latest stuff in GIT seems to be at 2.9.2
+[21:07] <steve__> http://lwjgl.org/forum/index.php?action=printpage;topic=4848.0
+[21:08] <steve__> that url has same error message.    The fix mentioned there would seem to be later by 2 days than the binary available for 2.9.1
+[21:08] <steve__> Are you guys all building lwjgl from  source?
+[21:09] <jezek2> are you trying to get opengl 3.x context or 2.1? minecraft is using 2.1
+[21:09] <jezek2> no we use the prebuild package
+[21:09] <steve__> // Use a specified version of OpenGL - namely version 3.2 private void specifiedCreate() { PixelFormat pixelFormat = new PixelFormat(); ContextAttribs contextAtrributes = new ContextAttribs(3, 2)
+[21:09] <steve__> the example uses 3.2
+[21:10] <steve__> changing the vals gives Exception in thread "main" java.lang.IllegalArgumentException: Profiles are only supported on OpenGL version 3.2 or higher.
+[21:10] <jezek2> the normalCreate() method is for obtaining 2.1 context
+[21:12] <jezek2> of course it's advisable to start developing using 3.x, so if 2.1 is working fine but 3.x not, try posting on the forum with a bug report, or try googling some more maybe there is someone with the same problem
+[21:12] <jezek2> if even 2.1 is not working something is quite bad :)
+[21:12] <steve__> that seemd to work somewhat...
+[21:12] <jezek2> also what OS do you use
+[21:12] <jezek2> ?
+[21:13] <steve__> it now ouputs this.....OpenGL version: 3.0.0 - Build 8.15.10.2353    (which I'm not sure why this didnt' come up 2.1)  (this is Win7pro)
+[21:17] <steve__> so does this mean my laptop only goes up to 3.0 ?  I guess that's what I needed then....THANKS!
+[21:18] <steve__> I just commented out the "specifiedCreate" stuff in that example.
+[21:37] == meoblast001 [~meoblast@dynamic-acs-24-112-252-251.zoominternet.net] has quit [Quit: Leaving]
+[21:38] <jezek2> steve__: you could try upgrading the drivers
+[21:38] == ra4king_home [473b3234@gateway/web/freenode/ip.71.59.50.52] has joined #lwjgl
+[21:38] == ra4king_home [473b3234@gateway/web/freenode/ip.71.59.50.52] has quit [Client Quit]
+[21:38] <jezek2> but I'm not that familiar with intel gpus
+[21:39] == ra4king_ [473b3234@gateway/web/freenode/ip.71.59.50.52] has joined #lwjgl
+[21:39] == ra4king_ has changed nick to ra4king_home
+[21:39] <ra4king_home> hai
+[21:40] <steve__> so I guess I should be looking at the "legacy OpenGL" examples instead of the "openGL 3.2 and newer"  ??
+[21:40] <ra4king_home> steve__: why?
+[21:41] <jezek2> ra4king_home: just looks at the logs just before you connected
+[21:41] <steve__> (not clear where 3.0 falls between "legacy" and "3.2")
+[21:41] <ra4king_home> jezek2: eh, too much work :D
+[21:41] <ra4king_home> steve__: you can still use core with 3.0
+[21:41] <ra4king_home> well, it's technically not core since "core" is 3.1+
+[21:41] <ra4king_home> but with 3.0 you can use shaders + VAO and VBO
+[21:42] <ra4king_home> and that's basically all you need
+[21:42] <steve__> ok, so follow those examples and comment out the "profile" stuff?
+[21:42] <steve__> (and maybe some other nasty surprises along the way)
+[21:42] <ra4king_home> shaders should be version #130
+[21:44] <ra4king_home> steve__: what code uses 3.2 btw? let me take a look at it
+[21:45] <steve__> i think you are saying the shader stuff in "legacy" examples didn't change in 3.x , but maybe I have to use that constant to tell it to use particular kind of shader?
+[21:45] <steve__> public void setupOpenGL() { // Setup an OpenGL context with API version 3.2 try { PixelFormat pixelFormat = new PixelFormat(); ContextAttribs contextAtrributes = new ContextAttribs(3, 0)  //bugbug the highest this laptop goes .withForwardCompatible(true); //.withProfileCore(true);  //not allowed until 3.2
+[21:45] <steve__> .
+[21:46] <ra4king_home> yeah just do Display.create() without any of that stuff
+[21:46] <steve__> reference :    http://lwjgl.org/wiki/index.php?title=The_Quad_with_DrawArrays
+[21:46] <ra4king_home> none of that is necessary since profiles and version selection is usually for 3.1+ stuff
+[21:47] <ra4king_home> steve__: line 60: change to Display.create();
+[21:47] <steve__> yes I got that working in different example, using the simple create.
+[21:48] <ra4king_home> wow that example you linked doesn't even use shaders
+[21:48] <steve__> ok, and I've done it here in the referenced example as well
+[21:48] <ra4king_home> hmm
+[21:48] <steve__> (I am just trying to START a project)
+[21:49] <ra4king_home> I have a tutorial that was built for 3.3+ so I can't exactly link you that
+[21:49] <steve__> (right now, trying to decide to use java/lwjgl   OR   go to just C/C# on Direct3D  (which I've done before)
+[21:50] <steve__> I'll try the other examples and get as much working as I can.  I think I can find a GL 3.0 ref somewhere
+[21:50] == skoskav [s@c-1a9d72d5.035-127-73746f3.cust.bredbandsbolaget.se] has quit [Ping timeout: 246 seconds]
+[21:50] <steve__> (trying to make the game work on more than just Windows)
+[21:51] <ra4king_home> java+lwjgl ftw
+[21:51] <steve__> (need to see it work first, so I'm just prototyping now.  
+[21:55] <steve__> but if community support is the issue, lwjgl already wins..... (and I say this having previously worked at msft)
+[22:01] <ra4king_home> oh wow
+[22:01] <ra4king_home> that's pretty neat!
+[22:07] == ra4king_home [473b3234@gateway/web/freenode/ip.71.59.50.52] has quit [Quit: Page closed]
++lwjglbot
+agro_tablet
+badlogic
+baedert
+balrog
+bgilb
+CharlieM751
+chuckles73
+Danik
+darkfrog
+Dashiva
+delt0r
+djdduty
+Dragonene_
+e0n_
+Emily
+fella7s
+Grum
+Guest57919
+ivan``_
+ivan\
+jezek2
+Jonas__
+jyc
+ksclarke
+l3dx
+langkid1
+MatthiasM
+MatthiasM2
+Mazon
+md_5-
+MMuse
+mononofu
+monty_hall
+monty_slate
+Morgawr
+natte
+nbf
+nephilim_
+Nibato
+Nitram___
+noplamodo
+popey
+quadz_
+ra4king
+Raven67854
+Sam4242
+Scient
+ShaRose
+smiley_
+steve__
+Unimatrix325
+[Neurotic]
+
+-------------------\
+
+[23:53] == steve____ [322e98ee@gateway/web/freenode/ip.50.46.152.238] has joined #lwjgl
+[23:53] -ChanServ- [#lwjgl] This channel is logged: http://echelog.matzon.dk
+[23:58] <steve____> hello
+[00:01] <steve____> is there some way to draw simple text strings in 2D (e.g. score) while simultaneously having 3d stuff going? (without a bunch of other libraries)?
+[00:04] <jezek2> steve____: I think the simplest is to render your text into a BufferedImage and then upload it to opengl texture and show that on screen, it's not the most efficient approach but probably the simplest without need for 3rd party code or writing more complex font drawing routines
+[00:05] <jezek2> for text that is changed only sometimes (not every frame) it's ok
+[00:06] <jezek2> you still need to write the conversion routine though :)
+[00:07] <steve____> what if I'm doing a FPS indicator, or heading/velocity/position, where I do want to update almost every frame?
+[00:08] <jezek2> generating texture populated with individual characters and then rendering parts of it where you need is one of the classic approaches
+[00:09] <MatthiasM2> steve____: TWL has all these features
+[00:09] <steve____> i don't suppose someone's already made a nice png containing all the Unicode chars on 32x32 tiles?
+[00:09] <MatthiasM2> it loads BMFont files (there is also an addon for TrueType fonts)
+[00:09] <MatthiasM2> steve____: lol
+[00:10] <steve____> with twl I'd have to use all TWL, right?  including to do the 3D stuff?
+[00:10] <MatthiasM2> the TWLThemeEditor can create a BMFont file from an TrueType font (TTF) with the characters you want
+[00:10] <MatthiasM2> it has no 3D stuff
+[00:10] <steve____> OK, i can probably make that work
+[00:10] <MatthiasM2> you can use it just as an overlay over your 3D world for UI
+[00:10] <steve____> OK that's what I need.  
+[00:10] <MatthiasM2> eg FPSCounter, chat windows, game messages
+[00:12] <steve____> i see this code    public void render() { Color.white.bind(); texture.bind(); // or GL11.glBind(texture.getTextureID()); GL11.glBegin(GL11.GL_QUADS); GL11.glTexCoord2f(0,0); GL11.glVertex2f(100,100); GL11.glTexCoord2f(1,0); GL11.glVertex2f(100+texture.getTextureWidth(),100); GL11.glTexCoord2f(1,1); GL11.glVertex2f(100+texture.getTextureWidth(),100+texture.getTextureHeight()); GL11.glTexCoord2f(0,1); GL11.glVertex2f(100,100+texture.ge
+[00:12] <steve____> that is in the TestUtils.java
+[00:12] <steve____> But I don't see quite where to put it in my 3D render section
+[00:12] <MatthiasM2> ?
+[00:13] <steve____> e.g. my current 3D code doesn't have "glBegin"
+[00:14] <steve____> (so I'm not quite sure how to merge in this render example with the 3D quads etc rendering already happening.
+[00:17] <MatthiasM2> what is TestUtils?
+[00:17] <steve____> in package org.newdawn.slick.tests;
+[00:17] <MatthiasM2> well - I don't use Slick - and I don't know your renderer
+[00:17] <steve____> C:\Users\steve\Downloads\twl.zip\TWLExamples
+[00:17] <MatthiasM2> but sounds like you need to learn a bit more about OpenGL :)
+[00:18] <steve____> sorry I'm getting lib confusion at this point.  that's slick not twl
+[00:18] <MatthiasM2> you can ignore the Slick parts of the examples
+[00:18] <MatthiasM2> (they should not even be in the TWLExamples repository)
+[00:18] <steve____>  	private void renderCycle()  	{  	 GL11.glClear(GL11.GL_COLOR_BUFFER_BIT); GL20.glUseProgram(pId); // Bind the texture GL13.glActiveTexture(GL13.GL_TEXTURE0); GL11.glBindTexture(GL11.GL_TEXTURE_2D, texIds[textureSelector]); // Bind to the VAO that has all the information about the vertices GL30.glBindVertexArray(vaoId); GL20.glEnableVertexAttribArray(0); GL20.glEnableVertexAttribArray(1); GL20.glEnableVertexAttribArray(2); // Bind
+[00:19] <steve____> i was looking at slick also (trying to pick a minimal lib to do this overlay stuff)
+[00:19] <steve____> OK pasting code not working so good.
+[00:20] <steve____> am I inserting the text overlay at the right place in render cycle?
+[00:20] <steve____> please forget I mentioned slick
+[00:21] <steve____> GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, vboiId); GL11.glDrawElements(GL11.GL_TRIANGLES, indicesCount, GL11.GL_UNSIGNED_BYTE, 0);  //bugbug is this the right place for text overlays? GL11.glBindTexture(GL11.GL_TEXTURE_2D, 0); RenderTextOverlay();
+[00:22] <steve____> (draw the 3d elements, then the 2d overlay)
+[00:30] == Guest19084 [Me4502@irc.me4502.com] has joined #lwjgl
+[00:31] == Htbrdd [~Htbrdd2@66-191-191-150.dhcp.gnvl.sc.charter.com] has quit [Ping timeout: 272 seconds]
+[00:31] <steve____> Is RenderTextOverlay() call in the right place to call drawString??
+[00:32] <steve____> I mean  is that the right place to call into  twl renderer's  Font.drawText()
+[00:33] <steve____> ?
+[00:34] <MatthiasM2> TWL rendering is done by creating a UI hierarchy (eg GUI -> your own root widget -> FPSCounter) - see GameUIDemo
+[00:34] <MatthiasM2> and then calling gui.update()
+[00:38] <steve____> that would be a pretty big change
+[00:39] <MatthiasM2> why? it has no influence on the rest of your app
+[00:39] <MatthiasM2> just insert the gui.update() between your rendering and Display.update()
+[00:39] <MatthiasM2> if you don't want TWL to handle input pass a null Input object to the GUI constructor
+[00:42] == Guest19084 [Me4502@irc.me4502.com] has quit [Ping timeout: 245 seconds]
+[00:42] <steve____> OK I will give it a try that way.  wish me luck!  thanks for your help!
+[00:56] <steve____> Ah, one more question...it seems to do this I would need to be a widget myself...must override layout, etc ,  like the demo does?
+[00:57] == md_5 [md_5@mcdevs/trusted/md-5] has joined #lwjgl
+[00:58] <MatthiasM2> your class does not need to extend Widget
+[00:58] <MatthiasM2> you can just create an additional class
+[00:58] <MatthiasM2> in the demos I just combined it all
+
+
