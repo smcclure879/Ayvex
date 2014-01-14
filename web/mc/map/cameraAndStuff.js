@@ -67,14 +67,14 @@ function start3d()
 
 	var selectedItem=null;
 	//best == newly selected item (best match to mouseclick)
-	function select(bestItem)  //bugbug make selection overlay of the color instead of editing the color  (separate bit for isSelected)
+	function select(bestItem)  
 	{
 		if (bestItem==null || bestItem.closestPointIndex<0) return;
 		
-		debugSet(bestItem.closestDrawingIndex+","+bestItem.closestPointIndex);
+		//debugSet(bestItem.closestDrawingIndex+","+bestItem.closestPointIndex);
 		
 		//clear out the old selection
-		if (selectedItem!=null && selectedItem.closestDrawingIndex>0) 
+		if (selectedItem!=null && selectedItem.closestDrawingIndex>=0) 
 		{
 			theDrawings[selectedItem.closestDrawingIndex].isSelected=false;
 		}
@@ -82,6 +82,7 @@ function start3d()
 		//actually perform new selection
 		selectedItem=bestItem;
 		theDrawings[bestItem.closestDrawingIndex].isSelected=true;
+		theDrawings[bestItem.closestDrawingIndex].closestPointIndex=bestItem.closestPointIndex;
 	};
 	
 
