@@ -704,6 +704,13 @@ var Pre3d = (function() {
   // Project the 3d point |p| to a point in 2d.
   // Takes the current focal_length_ in account.
   Renderer.prototype.projectPointToCanvas = function projectPointToCanvas(p,skipOffscreenPoint) {
+  	if (skipOffscreenPoint)
+	{
+		if (p.x*v<-20 || p.x*v>20) return null;
+		if (p.y*v<-20 || p.y*v>20) return null;  //bugbug const or setting
+		if (p.z>0)  return null;  //this culls out stuff behind the camera  (it's already projected into camera space
+	}
+	
     // We're looking down the z-axis in the negative direction...
     var v = this.camera.focal_length / -p.z;  //bugbug removed negative on p.z but that's wrong too apparently
     var scale = this.scale_;
@@ -711,14 +718,6 @@ var Pre3d = (function() {
 	// Map the height to -1 .. 1, and the width to maintain aspect.
 	var x = p.x * v * scale + this.xoff_;
 	var y = p.y * v * -scale + scale;
-	
-	if (skipOffscreenPoint)
-	{
-		if (p.x*v<-2 || p.x*v>2) return null;
-		if (p.y*v<-2 || p.y*v>2) return null;
-		if (p.z>0)  return null;  //this culls out stuff behind the camera  (it's already projected into camera space
-	}
-	
     
     return { x:x, y:y };
   };
@@ -736,6 +735,8 @@ var Pre3d = (function() {
     }
     return out;
   };
+  
+  
 
   Renderer.prototype.projectQuadFaceToCanvasIP = function(qf) {
     qf.i0 = this.projectPointToCanvas(qf.i0,false);
@@ -1033,6 +1034,9 @@ var Pre3d = (function() {
 
   //bugbug consider removing all the above texturing and curves stuff and just do points, lines, text???
   
+  
+  Renderer.prototype.currentTransform=null;  //keep these around, then can use for hit detection
+  
   // Draw a Path.  There is no buffering, because there is no culling or
   // z-sorting.  There is currently no filling, paths are only stroked.  To
   // control the render state, you should modify ctx directly, and set whatever
@@ -1041,9 +1045,9 @@ var Pre3d = (function() {
     var ctx = this.ctx;
     opts = opts || { };
 
-    var t = multiplyAffine(this.camera.transform.m, this.transform.m);
+    currentTransform = multiplyAffine(this.camera.transform.m, this.transform.m);  //bugbug memoize--all paths being drawn share same transform!
 
-    var screen_points = this.projectPointsToCanvas(transformPoints(t, path.points),true);
+    screen_points = this.projectPointsToCanvas(transformPoints(currentTransform, path.points),true);
 	
 	//skip drawing the entire path if parts of it are behind the camera--a little overzealous perhaps, but let's try this
 	if (screen_points==null) return;
@@ -1059,8 +1063,16 @@ var Pre3d = (function() {
 	ctx.fillStyle="black";
 	ctx.fillText(path.points[path.starting_point].t,start_point.x,start_point.y);  //bugbug redo startingPoint logic we inherited here
 
-	ctx.strokeStyle=path.color;  //bugbug why this no work
-	ctx.lineWidth=path.width;
+	if (path.isSelected)
+	{
+		ctx.strokeStyle='purple';
+		ctx.lineWidth=path.width+2;
+	}
+	else
+	{
+		ctx.strokeStyle=path.color;  
+		ctx.lineWidth=path.width;
+	}
 	
     var curves = path.curves;
     for (var j = 0, jl = curves.length; j < jl; ++j) {
@@ -1087,6 +1099,37 @@ var Pre3d = (function() {
       ctx.stroke();
     }
   };
+  
+  
+  //bugbug move to helpers??
+  function dist2(x,y,point)
+  {
+	var dx=x-point.x;
+	var dy=y-point.y;
+	return dx*dx+dy*dy;
+  }
+  
+  Renderer.prototype.getNearest = function getNearest(path,x,y,best,thisDrawingIndex) 
+  {
+	var screen_points = this.projectPointsToCanvas(transformPoints(currentTransform, path.points),true);
+	//skip testing the entire path if parts of it are behind the camera
+	if (screen_points==null) return best;
+	
+	for(var ii=0; ii<path.points.length; ii++)
+	{
+		var newQuadrance = dist2(x,y,screen_points[ii]);
+		if (newQuadrance >= best.bestQuadranceSoFar) continue;
+		
+		best.bestQuadranceSoFar = newQuadrance;
+		best.closestPointIndex = ii;
+		best.closestDrawingIndex = thisDrawingIndex;
+	}
+	return best;
+  }
+  
+  
+  
+  
 
   return {
     RGBA: RGBA,

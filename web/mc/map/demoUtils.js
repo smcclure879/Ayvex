@@ -214,14 +214,42 @@ var DemoUtils = (function() {
       return {x: e.layerX - off.x, y: e.layerY - off.y};
     }
 
+	function movementSizeSqr(state)
+	{
+		dx = state.last_x-state.first_x;
+		dy = state.last_y-state.first_y;
+		return dx*dx+dy*dy;
+	}
+	
+	canvas.addEventListener('click', function(e) {
+		if (movementSizeSqr(state)>40)  //not really a click...moved too far.
+		{
+			e.preventDefault();
+			return false;
+		}
+		//else we make a click event (shouldn't html or jquery do this for me?  bugbug)
+	    var info = {
+          is_clicking: false,
+		  wasClick: true,
+          canvas_x: state.first_x,
+          canvas_y: state.first_y,
+          shift: e.shiftKey,
+          ctrl: e.ctrlKey,
+		  isRightClick: (e.button!=0)
+        };
+		listener(info);
+	}, false);
+	
     canvas.addEventListener('mousedown', function(e) {
       var rel = relXY(e);
       state.is_clicking = true;
       state.last_x = rel.x;
       state.last_y = rel.y
-      // Event was handled, don't take default action.
-      e.preventDefault();
-      return false;
+	  state.first_x = rel.x;
+	  state.first_y = rel.y;
+      // Event was handled, don't take default action.  
+      //e.preventDefault();
+      return true;;
     }, false);
 
     canvas.addEventListener('mouseup', function(e) {
@@ -293,7 +321,7 @@ var DemoUtils = (function() {
   //   Mouse + shift -> pan z.
   //   Mouse + ctrl + shift -> adjust focal length.
   var animate = false;
-  function autoCamera(renderer, ix, iy, iz, tx, ty, tz, draw_callback, opts) {
+  function autoCamera(renderer, ix, iy, iz, tx, ty, tz, draw_callback, find_callback, opts) {
     var camera_state = {
       rotate_x: tx,
       rotate_y: ty,
@@ -357,7 +385,7 @@ var DemoUtils = (function() {
 		//update control panel
 		$("#frameNum").val(frameNum);
 		$("#camX").val(camera_state.x);
-		$("#camY").val(camera_state.y);
+		$("#camY").val(-camera_state.y);  //bugbug why this sign flip?  don't know right now!
 		$("#camZ").val(camera_state.z);
 		$("#camRotX").val(deg(camera_state.rotate_x));  //degrees for display only
 		$("#camRotY").val(deg(camera_state.rotate_y));
@@ -368,6 +396,7 @@ var DemoUtils = (function() {
 		dirtyCam=false;
 	}
 
+	
 
 	function animateIt(frameNum)
 	{
@@ -386,16 +415,22 @@ var DemoUtils = (function() {
 	ticker.start();
 
 
-
-
+	
+	
 
     // We debounce fast mouse movements so we don't paint a million times.
     var cur_pending = null;
-
     function handleCameraMouse(info) {
-
+	
+	  if (info.wasClick)
+	  {
+		var bestItem = find_callback(info.canvas_x,info.canvas_y,true);
+	  }
+	
       if (!info.is_clicking)
-        return;
+	  {  
+         return;
+	  }
 
       if (info.shift && info.ctrl) {
         renderer.camera.focal_length = clamp(0.05, 10, renderer.camera.focal_length + (info.delta_y * 0.1) );
@@ -415,9 +450,9 @@ var DemoUtils = (function() {
         camera_state.rotate_y -= info.delta_x * 0.01;  //bugbug const
         camera_state.rotate_x -= info.delta_y * 0.01;  
       } else {
-		//plain bugbug nothing for now
+		//alert("todo plain click"+info.canvas_x+" "+info.canvas_y);
 	  }
-
+		//alert("todo something click");
 
       if (cur_pending != null)
         clearTimeout(cur_pending);
