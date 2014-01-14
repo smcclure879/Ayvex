@@ -1070,7 +1070,7 @@ var Pre3d = (function() {
 	}
 	else
 	{
-		ctx.strokeStyle=path.color;  
+		ctx.strokeStyle=path.color;  //is deciding and setting every time a perf hit?
 		ctx.lineWidth=path.width;
 	}
 	
@@ -1092,12 +1092,29 @@ var Pre3d = (function() {
 	  ctx.fillText(path.points[j].t,ep.x,ep.y);
     }
 
+
     // We've connected all our Curves into a <canvas> path, now draw it.
     if (opts.fill === true) {
       ctx.fill();
     } else {
       ctx.stroke();
     }
+	
+	if (path.isSelected && path.closestPointIndex>-1)
+	{
+		var selectedPoint = screen_points[path.closestPointIndex];
+		var x=selectedPoint.x;
+		var y=selectedPoint.y;
+		ctx.moveTo(x+1,y+1); 
+		ctx.lineTo(x+1,y-1);
+		ctx.lineTo(x-1,y-1);
+		ctx.lineTo(x-1,y+1);
+		ctx.lineTo(x+1,y+1);
+		ctx.stroke();
+	}
+		
+
+	
   };
   
   
