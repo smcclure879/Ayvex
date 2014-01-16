@@ -68,12 +68,20 @@ function clamp(a, b, c) {
 
 //there are only 360 degrees in a circle
 function loop(a, b, c) {  //enforce a<=c<=b by "looping around"
-	while(c<a) { c+=b; }  //only optimum if not ever exceeding one of these by much
-	while(c>b) { c-=b; }
+	while(c<a) { c+=(b-a); }  //only optimum if not ever exceeding one of these by much
+	while(c>b) { c-=(b-a); }
 	return c;
 }
 
+function stringVec(v)
+{
+	return ""+v.x+","+v.y+","+v.z;
+}
 
+function negate(v)   //this function makes it all better but I have zero sense WHY???  BUGBUG
+{
+	return {x:-v.x, y:v.y, z:-v.z};
+}
 
 
 
@@ -315,6 +323,10 @@ var DemoUtils = (function() {
     canvas.addEventListener('mousewheel', handler, false);
   }
 
+  
+  
+  
+  
   // Register mouse handlers to automatically handle camera:
   //   Mouse -> rotate around origin x and y axis.
   //   Mouse + ctrl -> pan x / y.
@@ -345,16 +357,44 @@ var DemoUtils = (function() {
       ct.rotateX(camera_state.rotate_x);
     }
 
+//used for key speeds
 	timeStepAng=50;
 	timeStepU=1/4;
-	function pitch(ang) { camera_state.rotate_x = clamp(-halfPi,+halfPi,camera_state.rotate_x+ang/timeStepAng); dirtyCam=true;}
-	function yaw(ang) { camera_state.rotate_y = loop(0,twoPi,camera_state.rotate_y+ang/timeStepAng); dirtyCam=true;}
+
+
+	
+	function setPitchAngInternal(rotX)	{		camera_state.rotate_x = loop(-halfPi,+halfPi,rotX); 	dirtyCam=true;	}
+	function setPitchAng(rotX) 			{		camera_state.rotate_x = clamp(-halfPi,+halfPi,rotX); 	dirtyCam=true;  }  //user no flipping upside down
+	function setYawAng(rotY)			{		camera_state.rotate_y = loop(0,twoPi,rotY); 			dirtyCam=true;	}
+	
+	function pitch(ang) { setPitchAng(camera_state.rotate_x+ang/timeStepAng); }
+	function yaw(ang)   { setYawAng(  camera_state.rotate_y+ang/timeStepAng); }
 	function panLeftRight(u)   { u/=timeStepU; a=camera_state.rotate_y; camera_state.x += u*cos(a); camera_state.z += u*sin(a); dirtyCam=true;}
 	function panForwardBack(u) { u/=timeStepU; a=camera_state.rotate_y; camera_state.x -= u*sin(a); camera_state.z += u*cos(a); dirtyCam=true;}
 	function panUpDown(u) { u/=timeStepU; camera_state.y += u; dirtyCam=true;}
+	function orbit1(u) { panLeftRight(u); pointAtSelected(); }
+	function orbit2(u) { panUpDown(u); pointAtSelected(); }
+	
+	function pointAtSelected()
+	{
+		//given cam xyz and selected point xyz, set cam rotY and rotX to point at it. 		
+		pointAt(selectedItem);
+	}
 
-
-
+	
+	function pointAt(targetPoint)
+	{
+		var delta = Pre3d.Math.subPoints3d(negate(camera_state),targetPoint);
+		var rotX = -Math.atan2(delta.y,Math.sqrt(delta.x*delta.x+delta.z*delta.z))    
+		var rotY = Math.atan2(delta.z,delta.x)-halfPi;
+		debugSet(//"rotX="+deg(rotX)+
+				 //", rotY="+deg(rotY)
+				 ", sel="+stringVec(targetPoint)
+				);		
+		
+		setPitchAngInternal(rotX);  //bugbug want to have the pitch(), yaw() etc take units (deg, rad?) and have separate bumpPitch() for key event, with the timeStepAng there
+		setYawAng(rotY);
+	}
 
 	function myTick(frameNum)
 	{
@@ -371,10 +411,12 @@ var DemoUtils = (function() {
 		if (isDown(83))  panForwardBack(-1);   //s
 		if (isDown(82))  panUpDown(-1);  //r
 		if (isDown(70))  panUpDown( 1);  //f
+		if (isDown(65))  orbit1( 1);  //a
+		if (isDown(68))  orbit1(-1);  //d
+		if (isDown(89))  orbit2(-1);  //y
+		if (isDown(72))  orbit2( 1);  //h
 
 		if (animate) animateIt(frameNum);
-
-
 		redoTheCam(frameNum);
 	}
 
@@ -384,9 +426,9 @@ var DemoUtils = (function() {
 
 		//update control panel
 		$("#frameNum").val(frameNum);
-		$("#camX").val(camera_state.x);
+		$("#camX").val(-camera_state.x);
 		$("#camY").val(-camera_state.y);  //bugbug why this sign flip?  don't know right now!
-		$("#camZ").val(camera_state.z);
+		$("#camZ").val(-camera_state.z);
 		$("#camRotX").val(deg(camera_state.rotate_x));  //degrees for display only
 		$("#camRotY").val(deg(camera_state.rotate_y));
 		$("#camRotZ").val(deg(camera_state.rotate_z));
@@ -416,7 +458,7 @@ var DemoUtils = (function() {
 
 
 	
-	
+	var selectedItem=null;  
 
     // We debounce fast mouse movements so we don't paint a million times.
     var cur_pending = null;
@@ -424,7 +466,7 @@ var DemoUtils = (function() {
 	
 	  if (info.wasClick)
 	  {
-		var bestItem = find_callback(info.canvas_x,info.canvas_y,true);
+		selectedItem = find_callback(info.canvas_x,info.canvas_y,true);
 	  }
 	
       if (!info.is_clicking)
@@ -496,6 +538,13 @@ var DemoUtils = (function() {
 	dirtyCam=true;
   }
 
+  
+  
+  
+  
+  
+  
+  
   function ToggleToolbar() {
     this.options_ = [ ];
   }
