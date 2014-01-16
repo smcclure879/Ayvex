@@ -92,6 +92,8 @@ var Pre3d = (function() {
   // object creations, there are some "IP" versions of these functions.  This
   // stands for "in place", and they write the result to one of the arguments.
 
+	
+  
   function crossProduct(a, b) {
     // a1b2 - a2b1, a2b0 - a0b2, a0b1 - a1b0
     return {
@@ -1134,12 +1136,16 @@ var Pre3d = (function() {
 	
 	for(var ii=0; ii<path.points.length; ii++)
 	{
+		if (screen_points[ii]==null) continue;
 		var newQuadrance = dist2(x,y,screen_points[ii]);
 		if (newQuadrance >= best.bestQuadranceSoFar) continue;
 		
 		best.bestQuadranceSoFar = newQuadrance;
 		best.closestPointIndex = ii;
 		best.closestDrawingIndex = thisDrawingIndex;
+		best.x=path.points[ii].x;
+		best.y=path.points[ii].y;
+		best.z=path.points[ii].z;
 	}
 	return best;
   }
