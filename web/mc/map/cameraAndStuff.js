@@ -44,7 +44,8 @@ function start3d()
 
 		for(var ii=0,lim=theDrawings.length; ii<lim; ii++)
 		{
-			var drawing = theDrawings[ii];
+			var drawing = theDrawings[ii];			
+			renderer.camera.transform.check();  //bugbug
 			renderer.drawPath(drawing);
 		}
 		
@@ -54,13 +55,14 @@ function start3d()
 	//bugbug move this function into the renderer (pre3d.js function getnearest )
 	function findNearest(x,y,selectIt) //callback from demoUtils.js function handleCameraMouse
 	{
-		var best={closestDrawingIndex:-1,closestPointIndex:-1,bestQuadranceSoFar:40000};  //bugbug const
+		var best={closestDrawingIndex:-1,closestPointIndex:-1,bestQuadranceSoFar:40000};  //quadrance=dist*dist //bugbug const
 		var lim=theDrawings.length;
 		var ii=0;
 		for(; ii<lim; ii++)  //ii=drawingNumber
 		{
 			var drawing = theDrawings[ii];
-			best = renderer.getNearest(drawing,x,y,best,ii);  //bugbug pass the best thru,//and insist it hand the old or new best back out  (end up with path#, point #, point serialNum, distance between click and selectPoint
+			//pass the best thru, and insist it hand the old or new best back out  (end up with path#, point #, point serialNum, distance between click and selectPoint
+			best = renderer.getNearest(drawing,x,y,best,ii);
 		}
 		if (selectIt) select(best);
 		return best;
@@ -120,6 +122,6 @@ function start3d()
 	toolbar.populateDiv(document.getElementById('toolbar'));
 
 
-	draw();
+	//too early to draw() here, wait for tick()
 
 }

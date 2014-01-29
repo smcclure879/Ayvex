@@ -347,7 +347,7 @@ var DemoUtils = (function() {
 
     opts = opts !== undefined ? opts : { };
 
-	var dx,dy,dz=0.0;  //to support animation
+	var dx=0.0,dy=0.0,dz=0.0;  //to support animation
     function set_camera() {
       var ct = renderer.camera.transform;
       ct.reset();
@@ -355,6 +355,7 @@ var DemoUtils = (function() {
       ct.rotateZ(camera_state.rotate_z);
       ct.rotateY(camera_state.rotate_y);
       ct.rotateX(camera_state.rotate_x);
+	  ct.check();
     }
 
 //used for key speeds

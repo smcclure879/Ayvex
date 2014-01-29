@@ -7,6 +7,7 @@
 <script src="demoUtils.js"></script>
 <script src="cameraAndStuff.js"></script>
 <script src="mc2data.js"></script>
+<script src="memoize.js"></script>
 <script src="tree.js"></script>
 <script src="hasher.js"></script>
 </head>
@@ -148,20 +149,21 @@ function makeBigMap(data)
  
  function markerPole(xx,zz)
  {
+	var floor=62;  //minecraftWaterLevel bugbug setting or ???
 	var treePoleFrac=0.3;
-	var h=Hasher.consistentHash(['marker',xx,zz]);  //bugbug 'marker' atom at first position
+	var h=Hasher.consistentHash(['marker',xx,zz]);  // 'marker' =?= atom at first position
 	//debugAdd(h+","+xx+","+zz);
 	if (hRndBool(h,treePoleFrac))
 	{
-		return tree(xx,zz);
+		return new Tree(xx,floor,zz,h);
 	}
 	else  //regular markerPole
 	{
 		return twoSegmentPath( 'green',
 							  1,
-							  xx,62,zz,   //the floor is at 62  //bugbug var or setting or ???
-							  xx,162,zz,
-							  xx,162 ,zz-10);  //minus Z is north
+							  xx, floor, zz,   
+							  xx, 100+floor, zz,
+							  xx, 100+floor, zz-10);  //minus Z is north
 	}
 }
  
