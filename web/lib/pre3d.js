@@ -348,6 +348,23 @@ var Pre3d = (function() {
   Transform.prototype.reset = function() {
     this.m = makeIdentityAffine();
   };
+  
+  Transform.prototype.check = function() {
+	var mm=this.m;
+	if (isNaN(mm.e0  
+		+mm.e1 
+		+mm.e2 
+		+mm.e3 
+		+mm.e4 
+		+mm.e5 
+		+mm.e6 
+		+mm.e7 
+		+mm.e8 
+		+mm.e9 
+		+mm.e10
+		+mm.e11))
+			alert("bugbug1040 bad affine transform");  //assert basically  bugbug remove this!
+  };
 
   // TODO(deanm): We are creating two extra objects here.  What would be most
   // effecient is something like multiplyAffineByRotateXIP(this.m), etc.
@@ -420,7 +437,10 @@ var Pre3d = (function() {
   };
 
   // Transform and return a new array of points with transform matrix |t|.
-  function transformPoints(t, ps) {
+  function transformPoints(t, ps){
+	if (typeof ps === "undefined" 
+	//|| ps==null
+	) return null; //bugbug other cases?
     var il = ps.length;
     var out = Array(il);
     for (var i = 0; i < il; ++i) {
@@ -539,6 +559,10 @@ var Pre3d = (function() {
     this.ep = ep;  // End point.
     this.c0 = c0;  // Control point.
     this.c1 = c1;  // Control point.
+  }
+  
+  Curve.prototype.atOffset= function(additionalOffset) {
+	return new Curve(this.ep+additionalOffset,this.c0+additionalOffset,this.c1+additionalOffset);
   }
 
   Curve.prototype.isQuadratic = function() {
@@ -729,9 +753,14 @@ var Pre3d = (function() {
   // TODO: flatten this calculation so we don't need make a method call.
   Renderer.prototype.projectPointsToCanvas =
       function projectPointsToCanvas(ps,skipOffscreenPoint) {
+	if (typeof ps === "undefined" ) return null;
+	if (ps==null)
+		alert("foo513");
     var il = ps.length;
     var out = Array(il);
     for (var i = 0; i < il; ++i) {
+	  if (ps && ps[i] && ps[i].x && isNaN(ps[i].x))
+	  	alert("foo556bugbug")
       out[i] = this.projectPointToCanvas(ps[i],skipOffscreenPoint);
 	  if (skipOffscreenPoint && out[i]==null) return null;  //skip the whole "shape"
     }
@@ -1039,6 +1068,30 @@ var Pre3d = (function() {
   
   Renderer.prototype.currentTransform=null;  //keep these around, then can use for hit detection
   
+  
+  //bugbug move this logic into the drawable objects!!!
+  Renderer.prototype.doLateDrawIfApplicable=function doLateDrawIfApplicable(path)
+  {  
+	//in case this is "deferred path determination" (geom shader?)
+	if (!path) 
+	{
+		alert("bugbug510 why does this happen?");
+		return;
+	}
+	//not a valid condition   if (path.points!=null) return; //nothing to fix up
+	if (!path.isLateDrawable) return; //can't fix anything up
+	
+	//late draw replaces this entire path (bugbug should it really be this way?--should this "force" happen "up" a few levels??)
+	path.lateDrawSet(-2);  //bugbug variable....-2=features cm and larger
+							//		still need to pass level here (based on focal length, distance, sampling etc etc
+	if (path.points==null)
+		alert("nullbugbug149");
+
+  }
+  
+
+  
+  
   // Draw a Path.  There is no buffering, because there is no culling or
   // z-sorting.  There is currently no filling, paths are only stroked.  To
   // control the render state, you should modify ctx directly, and set whatever
@@ -1046,14 +1099,20 @@ var Pre3d = (function() {
   Renderer.prototype.drawPath = function drawPath(path, opts) {
     var ctx = this.ctx;
     opts = opts || { };
-
+	
+	//bugbug remove later for perf??
+	this.camera.transform.check();
+	
     currentTransform = multiplyAffine(this.camera.transform.m, this.transform.m);  //bugbug memoize--all paths being drawn share same transform!
-
+	
+	this.doLateDrawIfApplicable(path);
+	
     screen_points = this.projectPointsToCanvas(transformPoints(currentTransform, path.points),true);
 	
 	//skip drawing the entire path if parts of it are behind the camera--a little overzealous perhaps, but let's try this
 	if (screen_points==null) return;
-	
+	if (isNaN(screen_points[0].x))
+		alert("bugbug1015p bad transforms above?");
 
     // default the starting point
 	if (path.starting_point==null) path.starting_point=0;

@@ -7,7 +7,9 @@
 <script src="demoUtils.js"></script>
 <script src="cameraAndStuff.js"></script>
 <script src="mc2data.js"></script>
-
+<script src="memoize.js"></script>
+<script src="tree.js"></script>
+<script src="hasher.js"></script>
 </head>
 
 <body>
@@ -22,18 +24,20 @@
 />
 </td>
 <td valign="top">
-<span style="">Copyright 2014
-<h2>Ayvex Light Industries<h1></span>
-<h1>mc2 world</h1><br>
-<div id="controlPanel" style="border:2px solid #000000;background-color:lightGray; font-family:Arial;font-size:12">
-<h3><b>Control Panel</b></h3>
+<span style="font-family:Arial"><h6>Copyright 2014</h6>
+<h1>Ayvex Light Industries</h1></span>	
+<h2>mc2 world</h2><br>
+<div style="border:2px solid #000000;background-color:lightGray" id="controlPanel">
+control panel
+<span  style="font-family:Arial;font-size:12">
 <input type="checkbox" value="animate" id="animate" checked>animate</input>
 <input type="checkbox" value="lockon" id="lockon" >lockon</input>
+</span>
 </div>
-<div id="readout" style="font-family:Arial;font-size:12;background-color:yellow">
+<br><div id="readout" style="background-color:yellow">
 <table>
-<tr><td></td
-<tr>
+<tr><td colspan="2">readout</td>
+<tr style="font-family:Arial;font-size:12">
 <td>
 frame<input type="text" id="frameNum" value="x"/><br>
 camX<input type="text" id="camX" value="x"/><br>
@@ -48,14 +52,12 @@ camRotZ<input type="text" id="camRotZ" value="x"/><br>
 </td>
 </tr>
 </table>
+<br>
+</div>
+<div><br><br><br><br><br><br><br><br><br>
 </div>
 
-
-<div id="toolbar" style="border:1px solid #000000; padding:10px; spacing:10px; "> </div>
-<div border="1" valign="bottom"><br><br>
-<span style="">Copyright 2014
-<h2>Ayvex Light Industries<h1><br></span>
-</div>
+<div id="toolbar" style="position: relative; bottom: 0; left: 0; border:1px solid #000000; padding:10px; spacing:10px"> </div>
 </td>
 <!--position: absolute; bottom: 0;-->
 
@@ -147,14 +149,24 @@ function makeBigMap(data)
  
  function markerPole(xx,zz)
  {
-	return twoSegmentPath( 'green',
-						  1,
-						  xx,62,zz,   //the floor is at 62  //bugbug var or setting or ???
-						  xx,162,zz,
-						  xx,162 ,zz-10);  //minus Z is north
- }
+	var floor=62;  //minecraftWaterLevel bugbug setting or ???
+	var treePoleFrac=0.3;
+	var h=Hasher.consistentHash(['marker',xx,zz]);  // 'marker' =?= atom at first position
+	//debugAdd(h+","+xx+","+zz);
+	if (hRndBool(h,treePoleFrac))
+	{
+		return new Tree(xx,floor,zz,h);
+	}
+	else  //regular markerPole
+	{
+		return twoSegmentPath( 'green',
+							  1,
+							  xx, floor, zz,   
+							  xx, 100+floor, zz,
+							  xx, 100+floor, zz-10);  //minus Z is north
+	}
+}
  
-
  //bugbug needed???
 // function linePath(color,x1,y1,z1,x2,y2,z2)  //todo: consider using this for the user paths as well??
 // {
