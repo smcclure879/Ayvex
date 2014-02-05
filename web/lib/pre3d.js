@@ -1,4 +1,4 @@
-//modifications by smcclure879 to add text
+//many modifications by smcclure879
 
 
 // Pre3d, a JavaScript software 3d renderer.
@@ -93,6 +93,14 @@ var Pre3d = (function() {
   // stands for "in place", and they write the result to one of the arguments.
 
 	
+	
+	
+  function rotate(ang,aboutVec3d,vec3d) {
+  
+	return vec3d; //bugbug
+  
+  }
+  
   
   function crossProduct(a, b) {
     // a1b2 - a2b1, a2b0 - a0b2, a0b1 - a1b0
@@ -755,12 +763,12 @@ var Pre3d = (function() {
       function projectPointsToCanvas(ps,skipOffscreenPoint) {
 	if (typeof ps === "undefined" ) return null;
 	if (ps==null)
-		alert("foo513");
+		debugSet("foo513");
     var il = ps.length;
     var out = Array(il);
     for (var i = 0; i < il; ++i) {
 	  if (ps && ps[i] && ps[i].x && isNaN(ps[i].x))
-	  	alert("foo556bugbug")
+	  	debugSet("foo556bugbug")
       out[i] = this.projectPointToCanvas(ps[i],skipOffscreenPoint);
 	  if (skipOffscreenPoint && out[i]==null) return null;  //skip the whole "shape"
     }
@@ -852,6 +860,7 @@ var Pre3d = (function() {
     var quad_callback = this.quad_callback;
 
     // Our vertex transformation matrix.
+	//bugbug likely need to change this to this.setCurrentTransform();
     var t = multiplyAffine(this.camera.transform.m,
                            this.transform.m);
     // Our normal transformation matrix.
@@ -1067,6 +1076,15 @@ var Pre3d = (function() {
   
   
   Renderer.prototype.currentTransform=null;  //keep these around, then can use for hit detection
+  Renderer.prototype.getCurrentTransformMemoized=function() //bugbug memoize it later or rename it
+  {
+	return this.currentTransform;
+  }
+  
+  Renderer.prototype.transformPoint=function(point)
+  {
+	return transformPoint(this.getCurrentTransformMemoized(), point);
+  }
   
   
   //bugbug move this logic into the drawable objects!!!
@@ -1090,6 +1108,10 @@ var Pre3d = (function() {
   }
   
 
+  Renderer.prototype.setCurrentTransform=function()
+  {
+      this.currentTransform = multiplyAffine(this.camera.transform.m, this.transform.m);  //bugbug memoize--all paths being drawn share same transform!
+  }
   
   
   // Draw a Path.  There is no buffering, because there is no culling or
@@ -1101,13 +1123,12 @@ var Pre3d = (function() {
     opts = opts || { };
 	
 	//bugbug remove later for perf??
-	this.camera.transform.check();
+	//this.camera.transform.check();
 	
-    currentTransform = multiplyAffine(this.camera.transform.m, this.transform.m);  //bugbug memoize--all paths being drawn share same transform!
-	
+	this.setCurrentTransform();  //bugbug do we really need to do this every time?  fix here or in .setCurrentTransform()?
 	this.doLateDrawIfApplicable(path);
 	
-    screen_points = this.projectPointsToCanvas(transformPoints(currentTransform, path.points),true);
+    screen_points = this.projectPointsToCanvas(transformPoints(this.getCurrentTransformMemoized(), path.points),true);
 	
 	//skip drawing the entire path if parts of it are behind the camera--a little overzealous perhaps, but let's try this
 	if (screen_points==null) return;
@@ -1131,7 +1152,7 @@ var Pre3d = (function() {
 	}
 	else
 	{
-		ctx.strokeStyle=path.color;  //is deciding and setting every time a perf hit?
+		ctx.strokeStyle=path.color;  //bugbug is deciding and setting every time a perf hit?
 		ctx.lineWidth=path.width;
 	}
 	
@@ -1189,6 +1210,8 @@ var Pre3d = (function() {
   
   Renderer.prototype.getNearest = function getNearest(path,x,y,best,thisDrawingIndex) 
   {
+    //bugbug update this for use with iDrawable
+	
 	var screen_points = this.projectPointsToCanvas(transformPoints(currentTransform, path.points),true);
 	//skip testing the entire path if parts of it are behind the camera
 	if (screen_points==null) return best;
@@ -1240,7 +1263,10 @@ var Pre3d = (function() {
       unitVector3d: unitVector3d,
       linearInterpolate: linearInterpolate,
       linearInterpolatePoints3d: linearInterpolatePoints3d,
-      averagePoints: averagePoints
+      averagePoints: averagePoints,
+	  
+	  //smcclure added...
+	  rotate: rotate
     }
   };
 })();

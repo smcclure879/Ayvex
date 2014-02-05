@@ -45,8 +45,15 @@ function start3d()
 		for(var ii=0,lim=theDrawings.length; ii<lim; ii++)
 		{
 			var drawing = theDrawings[ii];			
-			renderer.camera.transform.check();  //bugbug
-			renderer.drawPath(drawing);
+			renderer.camera.transform.check();  //bugbug assert
+			if (drawing instanceof iDrawable) 
+			{
+				drawing.draw(renderer);
+			}
+			else  //have the renderer do it
+			{
+				renderer.drawPath(drawing);
+			}
 		}
 		
 		//bugbug renderer.drawReticle();  //in screen coords
@@ -62,7 +69,7 @@ function start3d()
 		{
 			var drawing = theDrawings[ii];
 			//pass the best thru, and insist it hand the old or new best back out  (end up with path#, point #, point serialNum, distance between click and selectPoint
-			best = renderer.getNearest(drawing,x,y,best,ii);
+			best = renderer.getNearest(drawing,x,y,best,ii);  //bugbug fix this fn to take new iDrawables for "drawing"
 		}
 		if (selectIt) select(best);
 		return best;

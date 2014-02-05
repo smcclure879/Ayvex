@@ -1,3 +1,4 @@
+<html>
 <head>
 <title>mc2 world map</title>
 
@@ -150,20 +151,25 @@ function makeBigMap(data)
  function markerPole(xx,zz)
  {
 	var floor=62;  //minecraftWaterLevel bugbug setting or ???
-	var treePoleFrac=0.3;
+	var height=40;
+	var treePoleFrac=0.5;
 	var h=Hasher.consistentHash(['marker',xx,zz]);  // 'marker' =?= atom at first position
 	//debugAdd(h+","+xx+","+zz);
 	if (hRndBool(h,treePoleFrac))
 	{
-		return new Tree(xx,floor,zz,h);
+		//bugbug currently the Tree class is set up to IDrawable, not to lateDraw
+		var retval = new Tree(xx,floor,zz,h);
+		if (!(retval instanceof iDrawable))
+			alert("bugbug why is tree not iDrawable?");  //bugbug make this whole thing an assert
+		return retval;
 	}
 	else  //regular markerPole
 	{
-		return twoSegmentPath( 'green',
+		return twoSegmentPath( 'black',
 							  1,
 							  xx, floor, zz,   
-							  xx, 100+floor, zz,
-							  xx, 100+floor, zz-10);  //minus Z is north
+							  xx, height+floor, zz,
+							  xx, height+floor, zz-10);  //minus Z is north
 	}
 }
  
@@ -207,7 +213,7 @@ function makeFakeMap()
 	  ];
     path.curves = [new Pre3d.Curve(0, 0, 0), new Pre3d.Curve(1,1,1), new Pre3d.Curve(2,2,2)];
     path.starting_point = 0;
-	path.color='red';
+	path.color='black';
     return [path];
 }
 
@@ -242,3 +248,4 @@ $(document).ready(function()
 </script>
 
 </body>
+</html>
