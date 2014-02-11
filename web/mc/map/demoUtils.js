@@ -333,6 +333,7 @@ var DemoUtils = (function() {
   //   Mouse + shift -> pan z.
   //   Mouse + ctrl + shift -> adjust focal length.
   var animate = false;
+  var flying = false;
   function autoCamera(renderer, ix, iy, iz, tx, ty, tz, draw_callback, find_callback, opts) {
     var camera_state = {
       rotate_x: tx,
@@ -418,6 +419,7 @@ var DemoUtils = (function() {
 		if (isDown(72))  orbit2( 1);  //h
 
 		if (animate) animateIt(frameNum);
+		if (flying) flyTo(frameNum);
 		redoTheCam(frameNum);
 	}
 
@@ -450,6 +452,29 @@ var DemoUtils = (function() {
 		dz=1.2*oscSize*sin(ang/7);
 
 		dirtyCam=true;
+	}
+	
+	function flyTo(frameNum)
+	{
+		pointAtSelected();
+		 //a=camera_state.rotate_y; camera_state.x += u*cos(a); camera_state.z += u*sin(a); 
+		//renderer.getSelected();
+		if (mm.quadrancePts(camera_state,selectedItem)<100)  //lucky that camera_state works as a point!
+		{
+			flying=false;
+			return;
+		}
+		var nextPosition = mm.linearInterpolatePoints3d(camera_state,selectedItem,0.16);
+		copyPointData(nextPosition,camera_state); 
+		pointAtSelected();
+		dirtyCam=true;	
+	}
+	
+	function copyPointData(src,dst)
+	{
+		dst.x=src.x;
+		dst.y=src.y;
+		dst.z=src.z;
 	}
 
 	fps=60;  //bugbug settings
@@ -636,6 +661,10 @@ var DemoUtils = (function() {
 		if (item=="animate")
 		{
 			animate=state;
+		}
+		else if (item=="flyToSelected")
+		{
+			flying=true;
 		}
 	}
 
