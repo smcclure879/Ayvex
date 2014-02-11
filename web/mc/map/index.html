@@ -33,6 +33,7 @@ control panel
 <span  style="font-family:Arial;font-size:12">
 <input type="checkbox" value="animate" id="animate" checked>animate</input>
 <input type="checkbox" value="lockon" id="lockon" >lockon</input>
+<input type="button" id="flyTo" value="flyTo"/>
 </span>
 </div>
 <br><div id="readout" style="background-color:yellow">
@@ -242,9 +243,17 @@ $(document).ready(function()
 			}
 			,30*1000);//milliseconds  //bugbug settings		
 		DemoUtils.Notify("animate",animate.checked );  //and do it once right now for good measure
-		
+	
+
+		$("#flyTo").click( function(event)
+			{
+				DemoUtils.Notify("flyToSelected","bugbugneeded158?");			
+			});
+	
 	}
 )
+
+
 </script>
 
 </body>

@@ -4,14 +4,27 @@
 //bugbug make this into a function and just return the interface ... like pre3d.js is packaged
 
 var maxInt=0xFFFFFFF;  //bugbug chopped to 23 bits or so
-function hRndBool(h,treePoleFrac)
+function hRndBool(h,frac)
 {
 	//given a hash value h, which might be any set of 32 bits (check this bugbug)
 	//...we need to only return true treePoleFrac % of the time 
 	//var x = (h/2+maxInt/2)/maxInt; //ranged to 0..1
 	var x = h/maxInt; //ranged to 0..1, bugbug if using positive-only hash (24 bits)
 	//debugAdd(h+","+x+",");
-	return (x<treePoleFrac);
+	return (x<frac);
+}
+
+//lo and hi are both included as posible output values
+//bugbug same as linearInterp in Pre3d?
+function hRndRange(lo,hi,h8)  //h8=8 bits of hash data from 0-255
+{
+	var s=Math.abs(hi-lo);  //bugbug
+	return s*h8/256 + lo;
+}
+
+function hFloat(h)
+{
+	return hRndRange(0,1,h%256);
 }
 
 //bugbug move hashing and hashRands to separate class (no members needed)
@@ -51,6 +64,13 @@ Hasher.consistentHash=function consistentHash(arr)  //for now we only support ar
 	var retval=hr.get();
 	delete(hr);
 	return retval;
+}
+
+//bugbug redo things so we pass around hasher objects instead???
+Hasher.rehash=function rehash(h,r)
+{
+	h=h*33+r;
+	return maxInt&h;
 }
 
 

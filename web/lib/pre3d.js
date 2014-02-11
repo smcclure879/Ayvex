@@ -101,7 +101,22 @@ var Pre3d = (function() {
   
   }
   
-  
+   //bugbug move to helpers??
+  function quadrancePts(a,b)
+  {
+	var dx=a.x-b.x;
+	var dy=a.y-b.y;
+	var dz=a.z-b.z;
+	return dx*dx + dy*dy + dz*dz;
+  }
+   
+  function quadr(x,y,point)  //bugbug rename as quadrance
+  {
+	var dx=x-point.x;
+	var dy=y-point.y;
+	return dx*dx+dy*dy;
+  }
+ 
   function crossProduct(a, b) {
     // a1b2 - a2b1, a2b0 - a0b2, a0b1 - a1b0
     return {
@@ -1200,26 +1215,19 @@ var Pre3d = (function() {
   };
   
   
-  //bugbug move to helpers??
-  function dist2(x,y,point)
-  {
-	var dx=x-point.x;
-	var dy=y-point.y;
-	return dx*dx+dy*dy;
-  }
   
   Renderer.prototype.getNearest = function getNearest(path,x,y,best,thisDrawingIndex) 
   {
     //bugbug update this for use with iDrawable
 	
-	var screen_points = this.projectPointsToCanvas(transformPoints(currentTransform, path.points),true);
+	var screen_points = this.projectPointsToCanvas(transformPoints(this.currentTransform, path.points),true);
 	//skip testing the entire path if parts of it are behind the camera
 	if (screen_points==null) return best;
 	
 	for(var ii=0; ii<path.points.length; ii++)
 	{
 		if (screen_points[ii]==null) continue;
-		var newQuadrance = dist2(x,y,screen_points[ii]);
+		var newQuadrance = quadr(x,y,screen_points[ii]);
 		if (newQuadrance >= best.bestQuadranceSoFar) continue;
 		
 		best.bestQuadranceSoFar = newQuadrance;
@@ -1266,7 +1274,9 @@ var Pre3d = (function() {
       averagePoints: averagePoints,
 	  
 	  //smcclure added...
-	  rotate: rotate
+	  rotate: rotate,
+	  quadr: quadr,
+	  quadrancePts: quadrancePts
     }
   };
 })();

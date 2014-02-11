@@ -15,6 +15,18 @@ function mutateByHash1(vec3d,h)
 	return retval;
 }
 
+function mutateByHash2(vec3d,h)  
+{
+	var v=vec3d;
+	var s=mm.vecMag3d(v);
+	var retval = {
+			x: hRndRange(-s,s,		h%256),
+			y: hRndRange(-s,s,		h/256%256),
+			z: hRndRange(-s,s,		h/256/256%256)
+		};
+	return retval;
+}
+
 
 
 
@@ -70,7 +82,36 @@ function lineTo(ctx,pt)
 //bugbug make separate class  //this is an "abstract class"
 function iDrawable() {}  
 
-
+//near dup of code in renderer...can we consolidate?  bugbug
+iDrawable.prototype.getNearest=function(x,y,renderer,best,thisDrawingIndex)
+{
+	//old  return best;  //bugbug the rest of this should be a call to renderer or this duplicate code?
+	
+	if (typeof this.pointh==='undefined') 
+		return best;
+	
+	var pt3d = renderer.transformPoint(this.pointh);
+	if (pt3d.z > 0) 
+		return best;
+		
+	var pt2d = renderer.projectPointToCanvas(pt3d,true);
+	if (pt2d == null)
+		return best;
+		
+	var newQuadrance = mm.quadr(x,y,pt2d);
+	if (newQuadrance >= best.bestQuadranceSoFar) 
+		return best;
+		
+	//we found a new winner!
+	best.bestQuadranceSoFar = newQuadrance;
+	best.closestPointIndex = 0;
+	best.closestDrawingIndex = thisDrawingIndex;
+	best.x=this.pointh.x;
+	best.y=this.pointh.y;
+	best.z=this.pointh.z;
+	debugSet("winner"+thisDrawingIndex);
+	return best;
+}
 
 //bugbug make this into a function and just return the interface ... like pre3d.js is packaged
 
@@ -155,21 +196,22 @@ Tree.prototype.draw=function(renderer,log2Size)
 	//bugbug how to get from above to below based on dist between camear and object?  
 	//bugbug why is this in the tree or its base object and not the "camera"?
 	var levelsToGo=4;  //bugbug for now
-	
+	//bugbug you are here  need to only have this value high for things close to renderer
 	
 	this.drawFractalPath(
 						renderer,
-						this.pointh,  //point and hash
+						this.pointh.h,  //passing hash separately to allow "the hash updating trick"
+						this.pointh,  //passed as ordinary point
 						{x:0,y:60,z:0},  //momentum (bugbug tuck into a pointh?)  //60 m tall
 						'tree',  //label  bugbug needed?
 						levelsToGo, //=pathlevel1,2,3 etc  //bugbug 
 						//bugbug a place to potentially multithread....or GPU can do graph alg?  is there a copyPlusForkBit() in GLSL?
 						[  								//instructions for next step down...
-							['branch',0.47, 30,0.25],  //go scale 0.47 forward, branch 30deg, set scale in branch to 0.25
-							['branch',0.41,-33,0.11],
-							['branch',0.61,4,0.11],
-							['branch',0.87,66,0.11],
-							['branch',0.09,88,0.33]
+							//bugbug needed?['branch',0.3, 30,0.25],  //go scale 0.47 forward, branch 30deg, set scale in branch to 0.25
+							//['branch',0.41,-33,0.11],
+							//['branch',0.61,4,0.11],
+							['nprobbranch',9,0.5,1.0]  //bugbug why no work?
+							//['branch',0.09,88,0.33]
 							
 						]
 					 );
@@ -234,7 +276,7 @@ Tree.prototype.isLateDrawable=0;
 
 
 //bugbug separate to its own class 
-Tree.prototype.drawFractalPath=function(renderer,pointh,momentumVector,tag,levelsToDraw,arrBranchInstructions)
+Tree.prototype.drawFractalPath=function(renderer,h,pointh,momentumVector,tag,levelsToDraw,arrBranchInstructions)
 {
 	//recursion terminator
 	if (levelsToDraw<=0) 
@@ -242,16 +284,26 @@ Tree.prototype.drawFractalPath=function(renderer,pointh,momentumVector,tag,level
 	
     var ctx = renderer.ctx;
 	//bugbug still needed?  unlikely  var trans=renderer.getCurrentTransformMemoized(); //bugbug make this function work...//return multiplyAffine(renderer.camera.transform.m, renderer.transform.m);  //bugbug memoize--all paths being drawn share same transform!
-	var tpt = function transformPoint(point)
+	var tpt = function transformPoint(point)  
 		{
-			var pt3d=renderer.transformPoint(point);  //move into renderer if working bugbug
-			var pt2d=renderer.projectPointToCanvas(pt3d,true);
+			if (point==null)
+				return null;
+				
+			//move into renderer if working bugbug  and combine with similar code in getNearest?
+			var pt3d = renderer.transformPoint(point);
+			if (pt3d.z > 0) 
+				return null;
+				
+			var pt2d = renderer.projectPointToCanvas(pt3d,true);
+			if (pt2d == null)
+				return null;
+
 			return pt2d;
 		}
 	//bugbug lateDraw is superceded by "normal draw" (this fn)     //this.doLateDrawIfApplicable(path);
 	//probably want singlepoint version    bugbug  ....var screenPts = renderer.projectPointsToCanvas(renderer.transformPoints(currentTransform, path.points),true);
 	var firstPoint = tpt(pointh);
-	if (!firstPoint) return null;
+	if (firstPoint==null) return null;
 	
 	ctx.beginPath();
     //ctx.moveTo(screenPts.x, screenPts.y);
@@ -259,8 +311,19 @@ Tree.prototype.drawFractalPath=function(renderer,pointh,momentumVector,tag,level
 	//ctx.fillStyle="black";
 	//ctx.fillText(path.points[path.starting_point].t,start_point.x,start_point.y);  //bugbug redo startingPoint logic we inherited here
 
-	ctx.lineWidth=this.width || levelsToDraw || 1;  
-	ctx.strokeStyle=this.color || 'red';  //bugbug is deciding and setting every time a perf hit?
+	var width=this.width || levelsToDraw || 1;  
+	
+	if (this.isSelected) 
+	{
+		ctx.strokeStyle='purple';
+		ctx.lineWidth=width+1;
+	}
+	else
+	{
+		ctx.strokeStyle=this.color || 'red';  //bugbug is deciding and setting every time a perf hit?  bunch 'em up by color?
+		ctx.lineWidth=width;
+	}
+	
 	// if (this.isSelected)  //bugbug implement this!
 	// {
 		// ctx.strokeStyle='purple';
@@ -269,13 +332,18 @@ Tree.prototype.drawFractalPath=function(renderer,pointh,momentumVector,tag,level
 	
 	if (moveTo(ctx,firstPoint)==null) return null;
 	
-	//bugbugassert
-	if (typeof momentumVector==='undefined')
-		alert("undefined momentum vector bugbug");
+	var tip3=mm.addPoints3d(pointh,momentumVector);
+	if (tip3==null) return null;
 	
-	var tip=mm.addPoints3d(pointh,momentumVector);
+	var tip2=tpt(tip3);
+	if (tip2==null) 
+		return null;
 
-	if (lineTo(ctx,tpt(tip))==null) return null;
+	if (mm.vecMag2d(tip2,firstPoint)<ctx.lineWidth && !this.isSelected)
+		return null; //no point descending either!
+	
+	if (lineTo(ctx,tip2)==null) 
+		return null;
 	ctx.stroke();
 	
 	
@@ -287,14 +355,34 @@ Tree.prototype.drawFractalPath=function(renderer,pointh,momentumVector,tag,level
 		
 		if (cmd=='branch')
 		{
-			var branchFrac=x[1];
+			var howFarOutFrac=x[1];
 			var branchAngle=x[2];  //bugbug use this later
 			var branchScale=x[3];
 			
-			//bugbug needed??--->rotate(ang,aboutVec3d,vec3d) 
-			var newMomentumVector=mutateByHash1(momentumVector,pointh.h+levelsToDraw);//bugbug ok to add to hash like this?
-			newMomentumVector=mm.mulPoint3d(newMomentumVector,branchScale);
-			this.drawFractalPath(renderer,mm.linearInterpolatePoints3d(pointh,tip,branchFrac),newMomentumVector,tag,levelsToDraw-1,arrBranchInstructions);
+			//bugbug take rotational approach instead??--->rotate(ang,aboutVec3d,vec3d) 
+			var newMomentumVector=mm.mulPoint3d(momentumVector,branchScale);
+			h=Hasher.rehash(h,levelsToDraw*1000+ii);
+			newMomentumVector=mutateByHash2(newMomentumVector,h);
+			
+			this.drawFractalPath(renderer,h,mm.linearInterpolatePoints3d(pointh,tip3,howFarOutFrac),newMomentumVector,tag,levelsToDraw-1,arrBranchInstructions);
+		}
+		else if (cmd=='nprobbranch')  //bugbug remove dup code here, consolidate
+		{
+			var quantityOfPossibleBranches=x[1];  
+			var probabilityOfBranch=x[2];
+			var scaleDownRatio=x[3];
+			for(var jj=0; jj<quantityOfPossibleBranches; jj++)
+			{
+				h=Hasher.rehash(h,levelsToDraw*100000+ii*100+jj);
+				if (!hRndBool(h,probabilityOfBranch)) 
+					continue;
+				var howFarOutFrac=hFloat(h);
+				var newMomentumVector=mm.mulPoint3d(momentumVector,scaleDownRatio*(1-howFarOutFrac));
+				
+				newMomentumVector=mutateByHash2(newMomentumVector,h); 
+				this.drawFractalPath(renderer,h,mm.linearInterpolatePoints3d(pointh,tip3,howFarOutFrac),newMomentumVector,tag,levelsToDraw-1,arrBranchInstructions);
+			}
+			
 		}
 		else
 		{

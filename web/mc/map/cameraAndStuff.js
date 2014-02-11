@@ -68,8 +68,16 @@ function start3d()
 		for(; ii<lim; ii++)  //ii=drawingNumber
 		{
 			var drawing = theDrawings[ii];
-			//pass the best thru, and insist it hand the old or new best back out  (end up with path#, point #, point serialNum, distance between click and selectPoint
-			best = renderer.getNearest(drawing,x,y,best,ii);  //bugbug fix this fn to take new iDrawables for "drawing"
+			if (drawing instanceof iDrawable)
+			{
+				best = drawing.getNearest(x,y,renderer,best,ii);  //ii passed only for selection
+			}
+			else  //have the renderer do it
+			{
+				//pass the best thru, and insist it hand the old or new best back out  (end up with path#, point #, point serialNum, distance between click and selectPoint
+				best = renderer.getNearest(drawing,x,y,best,ii);  //bugbug fix this fn to take new iDrawables for "drawing"
+			}
+
 		}
 		if (selectIt) select(best);
 		return best;
