@@ -29,11 +29,18 @@
 <h1>Ayvex Light Industries</h1></span>	
 <h2>mc2 world</h2><br>
 <div style="border:2px solid #000000;background-color:lightGray" id="controlPanel">
-control panel
+<input type="button" id="flyTo" value="flyTo"/>
 <span  style="font-family:Arial;font-size:12">
 <input type="checkbox" value="animate" id="animate" checked>animate</input>
 <input type="checkbox" value="lockon" id="lockon" >lockon</input>
-<input type="button" id="flyTo" value="flyTo"/>
+<select id="dataset">
+  <option value="mc2map">mc2 world map+</option>
+  <option value="frcWld">frcWld 0.01</option>
+  <option value="hiiDimAnlErq">hiiDimAnlErq</option>
+  <option value="hiiDimAnlFlw">hiiDimAnlFlw</option>
+</select>
+<br>
+tags:<input type="text"/>   <!-- value="<all>" id="tags" style="color:red"/> -->
 </span>
 </div>
 <br><div id="readout" style="background-color:yellow">
@@ -225,6 +232,12 @@ function getMap()  //callback from the cameraAndStuff.js
 	return theMap;
 }
 
+function changeDataSet(ev)
+{
+	alert("nyi"+ev);
+}
+
+
 
 //used to track what keys are down
 isDown = DemoUtils.KeyTracker.isDown
@@ -248,6 +261,11 @@ $(document).ready(function()
 		$("#flyTo").click( function(event)
 			{
 				DemoUtils.Notify("flyToSelected","bugbugneeded158?");			
+			});
+		
+		$("#dataset").change( function(event)
+			{
+				changeDataSet(event);
 			});
 	
 	}
