@@ -210,7 +210,7 @@ Tree.prototype.draw=function(renderer,log2Size)
 							//bugbug needed?['branch',0.3, 30,0.25],  //go scale 0.47 forward, branch 30deg, set scale in branch to 0.25
 							//['branch',0.41,-33,0.11],
 							//['branch',0.61,4,0.11],
-							['nprobbranch',9,0.5,1.0]  //bugbug why no work?
+							['nprobbranch',5,0.5,1.0]  //bugbug why no work?
 							//['branch',0.09,88,0.33]
 							
 						]

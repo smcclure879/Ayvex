@@ -666,6 +666,10 @@ var DemoUtils = (function() {
 		{
 			flying=true;
 		}
+		else
+		{
+			alert("bugbug unknown alert");
+		}
 	}
 
 
