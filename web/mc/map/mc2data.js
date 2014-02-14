@@ -2,15 +2,7 @@ function getMc2Data()
 {
 	return 	[   
 	
-		//coordinate vectors
-		[10,0,0,'x'],
-		[0,0,0,''],
-		
-		[0,10,0,'y'],
-		[0,0,0,''],
-		
-		[0,0,10,'z'],  //and Z should be south
-		[0,0,0,''],
+
 	
 	
 		//dad's data...
