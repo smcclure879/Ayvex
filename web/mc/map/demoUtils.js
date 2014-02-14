@@ -80,7 +80,7 @@ function stringVec(v)
 
 function negate(v)   //this function makes it all better but I have zero sense WHY???  BUGBUG
 {
-	return {x:-v.x, y:v.y, z:-v.z};
+	return {x:-v.x, y:-v.y, z:-v.z};
 }
 
 
@@ -387,7 +387,7 @@ var DemoUtils = (function() {
 	function pointAt(targetPoint)
 	{
 		var delta = Pre3d.Math.subPoints3d(negate(camera_state),targetPoint);
-		var rotX = -Math.atan2(delta.y,Math.sqrt(delta.x*delta.x+delta.z*delta.z))    
+		var rotX = Math.atan2(delta.y,Math.sqrt(delta.x*delta.x+delta.z*delta.z))    
 		var rotY = Math.atan2(delta.z,delta.x)-halfPi;
 		debugSet(//"rotX="+deg(rotX)+
 				 //", rotY="+deg(rotY)
@@ -459,12 +459,13 @@ var DemoUtils = (function() {
 		pointAtSelected();
 		 //a=camera_state.rotate_y; camera_state.x += u*cos(a); camera_state.z += u*sin(a); 
 		//renderer.getSelected();
-		if (mm.quadrancePts(camera_state,selectedItem)<100)  //lucky that camera_state works as a point!
+		//camera always works with negative coordinates?
+		if (mm.quadrancePts(camera_state,negate(selectedItem))<50000)  //lucky that camera_state works as a point!  //bugbug const related to "scale"?
 		{
 			flying=false;
 			return;
 		}
-		var nextPosition = mm.linearInterpolatePoints3d(camera_state,selectedItem,0.16);
+		var nextPosition = mm.linearInterpolatePoints3d(camera_state,negate(selectedItem),0.14);  //bugbug const 1/flightSpeed
 		copyPointData(nextPosition,camera_state); 
 		pointAtSelected();
 		dirtyCam=true;	

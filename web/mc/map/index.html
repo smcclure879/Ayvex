@@ -138,7 +138,17 @@ function makeBigMap(data)
 			if (d>2000 && rnd(d)<2000) paths[kk++] = waterMarker(xx+rnd(500),zz+rnd(500));
 		}
 	}
-		
+	
+	
+	//coordinate vectors		
+	paths[kk++]=infoLine( 	{x:1000,y:0,z:0,t:'X'},
+							{x:0   ,y:0,z:0}        );
+							
+	paths[kk++]=infoLine( 	{x:0,y:1000,z:0,t:'Y'},
+							{x:0,y:0   ,z:0}          );
+							
+	paths[kk++]=infoLine(	{x:0,y:0,z:1000,t:'Z'},  //and Z should be south
+							{x:0,y:0,z:0   } );
 
 	return paths;
  }
@@ -181,18 +191,33 @@ function makeBigMap(data)
 	}
 }
  
- //bugbug needed???
-// function linePath(color,x1,y1,z1,x2,y2,z2)  //todo: consider using this for the user paths as well??
-// {
-//	var path=new Pre3d.Path();
-//	path.starting_point=0;
-//	path.points[0]={x:x1,y:y1,z:z1,t:""};  //""+x1+","+y1
-//	path.points[1]={x:x2,y:y2,z:z2	};
-//	path.curves[0]=new Pre3d.Curve(0,1,1);  //to make it a line, everything looks at 0th point.
-//	path.color=color;
-//	path.width=1;
-//	return path;
-// }
+
+ 
+ function infoLine(ptA,ptB)
+ {
+	return linePath(	
+						'6666FF',
+						0.1,
+						ptA,
+						ptB
+					);
+							
+ }
+ 
+ 
+function linePath(color,width,ptA,ptB)  //ptA includes a text .t  
+{
+	var path=new Pre3d.Path();
+	path.starting_point=0;
+	path.points[0]=ptA;
+	path.points[1]=ptB;
+	path.curves[0]=new Pre3d.Curve(1,1,1);  //to make it a line, everything looks at 0th point.
+	path.color=color;
+	path.width=width;
+	return path;
+}
+
+
 
  function twoSegmentPath(color,width,x1,y1,z1,x2,y2,z2,x3,y3,z3)
  {
@@ -234,7 +259,10 @@ function getMap()  //callback from the cameraAndStuff.js
 
 function changeDataSet(ev)
 {
-	alert("nyi"+ev);
+	var newDataSetName=ev.target.value;
+	alert("nyi"+newDataSetName);
+	ev.stopPropagation();  //bugbug needed??
+	
 }
 
 

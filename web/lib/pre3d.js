@@ -354,6 +354,8 @@ var Pre3d = (function() {
 
   // Transform the point |p| by the AffineMatrix |t|.
   function transformPoint(t, p) {
+    if (typeof p==='undefined' || typeof p.x === 'undefined') 
+		alert( "bugbug bad p" );
     return {
       x: t.e0 * p.x + t.e1 * p.y + t.e2  * p.z + t.e3,
       y: t.e4 * p.x + t.e5 * p.y + t.e6  * p.z + t.e7,
