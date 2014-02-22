@@ -5,6 +5,7 @@
 <!-- script src="jquery-1.10.2.min.js"></script   bugbug later maybe   -->
 <script src="../../lib/jquery-1.10.2.js"></script>
 <script src="../../lib/pre3d.js"></script>
+<script src="../../lib/queryParams.js"></script>
 <script src="demoUtils.js"></script>
 <script src="cameraAndStuff.js"></script>
 <script src="mc2data.js"></script>
@@ -77,6 +78,9 @@ camRotZ<input type="text" id="camRotZ" value="x"/><br>
 
 <script>
 
+
+var floor=62;  //minecraftWaterLevel bugbug setting or ???
+
 var toolbar = document.getElementById("toolbar");
 start3d();  //in cameraAndStuff.js
 
@@ -124,40 +128,65 @@ function makeBigMap(data)
 		jj++;
 	}
 	
-	paths[kk++]=path;  //close it out
-	
-	//landmarks
-	landmarkSpacing=200;
+	paths.push(path);  //close it out
+	return paths;
+}
+
+function addTreesAndWater(paths)
+{
+	landmarkSpacing=200;  //bugbug consts throughout
+	abs=Math.abs;
+	for(var xx=-20000; xx<20000; xx+=landmarkSpacing)
+	{
+		for(var zz=-20000; zz<20000; zz+=landmarkSpacing)
+		{
+			var d=abs(xx)+abs(zz) + 5;
+			var h8=Hasher.consistentHash(['tree',xx,zz])%256;
+			if (hRndN(d,h8)<80)   paths.push(new Tree(xx,floor,zz,'calculate'));
+			if (hRndN(d,h8)<200)   paths.push(waterMarker(xx+hRndN(500,h8),zz+hRndN(500,h8)));  //bugbug
+		}
+	}
+	return paths;
+}
+
+
+function addMarkersAndWater(paths)
+{
+	landmarkSpacing=200;  //bugbug consts throughout
 	abs=Math.abs;
 	for(var xx=-20000; xx<20000; xx+=landmarkSpacing)
 	{
 		for(var zz=-20000; zz<20000; zz+=landmarkSpacing)
 		{
 			var d=abs(xx)+abs(zz);
-			if (d>1000 && d<4000 && rnd(d)<800) paths[kk++] = markerPole(xx,zz);
-			if (d>2000 && rnd(d)<2000) paths[kk++] = waterMarker(xx+rnd(500),zz+rnd(500));
+			if (d>1000 && d<4000 && badRnd(d)<800)   paths.push(marker(xx,zz));
+			if (d>2000 && badRnd(d)<2000)            paths.push(waterMarker(xx+badRnd(500),zz+badRnd(500)));
 		}
 	}
-	
-	
-	//coordinate vectors		
-	paths[kk++]=infoLine( 	{x:1000,y:0,z:0,t:'X'},
-							{x:0   ,y:0,z:0}        );
-							
-	paths[kk++]=infoLine( 	{x:0,y:1000,z:0,t:'Y'},
-							{x:0,y:0   ,z:0}          );
-							
-	paths[kk++]=infoLine(	{x:0,y:0,z:1000,t:'Z'},  //and Z should be south
-							{x:0,y:0,z:0   } );
-
 	return paths;
- }
+}
+
+function addCoordinateVectors(paths)
+{
+	//coordinate vectors		
+	paths.push(infoLine( 	{x:1000,y:0,z:0,t:'X'},
+							{x:0   ,y:0,z:0}        ));
+							
+	paths.push(infoLine( 	{x:0,y:1000,z:0,t:'Y'},
+							{x:0,y:0   ,z:0}          ));
+							
+	paths.push(infoLine(	{x:0,y:0,z:1000,t:'Z'},  //and Z should be south
+							{x:0,y:0,z:0   } ));
+	
+	return paths;
+}
+
  
  
  function waterMarker(xx,zz, waveHeight, waveLength)
  {
-	if (waveHeight===undefined) waveHeight=rnd(8)-4;
-	if (waveLength===undefined) waveLength=rnd(7)+13;
+	if (waveHeight===undefined) waveHeight=badRnd(8)-4;
+	if (waveLength===undefined) waveLength=badRnd(7)+13;
 	return twoSegmentPath(	'blue',
 							1,
 							xx,62,zz,
@@ -166,29 +195,29 @@ function makeBigMap(data)
 						); 
  }
  
- function markerPole(xx,zz)
+ //function markerOrTree(xx,zz, treePoleFrac)
+ function marker(xx,zz)
  {
-	var floor=62;  //minecraftWaterLevel bugbug setting or ???
+//	var treePoleFrac= treePoleFrac || 0;
 	var height=40;
-	var treePoleFrac=0.5;
-	var h=Hasher.consistentHash(['marker',xx,zz]);  // 'marker' =?= atom at first position
-	//debugAdd(h+","+xx+","+zz);
-	if (hRndBool(h,treePoleFrac))
-	{
-		//bugbug currently the Tree class is set up to IDrawable, not to lateDraw
-		var retval = new Tree(xx,floor,zz,h);
-		if (!(retval instanceof iDrawable))
-			alert("bugbug why is tree not iDrawable?");  //bugbug make this whole thing an assert
-		return retval;
-	}
-	else  //regular markerPole
-	{
+//	var h=Hasher.consistentHash(['marker',xx,zz]);  // 'marker' =?= atom at first position  
+//	//debugAdd(h+","+xx+","+zz);
+//	if (hRndBool(h,treePoleFrac))
+//	{
+//		//bugbug currently the Tree class is set up to IDrawable, not to lateDraw
+//		var retval = new Tree(xx,floor,zz,h);
+//		if (!(retval instanceof iDrawable))
+//			alert("bugbug why is tree not iDrawable?");  //bugbug make this whole thing an assert
+//		return retval;
+//	}
+//	else  //regular markerPole
+//	{
 		return twoSegmentPath( 'black',
 							  1,
 							  xx, floor, zz,   
 							  xx, height+floor, zz,
 							  xx, height+floor, zz-10);  //minus Z is north
-	}
+//	}
 }
  
 
@@ -250,21 +279,94 @@ function makeFakeMap()
     return [path];
 }
 
-function getMap()  //callback from the cameraAndStuff.js  
+function getMap(dataSetName)  //callback from the cameraAndStuff.js  
 {
-	var data = getMc2Data(); 
-	var theMap = makeBigMap(data);	
-	return theMap;
+	//defaulting a bunch
+	if (typeof dataSetName === 'undefined')
+	{
+		dataSetName=$("#dataset").value
+		if (typeof dataSetName === 'undefined')
+		{
+			dataSetName='mc2map';
+		}
+	}
+	
+	if (dataSetName=='mc2map')
+	{
+		var data = getMc2Data();
+		var theMap = makeBigMap(data);
+		addMarkersAndWater(theMap);
+		theMap=addCoordinateVectors(theMap);
+
+		return theMap;
+	}
+	else if (dataSetName=='frcWld')
+	{	
+		return fractalWorldMap();  //bugbug semantics "map" for these entities is wrong....it's a full presentation around a dataset, the framing around the map, etc.
+	}
+	else if (dataSetName=='hiiDimAnlErq')
+	{
+		return earthquakeMap();
+	}
+	else if (dataSetName=='hiiDimAnlFlw')
+	{
+		return flowersMap();
+	}
 }
 
 function changeDataSet(ev)
 {
 	var newDataSetName=ev.target.value;
-	alert("nyi"+newDataSetName);
 	ev.stopPropagation();  //bugbug needed??
-	
+	window.location.href="?dataset="+newDataSetName;
 }
 
+function fractalWorldMap()
+{
+	var treePoleFrac=0.5;
+	var theMap=[];
+	addCoordinateVectors(theMap);
+	//todo add perlin noise, etc etc etc
+	addTreesAndWater(theMap,treePoleFrac);
+	return theMap;
+}
+
+function earthquakeMap()
+{
+	var theMap=[];
+	addCoordinateVectors(theMap);
+	
+	var columnInfo=
+	[  //time,latitude,longitude,depth,mag,magType,nst,gap,dmin,rms,net,id,updated,place,type
+		['time'],  //bugbug what are the other columns about a column??  (is UTC, parseThisWay, limits, precision, short and long name
+		['lat'],
+		['long'],
+		['depth']
+		///////more bugbug???
+	];
+	
+	loadDataFile(theMap,"earthquakes.txt",columnInfo,
+					{
+						'skipFirstLine':1,
+						'skipLinesWithFirstCharIn':'#'
+					}
+				);
+	return theMap;
+}
+
+function flowersMap()
+{
+	alert("nyi1028");
+}
+
+
+//bugbug separate file/module?
+function loadDataFile(theMap,file,columnInfo,options)
+{
+	options=options || {};
+	
+	alert("loadDataFile is nyi1245");
+}
 
 
 //used to track what keys are down
@@ -272,6 +374,9 @@ isDown = DemoUtils.KeyTracker.isDown
 
 $(document).ready(function() 
 	{
+		if (oGetVars["dataset"]) 
+			$("#dataset").val(oGetVars["dataset"]);
+	
 		anim = $("#animate");
 		anim.click( function(event)
 			{

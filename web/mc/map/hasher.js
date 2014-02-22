@@ -1,6 +1,12 @@
 //hasher.js
 
 
+function assert(condition,id)
+{
+  if (!condition) 
+	alert("failed assert:"+id);
+}
+
 //bugbug make this into a function and just return the interface ... like pre3d.js is packaged
 
 var maxInt=0xFFFFFFF;  //bugbug chopped to 23 bits or so
@@ -14,12 +20,23 @@ function hRndBool(h,frac)
 	return (x<frac);
 }
 
+function hRndN(hi,h8)
+{
+	return hRndRange(1,hi,h8);
+}
+
 //lo and hi are both included as posible output values
 //bugbug same as linearInterp in Pre3d?
 function hRndRange(lo,hi,h8)  //h8=8 bits of hash data from 0-255
 {
-	var s=Math.abs(hi-lo);  //bugbug
-	return s*h8/256 + lo;
+	assert(lo<hi,'errcode125c');
+	assert(h8<256 && h8>=0,'errCode126y');
+	var s=hi-lo;  //bugbug
+	assert(lo<hi,'errcode122a');
+	var retval = s*h8/256 + lo;
+	assert(retval<=hi && retval>=lo,'errCode122b');
+	return retval;
+	
 }
 
 function hFloat(h)

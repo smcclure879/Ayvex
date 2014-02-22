@@ -46,7 +46,7 @@ twoPi=pi*2;
 function deg(rd) { return rd/pi*180.0; }
 function rad(dg) { return dg*pi/180.0; }
 
-function rnd(n)
+function badRnd(n)  //bugbug use hash always for consistency
 {
 	return Math.floor((Math.random()*n)+1);
 }
