@@ -177,11 +177,14 @@ iDrawable.prototype.getNearest=function(x,y,renderer,best,thisDrawingIndex)
 //bugbug a whole new kind of object....the guy on the other side (renderer) needs to be taught how to use these
 function Tree(x,y,z,h)  //tree has this position forever, and can be regrown from hash
 {
+	if (typeof h === 'undefined' || h==null || h=='' || !h || h=='calculate')
+		h=Hasher.consistentHash(['marker',x,y,z]);  // 'marker' =?= atom at first position  
+
 	this.pointh={x:x,y:y,z:z,h:h};  
 	//bugbug can these be made as .prototype functions?
 	this.lateDraw=memoize(function(x){ return this.getLevelPath(x); });  
 	this.lateDrawSet=function(x) { var n=this.lateDraw(x); this.become(n);}; 
-	this.color='22CC00';
+	this.color='22CC00';  //bugbug reduce size of this obj by making these class props???
 	//bugbug change getting of paths to calling .Draw method and passing the ctx to it?
 	//bugbug but assuming we keep with it for tonights checkin...can't set "this" directly...what if different callers? .... memoized points, curves, methods instead?
 }

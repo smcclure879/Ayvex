@@ -24,7 +24,7 @@ function start3d()
 		orig_bezierCurveTo.call(this, c0x, c0y, c1x, c1y, epx, epy);
 	} 
 
-	var theDrawings = getMap();
+	var theDrawings = getMap(oGetVars["dataset"]);
 
 
 	renderer.ctx.setStrokeColor(0x52 / 255, 0xbb / 255, 0x5c / 255, 1);
