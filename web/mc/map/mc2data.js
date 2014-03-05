@@ -1,9 +1,6 @@
 function getMc2Data()
 {
-	return 	[   
-	
-
-	
+	return 	[   	
 	
 		//dad's data...
 		[-373,21,199,'Camp 1'],
