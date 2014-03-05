@@ -1160,7 +1160,7 @@ var Pre3d = (function() {
     ctx.beginPath();
     ctx.moveTo(start_point.x, start_point.y);
 	ctx.font="10px Arial";
-	ctx.fillStyle="black";
+	ctx.fillStyle=contrastBackground();
 	ctx.fillText(path.points[path.starting_point].t,start_point.x,start_point.y);  //bugbug redo startingPoint logic we inherited here
 
 	if (path.isSelected)
@@ -1170,7 +1170,7 @@ var Pre3d = (function() {
 	}
 	else
 	{
-		ctx.strokeStyle=path.color;  //bugbug is deciding and setting every time a perf hit?
+		ctx.strokeStyle=contrast(path.color);  //bugbug is deciding and setting every time a perf hit?
 		ctx.lineWidth=path.width;
 	}
 	
@@ -1217,7 +1217,11 @@ var Pre3d = (function() {
 	
   };
   
-  
+  function contrast(color)
+  {
+	if (color=='black' && mainBgColor=='black') return 'cyan';
+	return color;
+  }
   
   Renderer.prototype.getNearest = function getNearest(path,x,y,best,thisDrawingIndex) 
   {

@@ -315,7 +315,7 @@ Tree.prototype.drawFractalPath=function(renderer,h,pointh,momentumVector,tag,lev
 	ctx.beginPath();
     //ctx.moveTo(screenPts.x, screenPts.y);
 	//ctx.font="10px Arial";
-	//ctx.fillStyle="black";
+	//ctx.fillStyle=contrastBackground();
 	//ctx.fillText(path.points[path.starting_point].t,start_point.x,start_point.y);  //bugbug redo startingPoint logic we inherited here
 
 	var width=this.width || levelsToDraw || 1;  

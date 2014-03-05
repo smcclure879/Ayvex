@@ -243,11 +243,18 @@ function addCoordinateVectors(paths)
  
  function contrastBackground()
  {
-	if (mainBgColor='white') return 'black';
-	if (mainBgColor='black') return 'white';
+	if (mainBgColor=='white') return 'black';
+	if (mainBgColor=='black') return 'white';
 	return 'cyan'; //bugbug
  }
 
+
+ function contrast(color)
+ {
+	return 'green';
+	if (mainBgColor=='black' && color=='black') return 'white';
+	return color;
+ }
  
  function infoLine(ptA,ptB)
  {
@@ -302,7 +309,7 @@ function makeFakeMap()
 	  ];
     path.curves = [new Pre3d.Curve(0, 0, 0), new Pre3d.Curve(1,1,1), new Pre3d.Curve(2,2,2)];
     path.starting_point = 0;
-	path.color='black';
+	path.color=contrastBackground();
     return [path];
 }
 
