@@ -30,20 +30,22 @@
 </td>
 <td valign="top">
 <span style="font-family:Arial"><h6>Copyright 2014</h6>
-<h1>Ayvex Light Industries</h1></span>	
+<h1>Ayvex Light Industries</h1>	
 <h2>mc2 world</h2><br>
 <div style="border:2px solid #000000;background-color:lightGray" id="controlPanel">
 <input type="button" id="flyTo" value="flyTo"/>
 <span  style="font-family:Arial;font-size:12">
-<input type="checkbox" value="animate" id="animate" checked>animate</input>
-<input type="checkbox" value="lockon" id="lockon" >lockon</input>
+<input type="checkbox" value="animate" id="animate" checked>ANIM</input>
+<input type="checkbox" value="lockon" id="lockon" >LOCK</input>
+<input type="checkbox" value="black" id="black" checked>BLAK</input>
+<input type="checkbox" value="big" id="big" >BIG</input>
 <select id="dataset">
   <option value="mc2map">mc2 world map+</option>
   <option value="frcWld">frcWld 0.01</option>
   <option value="hiiDimAnlErq">hiiDimAnlErq</option>
   <option value="hiiDimAnlFlw">hiiDimAnlFlw</option>
 </select>
-<br>
+</span><br>
 tags:<input type="text"/>   <!-- value="<all>" id="tags" style="color:red"/> -->
 </span>
 </div>
@@ -231,7 +233,7 @@ function addCoordinateVectors(paths)
  {
 	var height=40;
 
-	return twoSegmentPath( 'black',
+	return twoSegmentPath( contrastBackground(),
 							  1,
 							  xx, floor, zz,   
 							  xx, height+floor, zz,
@@ -239,6 +241,12 @@ function addCoordinateVectors(paths)
 
  }
  
+ function contrastBackground()
+ {
+	if (mainBgColor='white') return 'black';
+	if (mainBgColor='black') return 'white';
+	return 'cyan'; //bugbug
+ }
 
  
  function infoLine(ptA,ptB)
@@ -398,6 +406,20 @@ function setFlowersMap()
 	alert("bugbugnyi1028");
 }
 
+var mainBgColor='white';
+function updateBackground(ev)
+{
+	mainBgColor = ($("#black").is(':checked')) ? 'black' : 'white';
+}
+
+var big=1;
+function toggleBigness(ev)
+{
+	big=($("#big").is(':checked'))?2:1;
+}
+
+
+
 function parseDataSet(dataFileOptions,columnInfo)
 {
 	addCoordinateVectors(theDrawings);
@@ -432,6 +454,7 @@ $(document).ready(function()
 			$("#dataset").val(oGetVars["dataset"]);
 			
 		setMap(oGetVars["dataset"]);  
+		updateBackground();
 		start3d(theDrawings);  //in cameraAndStuff.js
 
 	
@@ -457,6 +480,14 @@ $(document).ready(function()
 		$("#dataset").change( function(event)
 			{
 				changeDataSet(event);
+			});
+		$("#black").change( function(event)
+			{
+				updateBackground();
+			});
+		$("#big").change( function(event)
+			{
+				toggleBigness();
 			});
 	
 	}
