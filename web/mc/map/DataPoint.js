@@ -32,7 +32,7 @@ DataPoint.prototype.draw=function(renderer,log2Size)
 		moveTo(ctx, pointIn2d);
 		
 		ctx.font="10px Arial";
-		ctx.fillStyle="black";
+		ctx.fillStyle=contrastBackground();
 		
 		ctx.fillText(this.pointh.t,pointIn2d.x,pointIn2d.y);  //bugbug redo startingPoint logic we inherited here
 		ctx.stroke();
