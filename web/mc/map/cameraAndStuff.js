@@ -47,7 +47,7 @@ function start3d(theDrawings)
 		for(var ii=0,lim=theDrawings.length; ii<lim; ii++)
 		{
 			var drawing = theDrawings[ii];			
-			renderer.camera.transform.check();  //bugbug assert
+			renderer.camera.transform.check();  //bugbug assert  //bugbug needed???
 			if (drawing instanceof iDrawable) 
 			{
 				drawing.draw(renderer);

@@ -84,16 +84,19 @@ function moveTo(ctx,pt)
 	return 1;
 }
 
-
 function lineTo(ctx,pt)
 {
 	if (pt==null) return null;
 	ctx.lineTo(pt.x,pt.y);
 	return 1;
 }
-
-
-
+function fillPoint(ctx,pt,size)
+{
+	if (pt==null) return null;
+	if (size<=0) return null;
+	ctx.fillRect(pt.x,pt.y,size,size);
+	return 1;
+}
 
 //bugbug make separate class  //this is an "abstract class"
 function iDrawable() {}  
