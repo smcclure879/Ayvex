@@ -755,16 +755,17 @@ var Pre3d = (function() {
   // Project the 3d point |p| to a point in 2d.
   // Takes the current focal_length_ in account.
   Renderer.prototype.projectPointToCanvas = function projectPointToCanvas(p,skipOffscreenPoint) {
+  
+    // We're looking down the z-axis in the negative direction...
+    var v = this.camera.focal_length / -p.z;  //bugbug removed negative on p.z but that's wrong too apparently
+    var scale = this.scale_;
+  
   	if (skipOffscreenPoint)
 	{
 		if (p.x*v<-20 || p.x*v>20) return null;
 		if (p.y*v<-20 || p.y*v>20) return null;  //bugbug const or setting
 		if (p.z>0)  return null;  //this culls out stuff behind the camera  (it's already projected into camera space
 	}
-	
-    // We're looking down the z-axis in the negative direction...
-    var v = this.camera.focal_length / -p.z;  //bugbug removed negative on p.z but that's wrong too apparently
-    var scale = this.scale_;
 	
 	// Map the height to -1 .. 1, and the width to maintain aspect.
 	var x = p.x * v * scale + this.xoff_;

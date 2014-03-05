@@ -9,7 +9,7 @@ function assert(condition,id)
 
 //bugbug make this into a function and just return the interface ... like pre3d.js is packaged
 
-var maxInt=0xFFFFFFF;  //bugbug chopped to 23 bits or so
+var maxInt=0xFFFFFFF;  
 function hRndBool(h,frac)
 {
 	//given a hash value h, which might be any set of 32 bits (check this bugbug)
@@ -31,7 +31,7 @@ function hRndRange(lo,hi,h8)  //h8=8 bits of hash data from 0-255
 {
 	assert(lo<hi,'errcode125c');
 	assert(h8<256 && h8>=0,'errCode126y');
-	var s=hi-lo;  //bugbug
+	var s=hi-lo;  //bugbug +1?
 	assert(lo<hi,'errcode122a');
 	var retval = s*h8/256 + lo;
 	assert(retval<=hi && retval>=lo,'errCode122b');
@@ -75,7 +75,7 @@ Hasher.consistentHash=function consistentHash(arr)  //for now we only support ar
 		{
 			alert("foobugbug155am");
 		}
-		hr.process(arr[ii].toString());  //bugbug .toString??
+		hr.process(arr[ii].toString());  
 		hr.process("-x-");  //tab    //not safe, fix this part of the hash also!  bugbug
 	}
 	var retval=hr.get();

@@ -2,7 +2,7 @@
 <head>
 <title>mc2 world map</title>
 
-<!-- script src="jquery-1.10.2.min.js"></script   bugbug later maybe   -->
+<!-- script src="jquery-1.10.2.min.js"></script   todo   -->
 <script src="../../lib/jquery-1.10.2.js"></script>
 <script src="../../lib/pre3d.js"></script>
 <script src="../../lib/queryParams.js"></script>
@@ -12,6 +12,9 @@
 <script src="memoize.js"></script>
 <script src="tree.js"></script>
 <script src="hasher.js"></script>
+<script src="loadDataFile.js"></script>
+<script src="localSettings.js"></script>
+<script src="DataPoint.js"></script>
 </head>
 
 <body>
@@ -79,10 +82,12 @@ camRotZ<input type="text" id="camRotZ" value="x"/><br>
 <script>
 
 
+
 var floor=62;  //minecraftWaterLevel bugbug setting or ???
 
 var toolbar = document.getElementById("toolbar");
-start3d();  //in cameraAndStuff.js
+var theDrawings=[];
+
 
 
 function debugAdd(s)
@@ -96,10 +101,18 @@ function debugSet(s)
 }
 
 
+//this works, but the script won't be live until you yield the thread for a while.  call it carefully!
+function addScript(filename)
+{
+	//http://www.javascriptkit.com/javatutors/loadjavascriptcss.shtml  
+	var newScriptTag=document.createElement('script')
+	newScriptTag.setAttribute("type","text/javascript")
+	newScriptTag.setAttribute("src", filename)
+	document.getElementsByTagName("head")[0].appendChild(newScriptTag);
+}	
+
 function makeBigMap(data)
 {
-	var paths = [ ];
-	
 	var path;
 	var jj=0;  //for the inner loop inside one path
 	var kk=0;  //index into the outputs
@@ -110,7 +123,7 @@ function makeBigMap(data)
 		{
 			if (path) //store the old path if there is one
 			{
-				paths[kk++]=path;
+				theDrawings[kk++]=path;
 			}
 			path = new Pre3d.Path();
 			path.starting_point = 0;  //we make this standard
@@ -128,8 +141,7 @@ function makeBigMap(data)
 		jj++;
 	}
 	
-	paths.push(path);  //close it out
-	return paths;
+	theDrawings.push(path);  //close it out
 }
 
 function addTreesAndWater(paths)
@@ -178,7 +190,6 @@ function addCoordinateVectors(paths)
 	paths.push(infoLine(	{x:0,y:0,z:1000,t:'Z'},  //and Z should be south
 							{x:0,y:0,z:0   } ));
 	
-	return paths;
 }
 
  
@@ -198,27 +209,15 @@ function addCoordinateVectors(paths)
  //function markerOrTree(xx,zz, treePoleFrac)
  function marker(xx,zz)
  {
-//	var treePoleFrac= treePoleFrac || 0;
 	var height=40;
-//	var h=Hasher.consistentHash(['marker',xx,zz]);  // 'marker' =?= atom at first position  
-//	//debugAdd(h+","+xx+","+zz);
-//	if (hRndBool(h,treePoleFrac))
-//	{
-//		//bugbug currently the Tree class is set up to IDrawable, not to lateDraw
-//		var retval = new Tree(xx,floor,zz,h);
-//		if (!(retval instanceof iDrawable))
-//			alert("bugbug why is tree not iDrawable?");  //bugbug make this whole thing an assert
-//		return retval;
-//	}
-//	else  //regular markerPole
-//	{
-		return twoSegmentPath( 'black',
+
+	return twoSegmentPath( 'black',
 							  1,
 							  xx, floor, zz,   
 							  xx, height+floor, zz,
 							  xx, height+floor, zz-10);  //minus Z is north
-//	}
-}
+
+ }
  
 
  
@@ -247,7 +246,7 @@ function linePath(color,width,ptA,ptB)  //ptA includes a text .t
 }
 
 
-
+//bugbug move some of this to its own file
  function twoSegmentPath(color,width,x1,y1,z1,x2,y2,z2,x3,y3,z3)
  {
 	var path=new Pre3d.Path();
@@ -279,7 +278,9 @@ function makeFakeMap()
     return [path];
 }
 
-function getMap(dataSetName)  //callback from the cameraAndStuff.js  
+
+
+function setMap(dataSetName)  //no longer a callback from the cameraAndStuff.js  
 {
 	//defaulting a bunch
 	if (typeof dataSetName === 'undefined')
@@ -291,82 +292,105 @@ function getMap(dataSetName)  //callback from the cameraAndStuff.js
 		}
 	}
 	
-	if (dataSetName=='mc2map')
+	switch(dataSetName)
 	{
-		var data = getMc2Data();
-		var theMap = makeBigMap(data);
-		addMarkersAndWater(theMap);
-		theMap=addCoordinateVectors(theMap);
-
-		return theMap;
+		case 'mc2map': setMc2Map(); break;
+		case 'frcWld': setFractalWorldMap();  break;   		//bugbug semantics "map" for these entities is wrong....it's a full presentation around a dataset, the framing around the map, etc.
+		case 'hiiDimAnlErq': setEarthquakeMap(); break;
+		case 'hiiDimAnlFlw': setFlowersMap(); break;
+		default: setErrorMap(dataSetName); break;
 	}
-	else if (dataSetName=='frcWld')
-	{	
-		return fractalWorldMap();  //bugbug semantics "map" for these entities is wrong....it's a full presentation around a dataset, the framing around the map, etc.
-	}
-	else if (dataSetName=='hiiDimAnlErq')
-	{
-		return earthquakeMap();
-	}
-	else if (dataSetName=='hiiDimAnlFlw')
-	{
-		return flowersMap();
-	}
+	
 }
 
 function changeDataSet(ev)
 {
+	//bugbug find a better way to do this without refreshing...just an event to the camera or something....new call to start3d?
 	var newDataSetName=ev.target.value;
 	ev.stopPropagation();  //bugbug needed??
 	window.location.href="?dataset="+newDataSetName;
 }
 
-function fractalWorldMap()
+function setErrorMap(dataSetName)
+{
+	debugSet("bugbug setErrorMap is nyi:"+dataSetName);
+}
+
+function setMc2Map()
+{
+	var rawData=getMc2Data();
+	makeBigMap(rawData);
+	addMarkersAndWater(theDrawings);
+	addCoordinateVectors(theDrawings);
+}
+
+function setFractalWorldMap()
 {
 	var treePoleFrac=0.5;
-	var theMap=[];
-	addCoordinateVectors(theMap);
+	addCoordinateVectors(theDrawings);
 	//todo add perlin noise, etc etc etc
-	addTreesAndWater(theMap,treePoleFrac);
-	return theMap;
+	addTreesAndWater(theDrawings,treePoleFrac);
 }
 
-function earthquakeMap()
-{
-	var theMap=[];
-	addCoordinateVectors(theMap);
+
+
+function setEarthquakeMap()
+{	
+	var filename="data/erq_all_month.js";
 	
+	//todo should go into extended CSV script file thingy, not here with 
 	var columnInfo=
 	[  //time,latitude,longitude,depth,mag,magType,nst,gap,dmin,rms,net,id,updated,place,type
-		['time'],  //bugbug what are the other columns about a column??  (is UTC, parseThisWay, limits, precision, short and long name
-		['lat'],
-		['long'],
-		['depth']
-		///////more bugbug???
+		{name:'time',readas:'utc',scale:0.0000001,offset:1.387e+12},  //todo what are the other columns about a column??  (isUTC, parseThisWay, limits, precision, short and long name
+		{name:'lat',readas:'float',scale:2,offset:0}, 
+		{name:'long',readas:'float',scale:2,offset:0},
+		{name:'depth',readas:'float',scale:1,offset:0}
+		///////there are more columns....pull them in to make the demo better (need more dimensions)
 	];
+
+	//todo maybe this too into some kinda extended datafile format
+	var dataFileOptions={
+							'skipFirstLine':1,
+							'skipLinesWithFirstCharIn':'#'
+						};
 	
-	loadDataFile(theMap,"earthquakes.txt",columnInfo,
-					{
-						'skipFirstLine':1,
-						'skipLinesWithFirstCharIn':'#'
-					}
-				);
-	return theMap;
-}
-
-function flowersMap()
-{
-	alert("nyi1028");
-}
-
-
-//bugbug separate file/module?
-function loadDataFile(theMap,file,columnInfo,options)
-{
-	options=options || {};
+	addScript(filename); //bugbug should be .then();
 	
-	alert("loadDataFile is nyi1245");
+	//continue this later in second function, so the new JS will "take".  	
+	setTimeout(function(){
+	parseDataSet(dataFileOptions,columnInfo);
+	}, 100);
 }
+
+
+function setFlowersMap()
+{
+	alert("bugbugnyi1028");
+}
+
+function parseDataSet(dataFileOptions,columnInfo)
+{
+	addCoordinateVectors(theDrawings);
+	
+	if (typeof getData != 'function') 
+	{
+		alert("cannot read the data type 1");  //bugbug make this an assert
+		return theDrawings;	  // but you won't like it  
+	}
+	
+	var textData=getData();	
+	
+	if (!textData) 
+	{
+		alert("cannot read the data type 2");  //bugbug make this an assert
+		return theDrawings;
+	}
+	
+	addTextData(theDrawings,textData,columnInfo,dataFileOptions,null);  //transformation function --- null=use the default
+}
+
+
+
 
 
 //used to track what keys are down
@@ -376,6 +400,10 @@ $(document).ready(function()
 	{
 		if (oGetVars["dataset"]) 
 			$("#dataset").val(oGetVars["dataset"]);
+			
+		setMap(oGetVars["dataset"]);  
+		start3d(theDrawings);  //in cameraAndStuff.js
+
 	
 		anim = $("#animate");
 		anim.click( function(event)
@@ -393,7 +421,7 @@ $(document).ready(function()
 
 		$("#flyTo").click( function(event)
 			{
-				DemoUtils.Notify("flyToSelected","bugbugneeded158?");			
+				DemoUtils.Notify("flyToSelected","bugbugneeded158?");		
 			});
 		
 		$("#dataset").change( function(event)

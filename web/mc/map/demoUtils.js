@@ -78,7 +78,7 @@ function stringVec(v)
 	return ""+v.x+","+v.y+","+v.z;
 }
 
-function negate(v)   //this function makes it all better but I have zero sense WHY???  BUGBUG
+function negate(v)   //bugbug the camera projects negative.  wish we weren't calling this from everywhere...move it to shared file?
 {
 	return {x:-v.x, y:-v.y, z:-v.z};
 }
@@ -430,7 +430,7 @@ var DemoUtils = (function() {
 		//update control panel
 		$("#frameNum").val(frameNum);
 		$("#camX").val(-camera_state.x);
-		$("#camY").val(-camera_state.y);  //bugbug why this sign flip?  don't know right now!
+		$("#camY").val(-camera_state.y);  //bugbug same as the "negate" calls  Try to find a way to avoid
 		$("#camZ").val(-camera_state.z);
 		$("#camRotX").val(deg(camera_state.rotate_x));  //degrees for display only
 		$("#camRotY").val(deg(camera_state.rotate_y));
@@ -537,6 +537,8 @@ var DemoUtils = (function() {
       }, 0);
     }
 
+	
+	
     registerMouseListener(renderer.canvas, handleCameraMouse);
 
     if (opts.touchDrawCallback !== undefined)
