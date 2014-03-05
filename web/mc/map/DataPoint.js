@@ -38,16 +38,15 @@ DataPoint.prototype.draw=function(renderer,log2Size)
 		ctx.stroke();
 	}
 	
-	var size=1;
+	var size=big;
 	if (this.isSelected) 
 	{
 		ctx.fillStyle='purple';
-		size=3;
+		size++;
 	}
 	else
 	{
 		ctx.fillStyle=this.color;
-		size=1;
 	}
 	
 		

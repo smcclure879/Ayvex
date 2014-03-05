@@ -688,6 +688,7 @@ var DemoUtils = (function() {
 			case "animate": animate=state; break;
 			case "flyToSelected": flying=true; break;
 			case "moveCamera": newCameraState=state; break;
+			case "updateBackground": black=state; break;
 			default: alert("bugbug unknown alert");
 		}
 	}

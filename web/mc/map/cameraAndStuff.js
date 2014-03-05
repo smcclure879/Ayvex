@@ -40,8 +40,7 @@ function start3d(theDrawings)
 
 		renderer.transform.scale(1, 1, 1);  //todo consider if need stretch in Z  //bugbug needed?
 
-		// White background.
-		renderer.ctx.setFillColor(1, 1, 1, 1);  //bugbug settings
+		renderer.ctx.setFillColor(mainBgColor);  //bugbug settings
 		renderer.drawBackground();
 
 		for(var ii=0,lim=theDrawings.length; ii<lim; ii++)
