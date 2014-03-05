@@ -324,17 +324,22 @@ var DemoUtils = (function() {
   }
 
   
-  
-  
-  
   // Register mouse handlers to automatically handle camera:
   //   Mouse -> rotate around origin x and y axis.
   //   Mouse + ctrl -> pan x / y.
   //   Mouse + shift -> pan z.
   //   Mouse + ctrl + shift -> adjust focal length.
+ 
+
+ 
+//these vars are used to communicate stateu changes into the rather closed demoUtil "class"
   var animate = false;
   var flying = false;
-  function autoCamera(renderer, ix, iy, iz, tx, ty, tz, draw_callback, find_callback, opts) {
+  var newCameraState=null;
+ 
+
+
+ function autoCamera(renderer, ix, iy, iz, tx, ty, tz, draw_callback, find_callback, opts) {
     var camera_state = {
       rotate_x: tx,
       rotate_y: ty,
@@ -349,7 +354,7 @@ var DemoUtils = (function() {
     opts = opts !== undefined ? opts : { };
 
 	var dx=0.0,dy=0.0,dz=0.0;  //to support animation
-    function set_camera() {
+    function setupCamera() {
       var ct = renderer.camera.transform;
       ct.reset();
 	  ct.translate(camera_state.x+dx, camera_state.y+dy, camera_state.z+dz);
@@ -420,6 +425,7 @@ var DemoUtils = (function() {
 
 		if (animate) animateIt(frameNum);
 		if (flying) flyTo(frameNum);
+		if (newCameraState!=null) updateCameraState(frameNum,newCameraState);
 		redoTheCam(frameNum);
 	}
 
@@ -436,7 +442,7 @@ var DemoUtils = (function() {
 		$("#camRotY").val(deg(camera_state.rotate_y));
 		$("#camRotZ").val(deg(camera_state.rotate_z));
 
-		set_camera();
+		setupCamera();
 		draw_callback();
 		dirtyCam=false;
 	}
@@ -471,13 +477,29 @@ var DemoUtils = (function() {
 		dirtyCam=true;	
 	}
 	
+	function updateCameraState(frameNum)
+	{
+		copyPointData(newCameraState,camera_state);
+		copyAngleData(newCameraState,camera_state);
+		newCameraState=null;  //so it can be used to signal again
+		dirtyCam=true;	
+	}
+	
+	
 	function copyPointData(src,dst)
 	{
 		dst.x=src.x;
 		dst.y=src.y;
 		dst.z=src.z;
 	}
-
+	
+	function copyAngleData(src,dst)
+	{
+		dst.rotate_x=src.rotate_x;
+		dst.rotate_y=src.rotate_y;
+		dst.rotate_z=src.rotate_z;
+	}
+	
 	fps=60;  //bugbug settings
 	var ticker=new Ticker(fps,myTick);
 	dirtyCam=true;
@@ -528,7 +550,7 @@ var DemoUtils = (function() {
 
       cur_pending = setTimeout(function() {
         cur_pending = null;
-        set_camera();
+        setupCamera();
         if (info.touch === true) {
           opts.touchDrawCallback(false);
         } else {
@@ -563,7 +585,7 @@ var DemoUtils = (function() {
     }
 
     // Set up the initial camera.
-    set_camera();
+    setupCamera();
 	dirtyCam=true;
   }
 
@@ -661,17 +683,12 @@ var DemoUtils = (function() {
 
 	function Notify(item,state)
 	{
-		if (item=="animate")
+		switch(item)
 		{
-			animate=state;
-		}
-		else if (item=="flyToSelected")
-		{
-			flying=true;
-		}
-		else
-		{
-			alert("bugbug unknown alert");
+			case "animate": animate=state; break;
+			case "flyToSelected": flying=true; break;
+			case "moveCamera": newCameraState=state; break;
+			default: alert("bugbug unknown alert");
 		}
 	}
 

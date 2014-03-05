@@ -101,6 +101,26 @@ function debugSet(s)
 }
 
 
+//each step needs to be set off by the step before it, but on different thread to account for dynamic code
+function doAllSteps(arrSteps)
+{
+	doSteps(arrSteps,0);
+}
+
+function doSteps(arrSteps,whereAt)
+{
+	if (whereAt>=arrSteps.length) return;
+	if (arrSteps[whereAt]==null) return;
+	
+	doStep(function(){ arrSteps[whereAt](); doSteps(arrSteps,whereAt+1); });
+}
+
+function doStep(step)
+{
+	setTimeout(step,100);
+}
+
+
 //this works, but the script won't be live until you yield the thread for a while.  call it carefully!
 function addScript(filename)
 {
@@ -341,9 +361,9 @@ function setEarthquakeMap()
 	//todo should go into extended CSV script file thingy, not here with 
 	var columnInfo=
 	[  //time,latitude,longitude,depth,mag,magType,nst,gap,dmin,rms,net,id,updated,place,type
-		{name:'time',readas:'utc',scale:0.0000001,offset:1.387e+12},  //todo what are the other columns about a column??  (isUTC, parseThisWay, limits, precision, short and long name
-		{name:'lat',readas:'float',scale:2,offset:0}, 
-		{name:'long',readas:'float',scale:2,offset:0},
+		{name:'time',readas:'utc',scale:0.000001,offset:1.387e+12},  //todo what are the other columns about a column??  (isUTC, parseThisWay, limits, precision, short and long name
+		{name:'lat',readas:'float',scale:10,offset:0}, 
+		{name:'long',readas:'float',scale:10,offset:0},
 		{name:'depth',readas:'float',scale:1,offset:0}
 		///////there are more columns....pull them in to make the demo better (need more dimensions)
 	];
@@ -354,12 +374,22 @@ function setEarthquakeMap()
 							'skipLinesWithFirstCharIn':'#'
 						};
 	
-	addScript(filename); //bugbug should be .then();
 	
-	//continue this later in second function, so the new JS will "take".  	
-	setTimeout(function(){
-	parseDataSet(dataFileOptions,columnInfo);
-	}, 100);
+	addScript(filename); //so that data set is fetchable, must be in other thread for the script to activate
+	doAllSteps([  //bugbug should be .then()???;
+			 function() {parseDataSet(dataFileOptions,columnInfo);}
+			,function() {theDrawings.push(new DataPoint([-2000,100,100],"stand here to start")); }
+			,function() {
+							DemoUtils.Notify('moveCamera',{
+								rotate_x: rad(3),
+								rotate_y: rad(90),
+								rotate_z: rad(0),
+								x: 800,
+								y: -650,
+								z: 1100});
+						}
+		]);
+		
 }
 
 
@@ -374,7 +404,7 @@ function parseDataSet(dataFileOptions,columnInfo)
 	
 	if (typeof getData != 'function') 
 	{
-		alert("cannot read the data type 1");  //bugbug make this an assert
+		alert("dynamic read fail: cannot read the data type 1");  //bugbug make this an assert
 		return theDrawings;	  // but you won't like it  
 	}
 	
