@@ -1,6 +1,6 @@
   
 // (c) Dean McNamee <dean@gmail.com>.  All rights reserved.
-function start3d() 
+function start3d(theDrawings) 
 {
 	var screen_canvas = document.getElementById('c');
 	var renderer = new Pre3d.Renderer(screen_canvas);
@@ -24,28 +24,29 @@ function start3d()
 		orig_bezierCurveTo.call(this, c0x, c0y, c1x, c1y, epx, epy);
 	} 
 
-	var theDrawings = getMap(oGetVars["dataset"]);
-
-
 	renderer.ctx.setStrokeColor(0x52 / 255, 0xbb / 255, 0x5c / 255, 1);
 	renderer.ctx.lineWidth = 1;
 
 	function draw() 
-	{
+	{		
+		if (!theDrawings) 
+		{
+			debugSet("no drawings");
+			return;
+		}
 		renderer.transform.reset();
 		//here, we could be translating model, but don't
-		//renderer.transform.translate(0, 0, 0);  // Center over the origin.  //bugbug this is actually the "center of rotation point" for model rotation
+		//renderer.transform.translate(0, 0, 0);  // Center over the origin.  
 
 		renderer.transform.scale(1, 1, 1);  //todo consider if need stretch in Z  //bugbug needed?
 
-		// White background.
-		renderer.ctx.setFillColor(1, 1, 1, 1);  //bugbug settings
+		renderer.ctx.setFillColor(mainBgColor);  //bugbug settings
 		renderer.drawBackground();
 
 		for(var ii=0,lim=theDrawings.length; ii<lim; ii++)
 		{
 			var drawing = theDrawings[ii];			
-			renderer.camera.transform.check();  //bugbug assert
+			renderer.camera.transform.check();  //bugbug assert  //bugbug needed???
 			if (drawing instanceof iDrawable) 
 			{
 				drawing.draw(renderer);
@@ -56,7 +57,7 @@ function start3d()
 			}
 		}
 		
-		//bugbug renderer.drawReticle();  //in screen coords
+		//todo renderer.drawReticle();  //in screen coords
 	}
 	  
 	//bugbug move this function into the renderer (pre3d.js function getnearest )
@@ -75,7 +76,7 @@ function start3d()
 			else  //have the renderer do it
 			{
 				//pass the best thru, and insist it hand the old or new best back out  (end up with path#, point #, point serialNum, distance between click and selectPoint
-				best = renderer.getNearest(drawing,x,y,best,ii);  //bugbug fix this fn to take new iDrawables for "drawing"
+				best = renderer.getNearest(drawing,x,y,best,ii);  
 			}
 
 		}

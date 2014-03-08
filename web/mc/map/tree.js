@@ -3,6 +3,22 @@
 //"importing" the Pre3d math functions...
 var mm = Pre3d.Math;
 
+function transformPoint(renderer,point)  
+{
+	if (point==null)
+		return null;
+		
+	//move into renderer if working bugbug  and combine with similar code in getNearest?
+	var pt3d = renderer.transformPoint(point);
+	if (pt3d.z > 0) 
+		return null;
+		
+	var pt2d = renderer.projectPointToCanvas(pt3d,true);
+	if (pt2d == null)
+		return null;
+
+	return pt2d;
+}
 
 function mutateByHash1(vec3d,h)
 {
@@ -68,16 +84,19 @@ function moveTo(ctx,pt)
 	return 1;
 }
 
-
 function lineTo(ctx,pt)
 {
 	if (pt==null) return null;
 	ctx.lineTo(pt.x,pt.y);
 	return 1;
 }
-
-
-
+function fillPoint(ctx,pt,size)
+{
+	if (pt==null) return null;
+	if (size<=0) return null;
+	ctx.fillRect(pt.x,pt.y,size,size);
+	return 1;
+}
 
 //bugbug make separate class  //this is an "abstract class"
 function iDrawable() {}  
@@ -85,7 +104,7 @@ function iDrawable() {}
 //near dup of code in renderer...can we consolidate?  bugbug
 iDrawable.prototype.getNearest=function(x,y,renderer,best,thisDrawingIndex)
 {
-	//old  return best;  //bugbug the rest of this should be a call to renderer or this duplicate code?
+	//bugbug should this be a call to renderer or this semi-duplicate code?
 	
 	if (typeof this.pointh==='undefined') 
 		return best;
@@ -99,12 +118,15 @@ iDrawable.prototype.getNearest=function(x,y,renderer,best,thisDrawingIndex)
 		return best;
 		
 	var newQuadrance = mm.quadr(x,y,pt2d);
+	if (isNaN(newQuadrance))
+		return best;
 	if (newQuadrance >= best.bestQuadranceSoFar) 
 		return best;
+
 		
 	//we found a new winner!
 	best.bestQuadranceSoFar = newQuadrance;
-	best.closestPointIndex = 0;
+	best.closestPointIndex = 0;  //this is the point index within the drawable...by convention the zeroeth point is selected as the center for rotations, flyTo, etc
 	best.closestDrawingIndex = thisDrawingIndex;
 	best.x=this.pointh.x;
 	best.y=this.pointh.y;
@@ -182,7 +204,7 @@ function Tree(x,y,z,h)  //tree has this position forever, and can be regrown fro
 
 	this.pointh={x:x,y:y,z:z,h:h};  
 	//bugbug can these be made as .prototype functions?
-	this.lateDraw=memoize(function(x){ return this.getLevelPath(x); });  
+	this.lateDraw=memoize(function(x){ return this.getLevelPath(x); });  //bugbug is late-draw this still in use???
 	this.lateDrawSet=function(x) { var n=this.lateDraw(x); this.become(n);}; 
 	this.color='22CC00';  //bugbug reduce size of this obj by making these class props???
 	//bugbug change getting of paths to calling .Draw method and passing the ctx to it?
@@ -225,13 +247,10 @@ Tree.prototype.draw=function(renderer,log2Size)
 Tree.prototype.become = function(n)   
 {
 	this.color=n.color; 
-	this.bugbug="bugbug from lateDraw";
 	this.points=n.points; 
 	this.labels=n.labels; 
 	this.curves=n.curves;
 }
-//bugbug make Tree inherit from path something like this...
-//Tree.prototype=new Path();
 
 
 Tree.prototype.getLevelPath=function (log2Size) //size= log of features you care about (and bigger)
@@ -275,7 +294,6 @@ Tree.prototype.getLevelPath=function (log2Size) //size= log of features you care
 					}
 
 
-Tree.prototype.isLateDrawable=0;  
 
 
 //bugbug separate to its own class 
@@ -286,24 +304,10 @@ Tree.prototype.drawFractalPath=function(renderer,h,pointh,momentumVector,tag,lev
 		return;
 	
     var ctx = renderer.ctx;
-	//bugbug still needed?  unlikely  var trans=renderer.getCurrentTransformMemoized(); //bugbug make this function work...//return multiplyAffine(renderer.camera.transform.m, renderer.transform.m);  //bugbug memoize--all paths being drawn share same transform!
-	var tpt = function transformPoint(point)  
-		{
-			if (point==null)
-				return null;
-				
-			//move into renderer if working bugbug  and combine with similar code in getNearest?
-			var pt3d = renderer.transformPoint(point);
-			if (pt3d.z > 0) 
-				return null;
-				
-			var pt2d = renderer.projectPointToCanvas(pt3d,true);
-			if (pt2d == null)
-				return null;
-
-			return pt2d;
-		}
-	//bugbug lateDraw is superceded by "normal draw" (this fn)     //this.doLateDrawIfApplicable(path);
+	
+	var tpt = function (point)  {	return transformPoint(renderer,point);	} ;
+	
+	//lateDraw is now superceded by "normal draw" (this fn)     //this.doLateDrawIfApplicable(path);
 	//probably want singlepoint version    bugbug  ....var screenPts = renderer.projectPointsToCanvas(renderer.transformPoints(currentTransform, path.points),true);
 	var firstPoint = tpt(pointh);
 	if (firstPoint==null) return null;
@@ -311,7 +315,7 @@ Tree.prototype.drawFractalPath=function(renderer,h,pointh,momentumVector,tag,lev
 	ctx.beginPath();
     //ctx.moveTo(screenPts.x, screenPts.y);
 	//ctx.font="10px Arial";
-	//ctx.fillStyle="black";
+	//ctx.fillStyle=contrastBackground();
 	//ctx.fillText(path.points[path.starting_point].t,start_point.x,start_point.y);  //bugbug redo startingPoint logic we inherited here
 
 	var width=this.width || levelsToDraw || 1;  
@@ -326,12 +330,6 @@ Tree.prototype.drawFractalPath=function(renderer,h,pointh,momentumVector,tag,lev
 		ctx.strokeStyle=this.color || 'red';  //bugbug is deciding and setting every time a perf hit?  bunch 'em up by color?
 		ctx.lineWidth=width;
 	}
-	
-	// if (this.isSelected)  //bugbug implement this!
-	// {
-		// ctx.strokeStyle='purple';
-		// ctx.lineWidth=(this.width || this.levelsToDraw || 1)+2;
-	// }
 	
 	if (moveTo(ctx,firstPoint)==null) return null;
 	

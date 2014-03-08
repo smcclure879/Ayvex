@@ -755,16 +755,17 @@ var Pre3d = (function() {
   // Project the 3d point |p| to a point in 2d.
   // Takes the current focal_length_ in account.
   Renderer.prototype.projectPointToCanvas = function projectPointToCanvas(p,skipOffscreenPoint) {
+  
+    // We're looking down the z-axis in the negative direction...
+    var v = this.camera.focal_length / -p.z;  //bugbug removed negative on p.z but that's wrong too apparently
+    var scale = this.scale_;
+  
   	if (skipOffscreenPoint)
 	{
 		if (p.x*v<-20 || p.x*v>20) return null;
 		if (p.y*v<-20 || p.y*v>20) return null;  //bugbug const or setting
 		if (p.z>0)  return null;  //this culls out stuff behind the camera  (it's already projected into camera space
 	}
-	
-    // We're looking down the z-axis in the negative direction...
-    var v = this.camera.focal_length / -p.z;  //bugbug removed negative on p.z but that's wrong too apparently
-    var scale = this.scale_;
 	
 	// Map the height to -1 .. 1, and the width to maintain aspect.
 	var x = p.x * v * scale + this.xoff_;
@@ -1159,7 +1160,7 @@ var Pre3d = (function() {
     ctx.beginPath();
     ctx.moveTo(start_point.x, start_point.y);
 	ctx.font="10px Arial";
-	ctx.fillStyle="black";
+	ctx.fillStyle=contrastBackground();
 	ctx.fillText(path.points[path.starting_point].t,start_point.x,start_point.y);  //bugbug redo startingPoint logic we inherited here
 
 	if (path.isSelected)
@@ -1169,7 +1170,7 @@ var Pre3d = (function() {
 	}
 	else
 	{
-		ctx.strokeStyle=path.color;  //bugbug is deciding and setting every time a perf hit?
+		ctx.strokeStyle=contrast(path.color);  //bugbug is deciding and setting every time a perf hit?
 		ctx.lineWidth=path.width;
 	}
 	
@@ -1216,7 +1217,11 @@ var Pre3d = (function() {
 	
   };
   
-  
+  function contrast(color)
+  {
+	if (color=='black' && mainBgColor=='black') return 'cyan';
+	return color;
+  }
   
   Renderer.prototype.getNearest = function getNearest(path,x,y,best,thisDrawingIndex) 
   {
