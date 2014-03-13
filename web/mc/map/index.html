@@ -379,7 +379,7 @@ function setEarthquakeMap()
 		{name:'time',readas:'utc',scale:0.000001,offset:1.387e+12},  //todo what are the other columns about a column??  (isUTC, parseThisWay, limits, precision, short and long name
 		{name:'lat',readas:'float',scale:10,offset:0}, 
 		{name:'long',readas:'float',scale:10,offset:0},
-		{name:'depth',readas:'float',scale:1,offset:0}
+		{name:'depth',readas:'float',scale:1,offset:0},
 		///////there are more columns....pull them in to make the demo better (need more dimensions)
 	];
 
@@ -391,6 +391,7 @@ function setEarthquakeMap()
 	
 	
 	addScript(filename); //so that data set is fetchable, must be in other thread for the script to activate
+		
 	doAllSteps([  //bugbug should be .then()???;
 			 function() {parseDataSet(dataFileOptions,columnInfo);}
 			,function() {theDrawings.push(new DataPoint([-2000,100,100],"stand here to start")); }
@@ -401,8 +402,16 @@ function setEarthquakeMap()
 								rotate_z: rad(0),
 								x: 800,
 								y: -650,
-								z: 1100});
+								z: 1100});  //bugbug magic numbers.
+							DemoUtils.Notify('enableHiDim',[
+											[0,0,0,0],
+											[0,0,0,4],
+											[0,0,0,1]
+							
+										]);
+								
 						}
+			
 		]);
 		
 }

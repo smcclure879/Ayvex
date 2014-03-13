@@ -1,3 +1,7 @@
+//DataPoints are iDrawables that always take 1 (or 4 depending on "big" checkbox) pixels on the screen. 
+//They also support more than 3 dimensions (soon bugbug)
+
+
 function DataPoint(arrDims,text) 
 {
 	this.pointh = 
@@ -5,7 +9,8 @@ function DataPoint(arrDims,text)
 			x: arrDims[0],
 			y: arrDims[1],
 			z: arrDims[2],
-			h: 'foo',  //bugbug needed for any reason downstream??  if so, maybe do it right?  (or is DataPoint a special case)
+			xd: arrDims,  //just pack them all in here, later we can get rid of x,y,z (bugbug)  bugbug should these really be in pointh or elsewhere in dataPoint?
+			h: null,   //bugbug needed for any reason downstream??  if so, maybe do it right?  (or is DataPoint a special case)  or can we just compute later if needed
 			t: text
 		}
 	this.size=1;
@@ -15,9 +20,28 @@ function DataPoint(arrDims,text)
 DataPoint.prototype=new iDrawable();
 DataPoint.prototype.constructor=DataPoint;
 
-DataPoint.prototype.draw=function(renderer,log2Size)
+var phase=0;
+DataPoint.prototype.draw=function(renderer,log2Size) //,gameTime)  //bugbug need to pass in gameTime soon where this is called--OR should time be a global???
 {
-	var tpt = function (point)  {	return transformPoint(renderer,point);	} ;  //bugbug consolidate with the "tree.js"???
+	var tpt = function (pointh) {	
+	
+		var scaleDim = -1;
+		var phaseMax= 50000; //bugbug settings?
+		phase--;
+		phase %= phaseMax;	//bugbug base off the absolute frameNum or time or something???? unify time-handling
+		
+		//bugbug
+		//knock it down to 3 dimensions based on hiDimProjection settings (controller should have told renderer, what is the control structure?)
+		var offsetForHiDim = computeOffsetFromHi(renderer,pointh);  //   projection N ==> 3,   code in/near iDrawable?
+		var plainPoint3 = vecMultAdd(pointh,offsetForHiDim,scaleDim*phase/phaseMax);
+		debugSet("phase="+phase);
+		//we will not consolidate this with the "tree.js"....this is where I insert higher-dimensional projection code
+		//but should this go straight into the renderer and less code here?
+		var point2d = transformPoint(renderer,plainPoint3);  //   projection 3 ==> 2
+
+		return point2d;
+	} ;  
+	
 	
 	if (this.pointh==null) return;
 	
