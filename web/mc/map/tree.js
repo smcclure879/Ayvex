@@ -3,13 +3,13 @@
 //"importing" the Pre3d math functions...
 var mm = Pre3d.Math;
 
-function transformPoint(renderer,point)  
+function transformPoint(renderer,pointh)  //transformPoint ThreeTo2AkaTheCamera  
 {
-	if (point==null)
+	if (pointh==null)
 		return null;
 		
 	//move into renderer if working bugbug  and combine with similar code in getNearest?
-	var pt3d = renderer.transformPoint(point);
+	var pt3d = renderer.transformPoint(pointh);
 	if (pt3d.z > 0) 
 		return null;
 		
@@ -19,6 +19,22 @@ function transformPoint(renderer,point)
 
 	return pt2d;
 }
+
+//bugbug should these two functions (above & below) be in the renderer???
+//or iDrawable??
+function computeOffsetFromHi(renderer,pointhi)  //bugbug in effect this is a second camera!
+{	
+	if (pointhi==null)
+		return null;
+		
+	//move into renderer if working bugbug  and combine with similar code in getNearest?
+	var offset = renderer.computeOffsetFromHi(pointhi);
+	if (offset==null) 
+		return null;
+		
+	return offset;
+}
+
 
 function mutateByHash1(vec3d,h)
 {
@@ -101,6 +117,11 @@ function fillPoint(ctx,pt,size)
 //bugbug make separate class  //this is an "abstract class"
 function iDrawable() {}  
 
+iDrawable.prototype.draw=function (renderer,log2Size)
+{
+	alert("errCode100p7: cannot directly draw a raw iDrawable...treat it like abstract!");
+}
+
 //near dup of code in renderer...can we consolidate?  bugbug
 iDrawable.prototype.getNearest=function(x,y,renderer,best,thisDrawingIndex)
 {
@@ -131,6 +152,7 @@ iDrawable.prototype.getNearest=function(x,y,renderer,best,thisDrawingIndex)
 	best.x=this.pointh.x;
 	best.y=this.pointh.y;
 	best.z=this.pointh.z;
+	best.xd=this.pointh.xh;
 	debugSet("winner"+thisDrawingIndex);
 	return best;
 }
@@ -140,26 +162,8 @@ iDrawable.prototype.getNearest=function(x,y,renderer,best,thisDrawingIndex)
 
 
 
-
-	//add box at the selected point  bugbug have the pre3d area do this instead for "drawables" since this is point-selection
-	// if (path.isSelected && path.closestPointIndex>-1)
-	// {
-		// var selectedPoint = screen_points[path.closestPointIndex];
-		// var x=selectedPoint.x;
-		// var y=selectedPoint.y;
-		// //draws a box
-		// ctx.moveTo(x+1,y+1); 
-		// ctx.lineTo(x+1,y-1);
-		// ctx.lineTo(x-1,y-1);
-		// ctx.lineTo(x-1,y+1);
-		// ctx.lineTo(x+1,y+1);
-		// ctx.stroke();
-	// }
-		
-	
-	/* 
-	
-	this is some of the recursion code (rough) ....bugbug get this working next
+	/*
+	this is some of the recursion code (rough) ....bugbug get this working next??
 
 	for(var ii=0, l=arrBranchInstructions.length; ii<l; ii++)
 	{

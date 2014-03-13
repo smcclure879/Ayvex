@@ -1,5 +1,23 @@
-//many modifications by smcclure879
+//many modifications by smcclure879 (here and farther down)
 
+function min(a, b) {
+	if (a < b) return a;
+	return b;
+}
+
+function max(a, b) {
+	if (a > b) return a;
+	return b;
+}
+
+function vecMultAdd(a,b,q)  //retval  =  vecA + q*vecB;
+{
+	return {
+				 x:a.x+b.x*q
+				,y:a.y+b.y*q
+				,z:a.z+b.z*q
+			};
+}
 
 // Pre3d, a JavaScript software 3d renderer.
 // (c) Dean McNamee <dean@gmail.com>, Dec 2008.
@@ -352,9 +370,9 @@ var Pre3d = (function() {
     );
   }
 
-  // Transform the point |p| by the AffineMatrix |t|.
+  // Transform the point |p| by the AffineMatrix |t|.  //assuming 3-d to 3-d
   function transformPoint(t, p) {
-    if (typeof p==='undefined' || typeof p.x === 'undefined') 
+    if (typeof p==='undefined' || typeof p.x === 'undefined') //bugbug hoping to avoid this repeated check in this critical code.  (can this whole file go into the GPU?)
 		alert( "bugbug bad p" );
     return {
       x: t.e0 * p.x + t.e1 * p.y + t.e2  * p.z + t.e3,
@@ -362,16 +380,39 @@ var Pre3d = (function() {
       z: t.e8 * p.x + t.e9 * p.y + t.e10 * p.z + t.e11
     };
   }
+  
+	// Transform the point |p| by the AffineMatrix |t|.  should be N==>3  dimensions
+	//  ...slower, only use when don't have a method that matches dimension count exactly
+	function computeOffsetFromHi(t,pointhi,phase)
+	{
+		var p=pointhi.xd;  //the full N-dimensional vector, not the X,y,Z stuff yet
+		var N = p.length;
+		var M = t.length;  //bugbug for now!  how to figure t.rows???
+
+		var retval=new Array();
+		
+		for(var ii=0; ii<M; ii++)
+		{
+			retval[ii]=0;
+			for(var jj=0, jl=min(N,t[ii].length); jj<jl ; jj++)
+			{
+				retval[ii] += (t[ii][jj] * p[jj]);
+			}
+		}
+		
+		return {  x:retval[0], y:retval[1], z:retval[2]  };  //bugbug maybe later get rid of named dimensions?  please?
+	}
 
   // A Transform is a convenient wrapper around a AffineMatrix, and it is what
   // will be exposed for most transforms (camera, etc).
   function Transform() {
     this.reset();
   }
-
+  
   // Reset the transform to the identity matrix.
   Transform.prototype.reset = function() {
     this.m = makeIdentityAffine();
+	this.mHi = null;
   };
   
   Transform.prototype.check = function() {
@@ -442,7 +483,8 @@ var Pre3d = (function() {
   Transform.prototype.transformPoint = function(p) {
     return transformPoint(this.m, p);
   };
-
+  
+  
   Transform.prototype.multTransform = function(t) {
     this.m = multiplyAffine(this.m, t.m);
   };
@@ -735,6 +777,17 @@ var Pre3d = (function() {
     }
   }
 
+  
+  //bugbug  here or renderer?
+  Renderer.prototype.setHiDimProj = function(new_mHi) { //bugbug controller should be updating this every frame, yes?
+	this.mHi = new_mHi;
+  }
+
+  Renderer.prototype.transformHiDimPoint = function(p) {  //smcclure879 add.  bugbug where to set .mHi?
+    return transformPoint(this.mHi, p);
+  };
+
+  
   Renderer.prototype.pushTransform = function() {
     this.transform_stack_.push(this.transform.dup());
   };
@@ -1102,6 +1155,13 @@ var Pre3d = (function() {
   Renderer.prototype.transformPoint=function(point)
   {
 	return transformPoint(this.getCurrentTransformMemoized(), point);
+  }
+  
+  Renderer.prototype.computeOffsetFromHi=function(pointhi)
+  {
+    if (this.mHi==null) 
+		return null;  //bugbug why do I need to check this?
+	return computeOffsetFromHi(this.mHi,pointhi);
   }
   
   

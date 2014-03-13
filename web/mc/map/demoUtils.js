@@ -51,15 +51,6 @@ function badRnd(n)  //bugbug use hash always for consistency
 	return Math.floor((Math.random()*n)+1);
 }
 
-function min(a, b) {
-	if (a < b) return a;
-	return b;
-}
-
-function max(a, b) {
-	if (a > b) return a;
-	return b;
-}
 
 // Keep c >= a && c <= b.   enforce  a <= c <= b
 function clamp(a, b, c) {
@@ -335,6 +326,7 @@ var DemoUtils = (function() {
 //these vars are used to communicate stateu changes into the rather closed demoUtil "class"
   var animate = false;
   var flying = false;
+  var mhi = null;
   var newCameraState=null;
  
 
@@ -426,6 +418,7 @@ var DemoUtils = (function() {
 		if (animate) animateIt(frameNum);
 		if (flying) flyTo(frameNum);
 		if (newCameraState!=null) updateCameraState(frameNum,newCameraState);
+		if (mhi!=null) setHiDimProj(mhi);
 		redoTheCam(frameNum);
 	}
 
@@ -485,6 +478,10 @@ var DemoUtils = (function() {
 		dirtyCam=true;	
 	}
 	
+	function setHiDimProj(new_mhi)
+	{
+		renderer.setHiDimProj(new_mhi);  //bugbug eliminate this function?
+	}
 	
 	function copyPointData(src,dst)
 	{
@@ -689,6 +686,7 @@ var DemoUtils = (function() {
 			case "flyToSelected": flying=true; break;
 			case "moveCamera": newCameraState=state; break;
 			case "updateBackground": black=state; break;
+			case "enableHiDim": mhi=state; break;
 			default: alert("bugbug unknown alert");
 		}
 	}
