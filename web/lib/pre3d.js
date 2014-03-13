@@ -12,6 +12,7 @@ function max(a, b) {
 
 function vecMultAdd(a,b,q)  //retval  =  vecA + q*vecB;
 {
+	if (b==null) return a;
 	return {
 				 x:a.x+b.x*q
 				,y:a.y+b.y*q
