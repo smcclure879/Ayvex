@@ -46,20 +46,11 @@ twoPi=pi*2;
 function deg(rd) { return rd/pi*180.0; }
 function rad(dg) { return dg*pi/180.0; }
 
-function rnd(n)
+function badRnd(n)  //bugbug use hash always for consistency
 {
 	return Math.floor((Math.random()*n)+1);
 }
 
-function min(a, b) {
-	if (a < b) return a;
-	return b;
-}
-
-function max(a, b) {
-	if (a > b) return a;
-	return b;
-}
 
 // Keep c >= a && c <= b.   enforce  a <= c <= b
 function clamp(a, b, c) {
@@ -68,12 +59,20 @@ function clamp(a, b, c) {
 
 //there are only 360 degrees in a circle
 function loop(a, b, c) {  //enforce a<=c<=b by "looping around"
-	while(c<a) { c+=b; }  //only optimum if not ever exceeding one of these by much
-	while(c>b) { c-=b; }
+	while(c<a) { c+=(b-a); }  //only optimum if not ever exceeding one of these by much
+	while(c>b) { c-=(b-a); }
 	return c;
 }
 
+function stringVec(v)
+{
+	return ""+v.x+","+v.y+","+v.z;
+}
 
+function negate(v)   //bugbug the camera projects negative.  wish we weren't calling this from everywhere...move it to shared file?
+{
+	return {x:-v.x, y:-v.y, z:-v.z};
+}
 
 
 
@@ -214,14 +213,42 @@ var DemoUtils = (function() {
       return {x: e.layerX - off.x, y: e.layerY - off.y};
     }
 
+	function movementSizeSqr(state)
+	{
+		dx = state.last_x-state.first_x;
+		dy = state.last_y-state.first_y;
+		return dx*dx+dy*dy;
+	}
+	
+	canvas.addEventListener('click', function(e) {
+		if (movementSizeSqr(state)>40)  //not really a click...moved too far.
+		{
+			e.preventDefault();
+			return false;
+		}
+		//else we make a click event (shouldn't html or jquery do this for me?  bugbug)
+	    var info = {
+          is_clicking: false,
+		  wasClick: true,
+          canvas_x: state.first_x,
+          canvas_y: state.first_y,
+          shift: e.shiftKey,
+          ctrl: e.ctrlKey,
+		  isRightClick: (e.button!=0)
+        };
+		listener(info);
+	}, false);
+	
     canvas.addEventListener('mousedown', function(e) {
       var rel = relXY(e);
       state.is_clicking = true;
       state.last_x = rel.x;
       state.last_y = rel.y
-      // Event was handled, don't take default action.
-      e.preventDefault();
-      return false;
+	  state.first_x = rel.x;
+	  state.first_y = rel.y;
+      // Event was handled, don't take default action.  
+      //e.preventDefault();
+      return true;;
     }, false);
 
     canvas.addEventListener('mouseup', function(e) {
@@ -287,13 +314,24 @@ var DemoUtils = (function() {
     canvas.addEventListener('mousewheel', handler, false);
   }
 
+  
   // Register mouse handlers to automatically handle camera:
   //   Mouse -> rotate around origin x and y axis.
   //   Mouse + ctrl -> pan x / y.
   //   Mouse + shift -> pan z.
   //   Mouse + ctrl + shift -> adjust focal length.
+ 
+
+ 
+//these vars are used to communicate stateu changes into the rather closed demoUtil "class"
   var animate = false;
-  function autoCamera(renderer, ix, iy, iz, tx, ty, tz, draw_callback, opts) {
+  var flying = false;
+  var mhi = null;
+  var newCameraState=null;
+ 
+
+
+ function autoCamera(renderer, ix, iy, iz, tx, ty, tz, draw_callback, find_callback, opts) {
     var camera_state = {
       rotate_x: tx,
       rotate_y: ty,
@@ -307,26 +345,55 @@ var DemoUtils = (function() {
 
     opts = opts !== undefined ? opts : { };
 
-	var dx,dy,dz=0.0;  //to support animation
-    function set_camera() {
+	var dx=0.0,dy=0.0,dz=0.0;  //to support animation
+    function setupCamera() {
       var ct = renderer.camera.transform;
       ct.reset();
 	  ct.translate(camera_state.x+dx, camera_state.y+dy, camera_state.z+dz);
       ct.rotateZ(camera_state.rotate_z);
       ct.rotateY(camera_state.rotate_y);
       ct.rotateX(camera_state.rotate_x);
+	  ct.check();
     }
 
+//used for key speeds
 	timeStepAng=50;
 	timeStepU=1/4;
-	function pitch(ang) { camera_state.rotate_x = clamp(-halfPi,+halfPi,camera_state.rotate_x+ang/timeStepAng); dirtyCam=true;}
-	function yaw(ang) { camera_state.rotate_y = loop(0,twoPi,camera_state.rotate_y+ang/timeStepAng); dirtyCam=true;}
+
+
+	
+	function setPitchAngInternal(rotX)	{		camera_state.rotate_x = loop(-halfPi,+halfPi,rotX); 	dirtyCam=true;	}
+	function setPitchAng(rotX) 			{		camera_state.rotate_x = clamp(-halfPi,+halfPi,rotX); 	dirtyCam=true;  }  //user no flipping upside down
+	function setYawAng(rotY)			{		camera_state.rotate_y = loop(0,twoPi,rotY); 			dirtyCam=true;	}
+	
+	function pitch(ang) { setPitchAng(camera_state.rotate_x+ang/timeStepAng); }
+	function yaw(ang)   { setYawAng(  camera_state.rotate_y+ang/timeStepAng); }
 	function panLeftRight(u)   { u/=timeStepU; a=camera_state.rotate_y; camera_state.x += u*cos(a); camera_state.z += u*sin(a); dirtyCam=true;}
 	function panForwardBack(u) { u/=timeStepU; a=camera_state.rotate_y; camera_state.x -= u*sin(a); camera_state.z += u*cos(a); dirtyCam=true;}
 	function panUpDown(u) { u/=timeStepU; camera_state.y += u; dirtyCam=true;}
+	function orbit1(u) { panLeftRight(u); pointAtSelected(); }
+	function orbit2(u) { panUpDown(u); pointAtSelected(); }
+	
+	function pointAtSelected()
+	{
+		//given cam xyz and selected point xyz, set cam rotY and rotX to point at it. 		
+		pointAt(selectedItem);
+	}
 
-
-
+	
+	function pointAt(targetPoint)
+	{
+		var delta = Pre3d.Math.subPoints3d(negate(camera_state),targetPoint);
+		var rotX = Math.atan2(delta.y,Math.sqrt(delta.x*delta.x+delta.z*delta.z))    
+		var rotY = Math.atan2(delta.z,delta.x)-halfPi;
+		debugSet(//"rotX="+deg(rotX)+
+				 //", rotY="+deg(rotY)
+				 ", sel="+stringVec(targetPoint)
+				);		
+		
+		setPitchAngInternal(rotX);  //bugbug want to have the pitch(), yaw() etc take units (deg, rad?) and have separate bumpPitch() for key event, with the timeStepAng there
+		setYawAng(rotY);
+	}
 
 	function myTick(frameNum)
 	{
@@ -343,10 +410,15 @@ var DemoUtils = (function() {
 		if (isDown(83))  panForwardBack(-1);   //s
 		if (isDown(82))  panUpDown(-1);  //r
 		if (isDown(70))  panUpDown( 1);  //f
+		if (isDown(65))  orbit1( 1);  //a
+		if (isDown(68))  orbit1(-1);  //d
+		if (isDown(89))  orbit2(-1);  //y
+		if (isDown(72))  orbit2( 1);  //h
 
 		if (animate) animateIt(frameNum);
-
-
+		if (flying) flyTo(frameNum);
+		if (newCameraState!=null) updateCameraState(frameNum,newCameraState);
+		if (mhi!=null) setHiDimProj(mhi);
 		redoTheCam(frameNum);
 	}
 
@@ -356,18 +428,19 @@ var DemoUtils = (function() {
 
 		//update control panel
 		$("#frameNum").val(frameNum);
-		$("#camX").val(camera_state.x);
-		$("#camY").val(camera_state.y);
-		$("#camZ").val(camera_state.z);
+		$("#camX").val(-camera_state.x);
+		$("#camY").val(-camera_state.y);  //bugbug same as the "negate" calls  Try to find a way to avoid
+		$("#camZ").val(-camera_state.z);
 		$("#camRotX").val(deg(camera_state.rotate_x));  //degrees for display only
 		$("#camRotY").val(deg(camera_state.rotate_y));
 		$("#camRotZ").val(deg(camera_state.rotate_z));
 
-		set_camera();
+		setupCamera();
 		draw_callback();
 		dirtyCam=false;
 	}
 
+	
 
 	function animateIt(frameNum)
 	{
@@ -379,23 +452,73 @@ var DemoUtils = (function() {
 
 		dirtyCam=true;
 	}
-
+	
+	function flyTo(frameNum)
+	{
+		pointAtSelected();
+		 //a=camera_state.rotate_y; camera_state.x += u*cos(a); camera_state.z += u*sin(a); 
+		//renderer.getSelected();
+		//camera always works with negative coordinates?
+		if (mm.quadrancePts(camera_state,negate(selectedItem))<50000)  //lucky that camera_state works as a point!  //bugbug const related to "scale"?
+		{
+			flying=false;
+			return;
+		}
+		var nextPosition = mm.linearInterpolatePoints3d(camera_state,negate(selectedItem),0.14);  //bugbug const 1/flightSpeed
+		copyPointData(nextPosition,camera_state); 
+		pointAtSelected();
+		dirtyCam=true;	
+	}
+	
+	function updateCameraState(frameNum)
+	{
+		copyPointData(newCameraState,camera_state);
+		copyAngleData(newCameraState,camera_state);
+		newCameraState=null;  //so it can be used to signal again
+		dirtyCam=true;	
+	}
+	
+	function setHiDimProj(new_mhi)
+	{
+		renderer.setHiDimProj(new_mhi);  //bugbug eliminate this function?
+	}
+	
+	function copyPointData(src,dst)
+	{
+		dst.x=src.x;
+		dst.y=src.y;
+		dst.z=src.z;
+	}
+	
+	function copyAngleData(src,dst)
+	{
+		dst.rotate_x=src.rotate_x;
+		dst.rotate_y=src.rotate_y;
+		dst.rotate_z=src.rotate_z;
+	}
+	
 	fps=60;  //bugbug settings
 	var ticker=new Ticker(fps,myTick);
 	dirtyCam=true;
 	ticker.start();
 
 
-
-
+	
+	var selectedItem=null;  
 
     // We debounce fast mouse movements so we don't paint a million times.
     var cur_pending = null;
-
     function handleCameraMouse(info) {
-
+	
+	  if (info.wasClick)
+	  {
+		selectedItem = find_callback(info.canvas_x,info.canvas_y,true);
+	  }
+	
       if (!info.is_clicking)
-        return;
+	  {  
+         return;
+	  }
 
       if (info.shift && info.ctrl) {
         renderer.camera.focal_length = clamp(0.05, 10, renderer.camera.focal_length + (info.delta_y * 0.1) );
@@ -415,16 +538,16 @@ var DemoUtils = (function() {
         camera_state.rotate_y -= info.delta_x * 0.01;  //bugbug const
         camera_state.rotate_x -= info.delta_y * 0.01;  
       } else {
-		//plain bugbug nothing for now
+		//alert("todo plain click"+info.canvas_x+" "+info.canvas_y);
 	  }
-
+		//alert("todo something click");
 
       if (cur_pending != null)
         clearTimeout(cur_pending);
 
       cur_pending = setTimeout(function() {
         cur_pending = null;
-        set_camera();
+        setupCamera();
         if (info.touch === true) {
           opts.touchDrawCallback(false);
         } else {
@@ -433,6 +556,8 @@ var DemoUtils = (function() {
       }, 0);
     }
 
+	
+	
     registerMouseListener(renderer.canvas, handleCameraMouse);
 
     if (opts.touchDrawCallback !== undefined)
@@ -457,10 +582,17 @@ var DemoUtils = (function() {
     }
 
     // Set up the initial camera.
-    set_camera();
+    setupCamera();
 	dirtyCam=true;
   }
 
+  
+  
+  
+  
+  
+  
+  
   function ToggleToolbar() {
     this.options_ = [ ];
   }
@@ -548,9 +680,14 @@ var DemoUtils = (function() {
 
 	function Notify(item,state)
 	{
-		if (item=="animate")
+		switch(item)
 		{
-			animate=state;
+			case "animate": animate=state; break;
+			case "flyToSelected": flying=true; break;
+			case "moveCamera": newCameraState=state; break;
+			case "updateBackground": black=state; break;
+			case "enableHiDim": mhi=state; break;
+			default: alert("bugbug unknown alert");
 		}
 	}
 

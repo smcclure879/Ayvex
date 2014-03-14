@@ -1,5 +1,24 @@
-//modifications by smcclure879 to add text
+//many modifications by smcclure879 (here and farther down)
 
+function min(a, b) {
+	if (a < b) return a;
+	return b;
+}
+
+function max(a, b) {
+	if (a > b) return a;
+	return b;
+}
+
+function vecMultAdd(a,b,q)  //retval  =  vecA + q*vecB;
+{
+	if (b==null) return a;
+	return {
+				 x:a.x+b.x*q
+				,y:a.y+b.y*q
+				,z:a.z+b.z*q
+			};
+}
 
 // Pre3d, a JavaScript software 3d renderer.
 // (c) Dean McNamee <dean@gmail.com>, Dec 2008.
@@ -92,6 +111,31 @@ var Pre3d = (function() {
   // object creations, there are some "IP" versions of these functions.  This
   // stands for "in place", and they write the result to one of the arguments.
 
+	
+	
+	
+  function rotate(ang,aboutVec3d,vec3d) {
+  
+	return vec3d; //bugbug
+  
+  }
+  
+   //bugbug move to helpers??
+  function quadrancePts(a,b)
+  {
+	var dx=a.x-b.x;
+	var dy=a.y-b.y;
+	var dz=a.z-b.z;
+	return dx*dx + dy*dy + dz*dz;
+  }
+   
+  function quadr(x,y,point)  //bugbug rename as quadrance
+  {
+	var dx=x-point.x;
+	var dy=y-point.y;
+	return dx*dx+dy*dy;
+  }
+ 
   function crossProduct(a, b) {
     // a1b2 - a2b1, a2b0 - a0b2, a0b1 - a1b0
     return {
@@ -327,24 +371,66 @@ var Pre3d = (function() {
     );
   }
 
-  // Transform the point |p| by the AffineMatrix |t|.
+  // Transform the point |p| by the AffineMatrix |t|.  //assuming 3-d to 3-d
   function transformPoint(t, p) {
+    if (typeof p==='undefined' || typeof p.x === 'undefined') //bugbug hoping to avoid this repeated check in this critical code.  (can this whole file go into the GPU?)
+		alert( "bugbug bad p" );
     return {
       x: t.e0 * p.x + t.e1 * p.y + t.e2  * p.z + t.e3,
       y: t.e4 * p.x + t.e5 * p.y + t.e6  * p.z + t.e7,
       z: t.e8 * p.x + t.e9 * p.y + t.e10 * p.z + t.e11
     };
   }
+  
+	// Transform the point |p| by the AffineMatrix |t|.  should be N==>3  dimensions
+	//  ...slower, only use when don't have a method that matches dimension count exactly
+	function computeOffsetFromHi(t,pointhi,phase)
+	{
+		var p=pointhi.xd;  //the full N-dimensional vector, not the X,y,Z stuff yet
+		var N = p.length;
+		var M = t.length;  //bugbug for now!  how to figure t.rows???
+
+		var retval=new Array();
+		
+		for(var ii=0; ii<M; ii++)
+		{
+			retval[ii]=0;
+			for(var jj=0, jl=min(N,t[ii].length); jj<jl ; jj++)
+			{
+				retval[ii] += (t[ii][jj] * p[jj]);
+			}
+		}
+		
+		return {  x:retval[0], y:retval[1], z:retval[2]  };  //bugbug maybe later get rid of named dimensions?  please?
+	}
 
   // A Transform is a convenient wrapper around a AffineMatrix, and it is what
   // will be exposed for most transforms (camera, etc).
   function Transform() {
     this.reset();
   }
-
+  
   // Reset the transform to the identity matrix.
   Transform.prototype.reset = function() {
     this.m = makeIdentityAffine();
+	this.mHi = null;
+  };
+  
+  Transform.prototype.check = function() {
+	var mm=this.m;
+	if (isNaN(mm.e0  
+		+mm.e1 
+		+mm.e2 
+		+mm.e3 
+		+mm.e4 
+		+mm.e5 
+		+mm.e6 
+		+mm.e7 
+		+mm.e8 
+		+mm.e9 
+		+mm.e10
+		+mm.e11))
+			alert("bugbug1040 bad affine transform");  //assert basically  bugbug remove this!
   };
 
   // TODO(deanm): We are creating two extra objects here.  What would be most
@@ -398,7 +484,8 @@ var Pre3d = (function() {
   Transform.prototype.transformPoint = function(p) {
     return transformPoint(this.m, p);
   };
-
+  
+  
   Transform.prototype.multTransform = function(t) {
     this.m = multiplyAffine(this.m, t.m);
   };
@@ -418,7 +505,10 @@ var Pre3d = (function() {
   };
 
   // Transform and return a new array of points with transform matrix |t|.
-  function transformPoints(t, ps) {
+  function transformPoints(t, ps){
+	if (typeof ps === "undefined" 
+	//|| ps==null
+	) return null; //bugbug other cases?
     var il = ps.length;
     var out = Array(il);
     for (var i = 0; i < il; ++i) {
@@ -537,6 +627,10 @@ var Pre3d = (function() {
     this.ep = ep;  // End point.
     this.c0 = c0;  // Control point.
     this.c1 = c1;  // Control point.
+  }
+  
+  Curve.prototype.atOffset= function(additionalOffset) {
+	return new Curve(this.ep+additionalOffset,this.c0+additionalOffset,this.c1+additionalOffset);
   }
 
   Curve.prototype.isQuadratic = function() {
@@ -684,6 +778,17 @@ var Pre3d = (function() {
     }
   }
 
+  
+  //bugbug  here or renderer?
+  Renderer.prototype.setHiDimProj = function(new_mHi) { //bugbug controller should be updating this every frame, yes?
+	this.mHi = new_mHi;
+  }
+
+  Renderer.prototype.transformHiDimPoint = function(p) {  //smcclure879 add.  bugbug where to set .mHi?
+    return transformPoint(this.mHi, p);
+  };
+
+  
   Renderer.prototype.pushTransform = function() {
     this.transform_stack_.push(this.transform.dup());
   };
@@ -704,21 +809,21 @@ var Pre3d = (function() {
   // Project the 3d point |p| to a point in 2d.
   // Takes the current focal_length_ in account.
   Renderer.prototype.projectPointToCanvas = function projectPointToCanvas(p,skipOffscreenPoint) {
+  
     // We're looking down the z-axis in the negative direction...
     var v = this.camera.focal_length / -p.z;  //bugbug removed negative on p.z but that's wrong too apparently
     var scale = this.scale_;
+  
+  	if (skipOffscreenPoint)
+	{
+		if (p.x*v<-20 || p.x*v>20) return null;
+		if (p.y*v<-20 || p.y*v>20) return null;  //bugbug const or setting
+		if (p.z>0)  return null;  //this culls out stuff behind the camera  (it's already projected into camera space
+	}
 	
 	// Map the height to -1 .. 1, and the width to maintain aspect.
 	var x = p.x * v * scale + this.xoff_;
 	var y = p.y * v * -scale + scale;
-	
-	if (skipOffscreenPoint)
-	{
-		if (p.x*v<-2 || p.x*v>2) return null;
-		if (p.y*v<-2 || p.y*v>2) return null;
-		if (p.z>0)  return null;  //this culls out stuff behind the camera  (it's already projected into camera space
-	}
-	
     
     return { x:x, y:y };
   };
@@ -728,14 +833,21 @@ var Pre3d = (function() {
   // TODO: flatten this calculation so we don't need make a method call.
   Renderer.prototype.projectPointsToCanvas =
       function projectPointsToCanvas(ps,skipOffscreenPoint) {
+	if (typeof ps === "undefined" ) return null;
+	if (ps==null)
+		debugSet("foo513");
     var il = ps.length;
     var out = Array(il);
     for (var i = 0; i < il; ++i) {
+	  if (ps && ps[i] && ps[i].x && isNaN(ps[i].x))
+	  	debugSet("foo556bugbug")
       out[i] = this.projectPointToCanvas(ps[i],skipOffscreenPoint);
 	  if (skipOffscreenPoint && out[i]==null) return null;  //skip the whole "shape"
     }
     return out;
   };
+  
+  
 
   Renderer.prototype.projectQuadFaceToCanvasIP = function(qf) {
     qf.i0 = this.projectPointToCanvas(qf.i0,false);
@@ -820,6 +932,7 @@ var Pre3d = (function() {
     var quad_callback = this.quad_callback;
 
     // Our vertex transformation matrix.
+	//bugbug likely need to change this to this.setCurrentTransform();
     var t = multiplyAffine(this.camera.transform.m,
                            this.transform.m);
     // Our normal transformation matrix.
@@ -1033,6 +1146,53 @@ var Pre3d = (function() {
 
   //bugbug consider removing all the above texturing and curves stuff and just do points, lines, text???
   
+  
+  Renderer.prototype.currentTransform=null;  //keep these around, then can use for hit detection
+  Renderer.prototype.getCurrentTransformMemoized=function() //bugbug memoize it later or rename it
+  {
+	return this.currentTransform;
+  }
+  
+  Renderer.prototype.transformPoint=function(point)
+  {
+	return transformPoint(this.getCurrentTransformMemoized(), point);
+  }
+  
+  Renderer.prototype.computeOffsetFromHi=function(pointhi)
+  {
+    if (this.mHi==null) 
+		return null;  //bugbug why do I need to check this?
+	return computeOffsetFromHi(this.mHi,pointhi);
+  }
+  
+  
+  //bugbug move this logic into the drawable objects!!!
+  Renderer.prototype.doLateDrawIfApplicable=function doLateDrawIfApplicable(path)
+  {  
+	//in case this is "deferred path determination" (geom shader?)
+	if (!path) 
+	{
+		alert("bugbug510 why does this happen?");
+		return;
+	}
+	//not a valid condition   if (path.points!=null) return; //nothing to fix up
+	if (!path.isLateDrawable) return; //can't fix anything up
+	
+	//late draw replaces this entire path (bugbug should it really be this way?--should this "force" happen "up" a few levels??)
+	path.lateDrawSet(-2);  //bugbug variable....-2=features cm and larger
+							//		still need to pass level here (based on focal length, distance, sampling etc etc
+	if (path.points==null)
+		alert("nullbugbug149");
+
+  }
+  
+
+  Renderer.prototype.setCurrentTransform=function()
+  {
+      this.currentTransform = multiplyAffine(this.camera.transform.m, this.transform.m);  //bugbug memoize--all paths being drawn share same transform!
+  }
+  
+  
   // Draw a Path.  There is no buffering, because there is no culling or
   // z-sorting.  There is currently no filling, paths are only stroked.  To
   // control the render state, you should modify ctx directly, and set whatever
@@ -1040,14 +1200,19 @@ var Pre3d = (function() {
   Renderer.prototype.drawPath = function drawPath(path, opts) {
     var ctx = this.ctx;
     opts = opts || { };
-
-    var t = multiplyAffine(this.camera.transform.m, this.transform.m);
-
-    var screen_points = this.projectPointsToCanvas(transformPoints(t, path.points),true);
+	
+	//bugbug remove later for perf??
+	//this.camera.transform.check();
+	
+	this.setCurrentTransform();  //bugbug do we really need to do this every time?  fix here or in .setCurrentTransform()?
+	this.doLateDrawIfApplicable(path);
+	
+    screen_points = this.projectPointsToCanvas(transformPoints(this.getCurrentTransformMemoized(), path.points),true);
 	
 	//skip drawing the entire path if parts of it are behind the camera--a little overzealous perhaps, but let's try this
 	if (screen_points==null) return;
-	
+	if (isNaN(screen_points[0].x))
+		alert("bugbug1015p bad transforms above?");
 
     // default the starting point
 	if (path.starting_point==null) path.starting_point=0;
@@ -1056,11 +1221,19 @@ var Pre3d = (function() {
     ctx.beginPath();
     ctx.moveTo(start_point.x, start_point.y);
 	ctx.font="10px Arial";
-	ctx.fillStyle="black";
+	ctx.fillStyle=contrastBackground();
 	ctx.fillText(path.points[path.starting_point].t,start_point.x,start_point.y);  //bugbug redo startingPoint logic we inherited here
 
-	ctx.strokeStyle=path.color;  //bugbug why this no work
-	ctx.lineWidth=path.width;
+	if (path.isSelected)
+	{
+		ctx.strokeStyle='purple';
+		ctx.lineWidth=path.width+2;
+	}
+	else
+	{
+		ctx.strokeStyle=contrast(path.color);  //bugbug is deciding and setting every time a perf hit?
+		ctx.lineWidth=path.width;
+	}
 	
     var curves = path.curves;
     for (var j = 0, jl = curves.length; j < jl; ++j) {
@@ -1080,13 +1253,64 @@ var Pre3d = (function() {
 	  ctx.fillText(path.points[j].t,ep.x,ep.y);
     }
 
+
     // We've connected all our Curves into a <canvas> path, now draw it.
     if (opts.fill === true) {
       ctx.fill();
     } else {
       ctx.stroke();
     }
+	
+	if (path.isSelected && path.closestPointIndex>-1)
+	{
+		var selectedPoint = screen_points[path.closestPointIndex];
+		var x=selectedPoint.x;
+		var y=selectedPoint.y;
+		ctx.moveTo(x+1,y+1); 
+		ctx.lineTo(x+1,y-1);
+		ctx.lineTo(x-1,y-1);
+		ctx.lineTo(x-1,y+1);
+		ctx.lineTo(x+1,y+1);
+		ctx.stroke();
+	}
+		
+
+	
   };
+  
+  function contrast(color)
+  {
+	if (color=='black' && mainBgColor=='black') return 'cyan';
+	return color;
+  }
+  
+  Renderer.prototype.getNearest = function getNearest(path,x,y,best,thisDrawingIndex) 
+  {
+    //bugbug update this for use with iDrawable
+	
+	var screen_points = this.projectPointsToCanvas(transformPoints(this.currentTransform, path.points),true);
+	//skip testing the entire path if parts of it are behind the camera
+	if (screen_points==null) return best;
+	
+	for(var ii=0; ii<path.points.length; ii++)
+	{
+		if (screen_points[ii]==null) continue;
+		var newQuadrance = quadr(x,y,screen_points[ii]);
+		if (newQuadrance >= best.bestQuadranceSoFar) continue;
+		
+		best.bestQuadranceSoFar = newQuadrance;
+		best.closestPointIndex = ii;
+		best.closestDrawingIndex = thisDrawingIndex;
+		best.x=path.points[ii].x;
+		best.y=path.points[ii].y;
+		best.z=path.points[ii].z;
+	}
+	return best;
+  }
+  
+  
+  
+  
 
   return {
     RGBA: RGBA,
@@ -1115,7 +1339,12 @@ var Pre3d = (function() {
       unitVector3d: unitVector3d,
       linearInterpolate: linearInterpolate,
       linearInterpolatePoints3d: linearInterpolatePoints3d,
-      averagePoints: averagePoints
+      averagePoints: averagePoints,
+	  
+	  //smcclure added...
+	  rotate: rotate,
+	  quadr: quadr,
+	  quadrancePts: quadrancePts
     }
   };
 })();

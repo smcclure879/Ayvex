@@ -1,19 +1,26 @@
+<html>
 <head>
 <title>mc2 world map</title>
 
-<!-- script src="jquery-1.10.2.min.js"></script   bugbug later maybe   -->
+<!-- script src="jquery-1.10.2.min.js"></script   todo   -->
 <script src="../../lib/jquery-1.10.2.js"></script>
 <script src="../../lib/pre3d.js"></script>
+<script src="../../lib/queryParams.js"></script>
 <script src="demoUtils.js"></script>
 <script src="cameraAndStuff.js"></script>
 <script src="mc2data.js"></script>
-
+<script src="memoize.js"></script>
+<script src="tree.js"></script>
+<script src="hasher.js"></script>
+<script src="loadDataFile.js"></script>
+<script src="localSettings.js"></script>
+<script src="DataPoint.js"></script>
 </head>
 
 <body>
 
 
-<table border=0>
+<table border="0" height="90%">
 <tr>
 <td style="width:800px" oncontextmenu=";return false"> <!-- disallowing context menu in the map surface only! -->
 <canvas width="800" height="600" id="c" 
@@ -22,15 +29,30 @@
 />
 </td>
 <td valign="top">
-Map for the <h1>mc2 world</h1><br>
-<div id="controlPanel" style="border:2px solid #000000;background-color:lightGray; font-family:Arial;font-size:12">
-<h3><b>Control Panel</b></h3>
-<input type="checkbox" value="animate" id="animate" checked>animate</input>
+<span style="font-family:Arial"><h6>Copyright 2014</h6>
+<h1>Ayvex Light Industries</h1>	
+<h2>mc2 world</h2><br>
+<div style="border:2px solid #000000;background-color:lightGray" id="controlPanel">
+<input type="button" id="flyTo" value="flyTo"/>
+<span  style="font-family:Arial;font-size:12">
+<input type="checkbox" value="animate" id="animate" checked>ANIM</input>
+<input type="checkbox" value="lockon" id="lockon" >LOCK</input>
+<input type="checkbox" value="black" id="black" checked>BLAK</input>
+<input type="checkbox" value="big" id="big" >BIG</input>
+<select id="dataset">
+  <option value="mc2map">mc2 world map+</option>
+  <option value="frcWld">frcWld 0.01</option>
+  <option value="hiiDimAnlErq">hiiDimAnlErq</option>
+  <option value="hiiDimAnlFlw">hiiDimAnlFlw</option>
+</select>
+</span><br>
+tags:<input type="text"/>   <!-- value="<all>" id="tags" style="color:red"/> -->
+</span>
 </div>
-<div id="readout" style="font-family:Arial;font-size:12;background-color:yellow">
+<br><div id="readout" style="background-color:yellow">
 <table>
-<tr><td></td
-<tr>
+<tr><td colspan="2">readout</td>
+<tr style="font-family:Arial;font-size:12">
 <td>
 frame<input type="text" id="frameNum" value="x"/><br>
 camX<input type="text" id="camX" value="x"/><br>
@@ -45,15 +67,14 @@ camRotZ<input type="text" id="camRotZ" value="x"/><br>
 </td>
 </tr>
 </table>
+<br>
+</div>
+<div><br><br><br><br><br><br><br><br><br>
 </div>
 
-
-<div id="toolbar" style="border:1px solid #000000; padding:10px; spacing:10px; "> </div>
-<div border="1" valign="bottom"><br><br>
-<span style="position: absolute; bottom: 0;">Copyright 2014
-<h2>Ayvex Light Industries<h1><br></span>
-</div>
+<div id="toolbar" style="position: relative; bottom: 0; left: 0; border:1px solid #000000; padding:10px; spacing:10px"> </div>
 </td>
+<!--position: absolute; bottom: 0;-->
 
 </tr>
 </table>
@@ -62,8 +83,13 @@ camRotZ<input type="text" id="camRotZ" value="x"/><br>
 
 <script>
 
+
+
+var floor=62;  //minecraftWaterLevel bugbug setting or ???
+
 var toolbar = document.getElementById("toolbar");
-start3d();  //in cameraAndStuff.js
+var theDrawings=[];
+
 
 
 function debugAdd(s)
@@ -77,10 +103,38 @@ function debugSet(s)
 }
 
 
+//each step needs to be set off by the step before it, but on different thread to account for dynamic code
+function doAllSteps(arrSteps)
+{
+	doSteps(arrSteps,0);
+}
+
+function doSteps(arrSteps,whereAt)
+{
+	if (whereAt>=arrSteps.length) return;
+	if (arrSteps[whereAt]==null) return;
+	
+	doStep(function(){ arrSteps[whereAt](); doSteps(arrSteps,whereAt+1); });
+}
+
+function doStep(step)
+{
+	setTimeout(step,100);
+}
+
+
+//this works, but the script won't be live until you yield the thread for a while.  call it carefully!
+function addScript(filename)
+{
+	//http://www.javascriptkit.com/javatutors/loadjavascriptcss.shtml  
+	var newScriptTag=document.createElement('script')
+	newScriptTag.setAttribute("type","text/javascript")
+	newScriptTag.setAttribute("src", filename)
+	document.getElementsByTagName("head")[0].appendChild(newScriptTag);
+}	
+
 function makeBigMap(data)
 {
-	var paths = [ ];
-	
 	var path;
 	var jj=0;  //for the inner loop inside one path
 	var kk=0;  //index into the outputs
@@ -91,7 +145,7 @@ function makeBigMap(data)
 		{
 			if (path) //store the old path if there is one
 			{
-				paths[kk++]=path;
+				theDrawings[kk++]=path;
 			}
 			path = new Pre3d.Path();
 			path.starting_point = 0;  //we make this standard
@@ -109,30 +163,63 @@ function makeBigMap(data)
 		jj++;
 	}
 	
-	paths[kk++]=path;  //close it out
-	
-	//landmarks
-	landmarkSpacing=200;
+	theDrawings.push(path);  //close it out
+}
+
+function addTreesAndWater(paths)
+{
+	landmarkSpacing=200;  //bugbug consts throughout
+	abs=Math.abs;
+	for(var xx=-20000; xx<20000; xx+=landmarkSpacing)
+	{
+		for(var zz=-20000; zz<20000; zz+=landmarkSpacing)
+		{
+			var d=abs(xx)+abs(zz) + 5;
+			var h8=Hasher.consistentHash(['tree',xx,zz])%256;
+			if (hRndN(d,h8)<80)   paths.push(new Tree(xx,floor,zz,'calculate'));
+			if (hRndN(d,h8)<200)   paths.push(waterMarker(xx+hRndN(500,h8),zz+hRndN(500,h8)));  //bugbug
+		}
+	}
+	return paths;
+}
+
+
+function addMarkersAndWater(paths)
+{
+	landmarkSpacing=200;  //bugbug consts throughout
 	abs=Math.abs;
 	for(var xx=-20000; xx<20000; xx+=landmarkSpacing)
 	{
 		for(var zz=-20000; zz<20000; zz+=landmarkSpacing)
 		{
 			var d=abs(xx)+abs(zz);
-			if (d>1000 && d<4000 && rnd(d)<800) paths[kk++] = markerPole(xx,zz);
-			if (d>2000 && rnd(d)<2000) paths[kk++] = waterMarker(xx+rnd(500),zz+rnd(500));
+			if (d>1000 && d<4000 && badRnd(d)<800)   paths.push(marker(xx,zz));
+			if (d>2000 && badRnd(d)<2000)            paths.push(waterMarker(xx+badRnd(500),zz+badRnd(500)));
 		}
 	}
-		
-
 	return paths;
- }
+}
+
+function addCoordinateVectors(paths)
+{
+	//coordinate vectors		
+	paths.push(infoLine( 	{x:1000,y:0,z:0,t:'X'},
+							{x:0   ,y:0,z:0}        ));
+							
+	paths.push(infoLine( 	{x:0,y:1000,z:0,t:'Y'},
+							{x:0,y:0   ,z:0}          ));
+							
+	paths.push(infoLine(	{x:0,y:0,z:1000,t:'Z'},  //and Z should be south
+							{x:0,y:0,z:0   } ));
+	
+}
+
  
  
  function waterMarker(xx,zz, waveHeight, waveLength)
  {
-	if (waveHeight===undefined) waveHeight=rnd(8)-4;
-	if (waveLength===undefined) waveLength=rnd(7)+13;
+	if (waveHeight===undefined) waveHeight=badRnd(8)-4;
+	if (waveLength===undefined) waveLength=badRnd(7)+13;
 	return twoSegmentPath(	'blue',
 							1,
 							xx,62,zz,
@@ -141,29 +228,60 @@ function makeBigMap(data)
 						); 
  }
  
- function markerPole(xx,zz)
+ //function markerOrTree(xx,zz, treePoleFrac)
+ function marker(xx,zz)
  {
-	return twoSegmentPath( 'green',
-						  1,
-						  xx,62,zz,   //the floor is at 62  //bugbug var or setting or ???
-						  xx,162,zz,
-						  xx,162 ,zz-10);  //minus Z is north
+	var height=40;
+
+	return twoSegmentPath( contrastBackground(),
+							  1,
+							  xx, floor, zz,   
+							  xx, height+floor, zz,
+							  xx, height+floor, zz-10);  //minus Z is north
+
  }
  
+ function contrastBackground()
+ {
+	if (mainBgColor=='white') return 'black';
+	if (mainBgColor=='black') return 'white';
+	return 'cyan'; //bugbug
+ }
 
- //bugbug needed???
-// function linePath(color,x1,y1,z1,x2,y2,z2)  //todo: consider using this for the user paths as well??
-// {
-//	var path=new Pre3d.Path();
-//	path.starting_point=0;
-//	path.points[0]={x:x1,y:y1,z:z1,t:""};  //""+x1+","+y1
-//	path.points[1]={x:x2,y:y2,z:z2	};
-//	path.curves[0]=new Pre3d.Curve(0,1,1);  //to make it a line, everything looks at 0th point.
-//	path.color=color;
-//	path.width=1;
-//	return path;
-// }
 
+ function contrast(color)
+ {
+	return 'green';
+	if (mainBgColor=='black' && color=='black') return 'white';
+	return color;
+ }
+ 
+ function infoLine(ptA,ptB)
+ {
+	return linePath(	
+						'6666FF',
+						0.1,
+						ptA,
+						ptB
+					);
+							
+ }
+ 
+ 
+function linePath(color,width,ptA,ptB)  //ptA includes a text .t  
+{
+	var path=new Pre3d.Path();
+	path.starting_point=0;
+	path.points[0]=ptA;
+	path.points[1]=ptB;
+	path.curves[0]=new Pre3d.Curve(1,1,1);  //to make it a line, everything looks at 0th point.
+	path.color=color;
+	path.width=width;
+	return path;
+}
+
+
+//bugbug move some of this to its own file
  function twoSegmentPath(color,width,x1,y1,z1,x2,y2,z2,x3,y3,z3)
  {
 	var path=new Pre3d.Path();
@@ -191,16 +309,156 @@ function makeFakeMap()
 	  ];
     path.curves = [new Pre3d.Curve(0, 0, 0), new Pre3d.Curve(1,1,1), new Pre3d.Curve(2,2,2)];
     path.starting_point = 0;
-	path.color='red';
+	path.color=contrastBackground();
     return [path];
 }
 
-function getMap()  //callback from the cameraAndStuff.js  
+
+
+function setMap(dataSetName)  //no longer a callback from the cameraAndStuff.js  
 {
-	var data = getMc2Data(); 
-	var theMap = makeBigMap(data);	
-	return theMap;
+	//defaulting a bunch
+	if (typeof dataSetName === 'undefined')
+	{
+		dataSetName=$("#dataset").value
+		if (typeof dataSetName === 'undefined')
+		{
+			dataSetName='mc2map';
+		}
+	}
+	
+	switch(dataSetName)
+	{
+		case 'mc2map': setMc2Map(); break;
+		case 'frcWld': setFractalWorldMap();  break;   		//bugbug semantics "map" for these entities is wrong....it's a full presentation around a dataset, the framing around the map, etc.
+		case 'hiiDimAnlErq': setEarthquakeMap(); break;
+		case 'hiiDimAnlFlw': setFlowersMap(); break;
+		default: setErrorMap(dataSetName); break;
+	}
+	
 }
+
+function changeDataSet(ev)
+{
+	//bugbug find a better way to do this without refreshing...just an event to the camera or something....new call to start3d?
+	var newDataSetName=ev.target.value;
+	ev.stopPropagation();  //bugbug needed??
+	window.location.href="?dataset="+newDataSetName;
+}
+
+function setErrorMap(dataSetName)
+{
+	debugSet("bugbug setErrorMap is nyi:"+dataSetName);
+}
+
+function setMc2Map()
+{
+	var rawData=getMc2Data();
+	makeBigMap(rawData);
+	addMarkersAndWater(theDrawings);
+	addCoordinateVectors(theDrawings);
+}
+
+function setFractalWorldMap()
+{
+	var treePoleFrac=0.5;
+	addCoordinateVectors(theDrawings);
+	//todo add perlin noise, etc etc etc
+	addTreesAndWater(theDrawings,treePoleFrac);
+}
+
+
+
+function setEarthquakeMap()
+{	
+	var filename="data/erq_all_month.js";
+	
+	//todo should go into extended CSV script file thingy, not here with 
+	var columnInfo=
+	[  //time,latitude,longitude,depth,mag,magType,nst,gap,dmin,rms,net,id,updated,place,type
+		{name:'time',readas:'utc',scale:0.000001,offset:1.387e+12},  //todo what are the other columns about a column??  (isUTC, parseThisWay, limits, precision, short and long name
+		{name:'lat',readas:'float',scale:10,offset:0}, 
+		{name:'long',readas:'float',scale:10,offset:0},
+		{name:'depth',readas:'float',scale:1,offset:0},
+		///////there are more columns....pull them in to make the demo better (need more dimensions)
+	];
+
+	//todo maybe this too into some kinda extended datafile format
+	var dataFileOptions={
+							'skipFirstLine':1,
+							'skipLinesWithFirstCharIn':'#'
+						};
+	
+	
+	addScript(filename); //so that data set is fetchable, must be in other thread for the script to activate
+		
+	doAllSteps([  //bugbug should be .then()???;
+			 function() {parseDataSet(dataFileOptions,columnInfo);}
+			,function() {theDrawings.push(new DataPoint([-2000,100,100],"stand here to start")); }
+			,function() {
+							DemoUtils.Notify('moveCamera',{
+								rotate_x: rad(3),
+								rotate_y: rad(90),
+								rotate_z: rad(0),
+								x: 800,
+								y: -650,
+								z: 1100});  //bugbug magic numbers.
+							DemoUtils.Notify('enableHiDim',[
+											[0,0,0,0],
+											[0,0,0,4],
+											[0,0,0,1]
+							
+										]);
+								
+						}
+			
+		]);
+		
+}
+
+
+function setFlowersMap()
+{
+	alert("bugbugnyi1028");
+}
+
+var mainBgColor='white';
+function updateBackground(ev)
+{
+	mainBgColor = ($("#black").is(':checked')) ? 'black' : 'white';
+}
+
+var big=1;
+function toggleBigness(ev)
+{
+	big=($("#big").is(':checked'))?2:1;
+}
+
+
+
+function parseDataSet(dataFileOptions,columnInfo)
+{
+	addCoordinateVectors(theDrawings);
+	
+	if (typeof getData != 'function') 
+	{
+		alert("dynamic read fail: cannot read the data type 1");  //bugbug make this an assert
+		return theDrawings;	  // but you won't like it  
+	}
+	
+	var textData=getData();	
+	
+	if (!textData) 
+	{
+		alert("cannot read the data type 2");  //bugbug make this an assert
+		return theDrawings;
+	}
+	
+	addTextData(theDrawings,textData,columnInfo,dataFileOptions,null);  //transformation function --- null=use the default
+}
+
+
+
 
 
 //used to track what keys are down
@@ -208,6 +466,14 @@ isDown = DemoUtils.KeyTracker.isDown
 
 $(document).ready(function() 
 	{
+		if (oGetVars["dataset"]) 
+			$("#dataset").val(oGetVars["dataset"]);
+			
+		setMap(oGetVars["dataset"]);  
+		updateBackground();
+		start3d(theDrawings);  //in cameraAndStuff.js
+
+	
 		anim = $("#animate");
 		anim.click( function(event)
 			{
@@ -218,11 +484,33 @@ $(document).ready(function()
 			{
 				anim.click();
 			}
-			,5*60*1000);//milliseconds  //bugbug settings		
+			,30*1000);//milliseconds  //bugbug settings		
 		DemoUtils.Notify("animate",animate.checked );  //and do it once right now for good measure
+	
+
+		$("#flyTo").click( function(event)
+			{
+				DemoUtils.Notify("flyToSelected","bugbugneeded158?");		
+			});
 		
+		$("#dataset").change( function(event)
+			{
+				changeDataSet(event);
+			});
+		$("#black").change( function(event)
+			{
+				updateBackground();
+			});
+		$("#big").change( function(event)
+			{
+				toggleBigness();
+			});
+	
 	}
 )
+
+
 </script>
 
 </body>
+</html>
