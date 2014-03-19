@@ -10,6 +10,7 @@
 <script src="cameraAndStuff.js"></script>
 <script src="mc2data.js"></script>
 <script src="memoize.js"></script>
+<script src="stepper.js"></script>
 <script src="tree.js"></script>
 <script src="hasher.js"></script>
 <script src="loadDataFile.js"></script>
@@ -104,24 +105,52 @@ function debugSet(s)
 
 
 //each step needs to be set off by the step before it, but on different thread to account for dynamic code
-function doAllSteps(arrSteps)
-{
-	doSteps(arrSteps,0);
-}
-
-function doSteps(arrSteps,whereAt)
-{
-	if (whereAt>=arrSteps.length) return;
-	if (arrSteps[whereAt]==null) return;
-	
-	doStep(function(){ arrSteps[whereAt](); doSteps(arrSteps,whereAt+1); });
-}
-
-function doStep(step)
-{
-	setTimeout(step,100);
-}
-
+//function doAllSteps(arrSteps)
+//{
+//	doSteps(arrSteps,0);
+//}
+//
+//var stepLimit = 20;  //bugbug const or passed into doAllSteps() ???
+//function doSteps(arrSteps,whereAt)
+//{
+//	if (whereAt>=arrSteps.length) return;
+//	if (whereAt>stepLimit)
+//	{
+//		alert("doSteps limit passed errCode333kz");
+//		return;
+//	}
+//	var thisStep = arrSteps[whereAt];
+//	if (thisStep==null) return;
+//	var thisStepType = typeof thisStep;
+//	if (thisStepType=='function')
+//	{
+//		doStep(function(){ arrSteps[whereAt](); doSteps(arrSteps,whereAt+1); });
+//	}
+//	else if (thisStepType=='array')
+//	{
+//		var command = thisStep[0];
+//		switch(command)
+//		{
+//			case "waiton": doStep(function()
+//									{ 
+//										if (thisStep[1]())
+//											doSteps(arrSteps,whereAt+1);
+//										else
+//											doSteps(arrSteps,whereAt);
+//									 
+//									}); 
+//				break;
+//			default: alert('how did we get here bugbug323wj');
+//		}
+//	}
+//}
+//
+//function doStep(step)
+//{
+//	setTimeout(step,100);
+//}
+////bugbug needed??
+//
 
 //this works, but the script won't be live until you yield the thread for a while.  call it carefully!
 function addScript(filename)
@@ -389,12 +418,14 @@ function setEarthquakeMap()
 							'skipLinesWithFirstCharIn':'#'
 						};
 	
+	addScript(filename);
 	
-	addScript(filename); //so that data set is fetchable, must be in other thread for the script to activate
 		
-	doAllSteps([  //bugbug should be .then()???;
-			 function() {parseDataSet(dataFileOptions,columnInfo);}
-			,function() {theDrawings.push(new DataPoint([-2000,100,100],"stand here to start")); }
+	var stuffToDo=StepperModule.Stepper.Create([  //bugbug should be .then()???;
+			// function() {addScript(filename);}.bind(this) //so that data set is fetchable, must be in other thread for the script to activate
+			['waiton',function(){ return (earthquakeDataLoaded==1); }]
+			,function() {parseDataSet(dataFileOptions,columnInfo);}.bind(this)
+			,function() {theDrawings.push(new DataPoint([-2000,100,100],"stand here to start")); }.bind(this)
 			,function() {
 							DemoUtils.Notify('moveCamera',{
 								rotate_x: rad(3),
@@ -406,14 +437,18 @@ function setEarthquakeMap()
 							DemoUtils.Notify('enableHiDim',[
 											[0,0,0,0],
 											[0,0,0,4],
-											[0,0,0,1]
+											[0,0,0,1]  
 							
 										]);
 								
-						}
+						}.bind(this)
+						
+						//bugbug soon make the above into a separate vector for each "higher dimension"...e.g. for 2 extra-spatial dimensions...
+						//   notify('enableHiDim',[0,4,1],[5,1,-5])
+						//
 			
 		]);
-		
+	stuffToDo.run()
 }
 
 
@@ -465,49 +500,56 @@ function parseDataSet(dataFileOptions,columnInfo)
 isDown = DemoUtils.KeyTracker.isDown
 
 $(document).ready(function() 
-	{
-		if (oGetVars["dataset"]) 
-			$("#dataset").val(oGetVars["dataset"]);
-			
-		setMap(oGetVars["dataset"]);  
-		updateBackground();
-		start3d(theDrawings);  //in cameraAndStuff.js
-
-	
-		anim = $("#animate");
-		anim.click( function(event)
-			{
-				//turn on the animation
-				DemoUtils.Notify("animate",animate.checked );
-			});
-		setTimeout(function()
-			{
-				anim.click();
-			}
-			,30*1000);//milliseconds  //bugbug settings		
-		DemoUtils.Notify("animate",animate.checked );  //and do it once right now for good measure
-	
-
-		$("#flyTo").click( function(event)
-			{
-				DemoUtils.Notify("flyToSelected","bugbugneeded158?");		
-			});
+{
+	if (oGetVars["dataset"]) 
+		$("#dataset").val(oGetVars["dataset"]);
 		
-		$("#dataset").change( function(event)
-			{
-				changeDataSet(event);
-			});
-		$("#black").change( function(event)
-			{
-				updateBackground();
-			});
-		$("#big").change( function(event)
-			{
-				toggleBigness();
-			});
 	
-	}
-)
+	setMap(oGetVars["dataset"]);  
+	updateBackground();
+	
+	StepperModule.Stepper.Create([
+			function(){	start3d(theDrawings); },  //in cameraAndStuff.js
+			function(){ finishGettingReady(); }
+		]).run();
+
+});
+
+
+function finishGettingReady()
+{
+	anim = $("#animate");
+	anim.click( function(event)
+		{
+			//turn on the animation
+			DemoUtils.Notify("animate",animate.checked );
+		});
+	setTimeout(function()
+		{
+			anim.click();
+		}
+		,30*1000);//milliseconds  //bugbug settings		
+	DemoUtils.Notify("animate",animate.checked );  //and do it once right now for good measure
+	
+
+	$("#flyTo").click( function(event)
+		{
+			DemoUtils.Notify("flyToSelected","bugbugneeded158?");		
+		});
+	
+	$("#dataset").change( function(event)
+		{
+			changeDataSet(event);
+		});
+	$("#black").change( function(event)
+		{
+			updateBackground();
+		});
+	$("#big").change( function(event)
+		{
+			toggleBigness();
+		});
+};
 
 
 </script>
