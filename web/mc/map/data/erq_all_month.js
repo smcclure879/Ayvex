@@ -3298,7 +3298,7 @@ return "time,latitude,longitude,depth,mag,magType,nst,gap,dmin,rms,net,id,update
 "2014-01-04T22:13:34.000Z,60.7566,-142.8566,9.9,1.1,ml,,,,0.14,ak,ak10961870,2014-01-04T22:20:06.423Z,\'80km NNW of Cape Yakataga, Alaska\',earthquake\r\n"+
 "2014-01-04T22:04:30.610Z,36.0316667,-117.7706667,2.38,0.39,ml,9,97,0.005257,0.07,ci,ci11410138,2014-01-07T16:34:06.630Z,\'42km N of Inyokern, California\',earthquake\r\n"+
 "2014-01-04T21:56:09.000Z,61.9916,-149.7404,34.2,1.7,ml,,,,0.38,ak,ak10961867,2014-01-04T22:20:05.812Z,\'19km SSE of Y, Alaska\',earthquake";
-}
+};
 
 function stupid()
 {
@@ -7907,3 +7907,5 @@ return "2014-01-04T21:43:36.390Z,33.5093333,-116.4696667,10.24,0.58,ml,21,97,0.0
 "2013-12-17T21:47:02.600Z,47.6932,-122.8177,19.3,0.1,Md,,313.2,0.12576414,0.05,uw,uw60652957,2013-12-18T05:28:45.209Z,\'6km N of Seabeck, Washington\',earthquake"
 ;
 }
+
+var earthquakeDataLoaded=1;
