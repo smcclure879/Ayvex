@@ -326,7 +326,7 @@ var DemoUtils = (function() {
 //these vars are used to communicate stateu changes into the rather closed demoUtil "class"
   var animate = false;
   var flying = false;
-  var mhi = null;
+  var mhi = null;  //for xanimation  
   var newCameraState=null;
  
 
@@ -416,9 +416,13 @@ var DemoUtils = (function() {
 		if (isDown(72))  orbit2( 1);  //h
 
 		if (animate) animateIt(frameNum);
+		
 		if (flying) flyTo(frameNum);
 		if (newCameraState!=null) updateCameraState(frameNum,newCameraState);
-		if (mhi!=null) setHiDimProj(mhi);
+		if (setHiDimProj(mhi))   //bugbug every time???  only on change!
+		{
+			dirtyCam=true;
+		}
 		redoTheCam(frameNum);
 	}
 
@@ -478,9 +482,9 @@ var DemoUtils = (function() {
 		dirtyCam=true;	
 	}
 	
-	function setHiDimProj(new_mhi)
+	function setHiDimProj(new_mhi)  //return value true means the camera is "dirty"
 	{
-		renderer.setHiDimProj(new_mhi);  //bugbug eliminate this function?
+		return renderer.setHiDimProj(new_mhi);
 	}
 	
 	function copyPointData(src,dst)
@@ -686,7 +690,7 @@ var DemoUtils = (function() {
 			case "flyToSelected": flying=true; break;
 			case "moveCamera": newCameraState=state; break;
 			case "updateBackground": black=state; break;
-			case "enableHiDim": mhi=state; break;
+			case "changeHiDim": mhi=state; break;
 			default: alert("bugbug unknown alert");
 		}
 	}
