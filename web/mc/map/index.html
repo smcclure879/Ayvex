@@ -1,6 +1,6 @@
 <html>
 <head>
-<title>mc2 world map</title>
+<title>Ayvex Light Industries<br>multidimensional viewer</title>
 
 <!-- script src="jquery-1.10.2.min.js"></script   todo   -->
 <script src="../../lib/jquery-1.10.2.js"></script>
@@ -30,21 +30,25 @@
 />
 </td>
 <td valign="top">
-<span style="font-family:Arial"><h6>Copyright 2014</h6>
-<h1>Ayvex Light Industries</h1>	
-<h2>mc2 world</h2><br>
+<span style="font-family:Arial">
+<h1>Ayvex</h1>	
+<h6>Copyright 2014 -- Ayvex Light Industries</h6><br>
 <div style="border:2px solid #000000;background-color:lightGray" id="controlPanel">
 <input type="button" id="flyTo" value="flyTo"/>
 <span  style="font-family:Arial;font-size:12">
-<input type="checkbox" value="animate" id="animate" checked>ANIM</input>
-<input type="checkbox" value="lockon" id="lockon" >LOCK</input>
-<input type="checkbox" value="black" id="black" checked>BLAK</input>
+<input type="checkbox" value="animate" id="animate" checked>ANM</input>
+xMOD:<select id="xanimate">
+	<option value="none">none</option>
+	<option value="sequence">sequence</option>
+</select>
+<input type="checkbox" value="lockon" id="lockon" >LCK</input>
+<input type="checkbox" value="black" id="black" checked>BLK</input>
 <input type="checkbox" value="big" id="big" >BIG</input>
 <select id="dataset">
-  <option value="mc2map">mc2 world map+</option>
-  <option value="frcWld">frcWld 0.01</option>
-  <option value="hiiDimAnlErq">hiiDimAnlErq</option>
-  <option value="hiiDimAnlFlw">hiiDimAnlFlw</option>
+  <option value="mc2map">mc2 world map</option>
+  <option value="frcWld">fractals</option>
+  <option value="hiiDimAnlErq">erquake</option>
+  <option value="hiiDimAnlFlw">flower</option>
 </select>
 </span><br>
 tags:<input type="text"/>   <!-- value="<all>" id="tags" style="color:red"/> -->
@@ -367,6 +371,18 @@ function setMap(dataSetName)  //no longer a callback from the cameraAndStuff.js
 	
 }
 
+function changeHiDim(newMode)
+{
+	DemoUtils.Notify("changeHiDim",matrixForMode(newMode));
+}
+
+function changeXanimate(ev)
+{
+	var newMode=ev.target.value;
+	ev.stopPropagation(); //bugbug needed?
+	changeHiDim(newMode);
+}
+
 function changeDataSet(ev)
 {
 	//bugbug find a better way to do this without refreshing...just an event to the camera or something....new call to start3d?
@@ -434,19 +450,10 @@ function setEarthquakeMap()
 								x: 800,
 								y: -650,
 								z: 1100});  //bugbug magic numbers.
-							DemoUtils.Notify('enableHiDim',[
-											[0,0,0,0],
-											[0,0,0,4],
-											[0,0,0,1]  
 							
-										]);
-								
-						}.bind(this)
-						
-						//bugbug soon make the above into a separate vector for each "higher dimension"...e.g. for 2 extra-spatial dimensions...
-						//   notify('enableHiDim',[0,4,1],[5,1,-5])
-						//
-			
+							//changeHiDim('sequence');  //bugbug can we do this through the UI to reflect the initial state correctly??  bugbug not checkin ready							
+							$("#xanimate").val('sequence').change();
+						}.bind(this)	
 		]);
 	stuffToDo.run()
 }
@@ -456,6 +463,36 @@ function setFlowersMap()
 {
 	alert("bugbugnyi1028");
 }
+
+
+
+function matrixForMode(hiDimMode)
+{
+	switch(hiDimMode)
+	{
+
+		case 'sequence':
+			return [
+						[0,0,0,0],  //bugbug need helper to create this only giving 0,4,1
+						[0,0,0,4],
+						[0,0,0,1]  
+					];
+		case null: 
+		case 'null':
+		case 'none':
+		case '':
+			return null;
+		default:
+			alert("errCode434 how did we get here:"+hiDimMode);  //bugbug perhaps the matrices should be attached to the <option elements???
+	}
+
+}
+
+
+
+
+
+
 
 var mainBgColor='white';
 function updateBackground(ev)
@@ -524,12 +561,17 @@ function finishGettingReady()
 			//turn on the animation
 			DemoUtils.Notify("animate",animate.checked );
 		});
-	setTimeout(function()
+	setTimeout(function()  //to avoid wasting CO2, we try to time out the animation...
 		{
 			anim.click();
 		}
 		,30*1000);//milliseconds  //bugbug settings		
 	DemoUtils.Notify("animate",animate.checked );  //and do it once right now for good measure
+	
+	$("#xanimate").change( function(event)
+		{
+			changeXanimate(event);
+		});
 	
 
 	$("#flyTo").click( function(event)

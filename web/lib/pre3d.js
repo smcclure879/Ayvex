@@ -384,12 +384,13 @@ var Pre3d = (function() {
   
 	// Transform the point |p| by the AffineMatrix |t|.  should be N==>3  dimensions
 	//  ...slower, only use when don't have a method that matches dimension count exactly
-	function computeOffsetFromHi(t,pointhi,phase)
+	function computeOffsetFromHi(t,pointhi)  //mostly a matrix mult
 	{
 		var p=pointhi.xd;  //the full N-dimensional vector, not the X,y,Z stuff yet
 		var N = p.length;
 		var M = t.length;  //bugbug for now!  how to figure t.rows???
 
+		//rename this to some kind of matrix mult operation (and move with those)
 		var retval=new Array();
 		
 		for(var ii=0; ii<M; ii++)
@@ -413,7 +414,6 @@ var Pre3d = (function() {
   // Reset the transform to the identity matrix.
   Transform.prototype.reset = function() {
     this.m = makeIdentityAffine();
-	this.mHi = null;
   };
   
   Transform.prototype.check = function() {
@@ -779,9 +779,11 @@ var Pre3d = (function() {
   }
 
   
-  //bugbug  here or renderer?
+  //bugbug  another place where "renderer" and camera are making extra work...
   Renderer.prototype.setHiDimProj = function(new_mHi) { //bugbug controller should be updating this every frame, yes?
-	this.mHi = new_mHi;
+	var retval = (this.mHi!=null || new_mHi!=null);
+	this.mHi=new_mHi;
+	return retval;
   }
 
   Renderer.prototype.transformHiDimPoint = function(p) {  //smcclure879 add.  bugbug where to set .mHi?
