@@ -31,11 +31,20 @@
 </td>
 <td valign="top">
 <span style="font-family:Arial">
-<h1>Ayvex</h1>	
-<h6>Copyright 2014 -- Ayvex Light Industries</h6><br>
+<h6>Copyright 2014 -- Ayvex Light Industries</h6>
+<br><br>
+pick dataset: 
+<select id="dataset">
+  <option value="mc2map">mc2 world map</option>
+  <option value="frcWld">fractals</option>
+  <option value="hiiDimAnlErq">erquake</option>
+  <option value="hiiDimAnlFlw">flower</option>
+</select>
+<br><br><br>
+<span  style="font-family:Arial;font-size:12">
 <div style="border:2px solid #000000;background-color:lightGray" id="controlPanel">
 <input type="button" id="flyTo" value="flyTo"/>
-<span  style="font-family:Arial;font-size:12">
+
 <input type="checkbox" value="animate" id="animate" checked>ANM</input>
 xMOD:<select id="xanimate">
 	<option value="none">none</option>
@@ -44,12 +53,6 @@ xMOD:<select id="xanimate">
 <input type="checkbox" value="lockon" id="lockon" >LCK</input>
 <input type="checkbox" value="black" id="black" checked>BLK</input>
 <input type="checkbox" value="big" id="big" >BIG</input>
-<select id="dataset">
-  <option value="mc2map">mc2 world map</option>
-  <option value="frcWld">fractals</option>
-  <option value="hiiDimAnlErq">erquake</option>
-  <option value="hiiDimAnlFlw">flower</option>
-</select>
 </span><br>
 tags:<input type="text"/>   <!-- value="<all>" id="tags" style="color:red"/> -->
 </span>
@@ -461,7 +464,18 @@ function setEarthquakeMap()
 
 function setFlowersMap()
 {
-	alert("bugbugnyi1028");
+	var flowerUrl = "http://localhost:5984/cosmos/49ddddba4288b13fcab187ef140034b9";  //bugbug cant checkin as localhost!!!
+	
+	//jquery fetch the string
+	$.get(flowerUrl, function(data) {
+		debugSet(data);
+		alert("foo526"+data);	
+	});
+	
+	
+	// run it thru similar to the ERQ data
+	
+	//bugbug you are here
 }
 
 
