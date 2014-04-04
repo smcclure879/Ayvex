@@ -85,14 +85,17 @@ var StepperModule = (function()  //module Stepper
 			var command = thisStep[0];
 			switch(command)
 			{
-				case "waiton": 	this.waitsTaken++;
-								this.doStep(function()	{ 
-												if (thisStep[1]()) //keep doing this until the condition is true
-													this.ii++;      //then we do the advance
-															//else it's
-												this.doSteps();  //without advancing!
-											 
-											}); 
+				case "waiton": 	
+					this.waitsTaken++;  
+					this.doStep(function()	{ 
+									if (thisStep[1]()) //keep doing this until the condition is true  //who is still using this , is this good logic still?  bugbug
+										this.ii++;      //then we do the advance
+									else
+										alert('bugbug:1149rd WAIT');  //bugbug
+									//else it's
+									this.doSteps();  //without advancing!
+								 
+								}); 
 					break;
 				default: 
 					alert('errCode323wj,cmd='+command);
