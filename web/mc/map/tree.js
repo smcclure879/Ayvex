@@ -21,7 +21,7 @@ function transformPoint(renderer,pointh)  //transformPoint ThreeTo2AkaTheCamera
 }
 
 //bugbug should these two functions (above & below) be in the renderer???
-//or iDrawable??
+//or at least iDrawable??
 function computeOffsetFromHi(renderer,pointhi)  //bugbug in effect this is a second camera!
 {	
 	if (pointhi==null)

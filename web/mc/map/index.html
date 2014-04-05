@@ -1,6 +1,6 @@
 <html>
 <head>
-<title>mc2 world map</title>
+<title>Ayvex Light Industries<br>multidimensional viewer</title>
 
 <!-- script src="jquery-1.10.2.min.js"></script   todo   -->
 <script src="../../lib/jquery-1.10.2.js"></script>
@@ -10,6 +10,7 @@
 <script src="cameraAndStuff.js"></script>
 <script src="mc2data.js"></script>
 <script src="memoize.js"></script>
+<script src="stepper.js"></script>
 <script src="tree.js"></script>
 <script src="hasher.js"></script>
 <script src="loadDataFile.js"></script>
@@ -29,22 +30,29 @@
 />
 </td>
 <td valign="top">
-<span style="font-family:Arial"><h6>Copyright 2014</h6>
-<h1>Ayvex Light Industries</h1>	
-<h2>mc2 world</h2><br>
+<span style="font-family:Arial">
+<h6>Copyright 2014 -- Ayvex Light Industries</h6>
+<br><br>
+pick dataset: 
+<select id="dataset">
+  <option value="mc2map">mc2 world map</option>
+  <option value="frcWld">fractals</option>
+  <option value="hiiDimAnlErq">erquake</option>
+  <option value="hiiDimAnlFlw">flower</option>
+</select>
+<br><br><br>
+<span  style="font-family:Arial;font-size:12">
 <div style="border:2px solid #000000;background-color:lightGray" id="controlPanel">
 <input type="button" id="flyTo" value="flyTo"/>
-<span  style="font-family:Arial;font-size:12">
-<input type="checkbox" value="animate" id="animate" checked>ANIM</input>
-<input type="checkbox" value="lockon" id="lockon" >LOCK</input>
-<input type="checkbox" value="black" id="black" checked>BLAK</input>
-<input type="checkbox" value="big" id="big" >BIG</input>
-<select id="dataset">
-  <option value="mc2map">mc2 world map+</option>
-  <option value="frcWld">frcWld 0.01</option>
-  <option value="hiiDimAnlErq">hiiDimAnlErq</option>
-  <option value="hiiDimAnlFlw">hiiDimAnlFlw</option>
+
+<input type="checkbox" value="animate" id="animate" checked>ANM</input>
+xMOD:<select id="xanimate">
+	<option value="none">none</option>
+	<option value="sequence">sequence</option>
 </select>
+<input type="checkbox" value="lockon" id="lockon" >LCK</input>
+<input type="checkbox" value="black" id="black" checked>BLK</input>
+<input type="checkbox" value="big" id="big" >BIG</input>
 </span><br>
 tags:<input type="text"/>   <!-- value="<all>" id="tags" style="color:red"/> -->
 </span>
@@ -104,24 +112,52 @@ function debugSet(s)
 
 
 //each step needs to be set off by the step before it, but on different thread to account for dynamic code
-function doAllSteps(arrSteps)
-{
-	doSteps(arrSteps,0);
-}
-
-function doSteps(arrSteps,whereAt)
-{
-	if (whereAt>=arrSteps.length) return;
-	if (arrSteps[whereAt]==null) return;
-	
-	doStep(function(){ arrSteps[whereAt](); doSteps(arrSteps,whereAt+1); });
-}
-
-function doStep(step)
-{
-	setTimeout(step,100);
-}
-
+//function doAllSteps(arrSteps)
+//{
+//	doSteps(arrSteps,0);
+//}
+//
+//var stepLimit = 20;  //bugbug const or passed into doAllSteps() ???
+//function doSteps(arrSteps,whereAt)
+//{
+//	if (whereAt>=arrSteps.length) return;
+//	if (whereAt>stepLimit)
+//	{
+//		alert("doSteps limit passed errCode333kz");
+//		return;
+//	}
+//	var thisStep = arrSteps[whereAt];
+//	if (thisStep==null) return;
+//	var thisStepType = typeof thisStep;
+//	if (thisStepType=='function')
+//	{
+//		doStep(function(){ arrSteps[whereAt](); doSteps(arrSteps,whereAt+1); });
+//	}
+//	else if (thisStepType=='array')
+//	{
+//		var command = thisStep[0];
+//		switch(command)
+//		{
+//			case "waiton": doStep(function()
+//									{ 
+//										if (thisStep[1]())
+//											doSteps(arrSteps,whereAt+1);
+//										else
+//											doSteps(arrSteps,whereAt);
+//									 
+//									}); 
+//				break;
+//			default: alert('how did we get here bugbug323wj');
+//		}
+//	}
+//}
+//
+//function doStep(step)
+//{
+//	setTimeout(step,100);
+//}
+////bugbug needed??
+//
 
 //this works, but the script won't be live until you yield the thread for a while.  call it carefully!
 function addScript(filename)
@@ -338,6 +374,18 @@ function setMap(dataSetName)  //no longer a callback from the cameraAndStuff.js
 	
 }
 
+function changeHiDim(newMode)
+{
+	DemoUtils.Notify("changeHiDim",matrixForMode(newMode));
+}
+
+function changeXanimate(ev)
+{
+	var newMode=ev.target.value;
+	ev.stopPropagation(); //bugbug needed?
+	changeHiDim(newMode);
+}
+
 function changeDataSet(ev)
 {
 	//bugbug find a better way to do this without refreshing...just an event to the camera or something....new call to start3d?
@@ -389,12 +437,14 @@ function setEarthquakeMap()
 							'skipLinesWithFirstCharIn':'#'
 						};
 	
+	addScript(filename);
 	
-	addScript(filename); //so that data set is fetchable, must be in other thread for the script to activate
 		
-	doAllSteps([  //bugbug should be .then()???;
-			 function() {parseDataSet(dataFileOptions,columnInfo);}
-			,function() {theDrawings.push(new DataPoint([-2000,100,100],"stand here to start")); }
+	var stuffToDo=StepperModule.Stepper.Create([  //bugbug should be .then()???;
+			// function() {addScript(filename);}.bind(this) //so that data set is fetchable, must be in other thread for the script to activate
+			['waiton',function(){ return (earthquakeDataLoaded==1); }]
+			,function() {parseDataSet(dataFileOptions,columnInfo);}.bind(this)
+			,function() {theDrawings.push(new DataPoint([-2000,100,100],"stand here to start")); }.bind(this)
 			,function() {
 							DemoUtils.Notify('moveCamera',{
 								rotate_x: rad(3),
@@ -403,24 +453,60 @@ function setEarthquakeMap()
 								x: 800,
 								y: -650,
 								z: 1100});  //bugbug magic numbers.
-							DemoUtils.Notify('enableHiDim',[
-											[0,0,0,0],
-											[0,0,0,4],
-											[0,0,0,1]
 							
-										]);
-								
-						}
-			
+							//changeHiDim('sequence');  //bugbug can we do this through the UI to reflect the initial state correctly??  bugbug not checkin ready							
+							$("#xanimate").val('sequence').change();
+						}.bind(this)	
 		]);
-		
+	stuffToDo.run()
 }
 
 
 function setFlowersMap()
 {
-	alert("bugbugnyi1028");
+	var flowerUrl = "http://localhost:5984/cosmos/49ddddba4288b13fcab187ef140034b9";  //bugbug cant checkin as localhost!!!
+	
+	//jquery fetch the string
+	$.get(flowerUrl, function(data) {
+		debugSet(data);
+		alert("foo526"+data);	
+	});
+	
+	
+	// run it thru similar to the ERQ data
+	
+	//bugbug you are here
 }
+
+
+
+function matrixForMode(hiDimMode)
+{
+	switch(hiDimMode)
+	{
+
+		case 'sequence':
+			return [
+						[0,0,0,0],  //bugbug need helper to create this only giving 0,4,1
+						[0,0,0,4],
+						[0,0,0,1]  
+					];
+		case null: 
+		case 'null':
+		case 'none':
+		case '':
+			return null;
+		default:
+			alert("errCode434 how did we get here:"+hiDimMode);  //bugbug perhaps the matrices should be attached to the <option elements???
+	}
+
+}
+
+
+
+
+
+
 
 var mainBgColor='white';
 function updateBackground(ev)
@@ -465,49 +551,61 @@ function parseDataSet(dataFileOptions,columnInfo)
 isDown = DemoUtils.KeyTracker.isDown
 
 $(document).ready(function() 
-	{
-		if (oGetVars["dataset"]) 
-			$("#dataset").val(oGetVars["dataset"]);
-			
-		setMap(oGetVars["dataset"]);  
-		updateBackground();
-		start3d(theDrawings);  //in cameraAndStuff.js
-
-	
-		anim = $("#animate");
-		anim.click( function(event)
-			{
-				//turn on the animation
-				DemoUtils.Notify("animate",animate.checked );
-			});
-		setTimeout(function()
-			{
-				anim.click();
-			}
-			,30*1000);//milliseconds  //bugbug settings		
-		DemoUtils.Notify("animate",animate.checked );  //and do it once right now for good measure
-	
-
-		$("#flyTo").click( function(event)
-			{
-				DemoUtils.Notify("flyToSelected","bugbugneeded158?");		
-			});
+{
+	if (oGetVars["dataset"]) 
+		$("#dataset").val(oGetVars["dataset"]);
 		
-		$("#dataset").change( function(event)
-			{
-				changeDataSet(event);
-			});
-		$("#black").change( function(event)
-			{
-				updateBackground();
-			});
-		$("#big").change( function(event)
-			{
-				toggleBigness();
-			});
 	
-	}
-)
+	setMap(oGetVars["dataset"]);  
+	updateBackground();
+	
+	StepperModule.Stepper.Create([
+			function(){	start3d(theDrawings); },  //in cameraAndStuff.js
+			function(){ finishGettingReady(); }
+		]).run();
+
+});
+
+
+function finishGettingReady()
+{
+	anim = $("#animate");
+	anim.click( function(event)
+		{
+			//turn on the animation
+			DemoUtils.Notify("animate",animate.checked );
+		});
+	setTimeout(function()  //to avoid wasting CO2, we try to time out the animation...
+		{
+			anim.click();
+		}
+		,30*1000);//milliseconds  //bugbug settings		
+	DemoUtils.Notify("animate",animate.checked );  //and do it once right now for good measure
+	
+	$("#xanimate").change( function(event)
+		{
+			changeXanimate(event);
+		});
+	
+
+	$("#flyTo").click( function(event)
+		{
+			DemoUtils.Notify("flyToSelected","bugbugneeded158?");		
+		});
+	
+	$("#dataset").change( function(event)
+		{
+			changeDataSet(event);
+		});
+	$("#black").change( function(event)
+		{
+			updateBackground();
+		});
+	$("#big").change( function(event)
+		{
+			toggleBigness();
+		});
+};
 
 
 </script>
