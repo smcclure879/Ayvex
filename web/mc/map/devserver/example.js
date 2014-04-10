@@ -1,4 +1,5 @@
 
+console.log('starting up');
 
 
 
@@ -22,6 +23,7 @@ function isAlphaNumeric() {
 
 http.createServer(function (request, response) //request is node.js "message" obj
 	{
+		console.log(request.url);
 		response.writeHead(200, {'Content-Type': 'text/plain'});
 		if (isAlphaNumeric(request.url[0]) && request.url.contains("erq"))  //bugbug switch
 		{

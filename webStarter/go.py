@@ -93,13 +93,8 @@ def putAttachment(filePath,relativeUrl):
 	obj=json.loads(data)
 	return extractRev(obj)
 
-#putAttachment("testFile.txt")
-
-# for f in allRelevantFilesUnder("..\\web"):
-	# print f
-
-	
-items=allRelevantFilesUnder("..\\web")
+sep="/"
+items=allRelevantFilesUnder(".."+sep+"web")
 for file,url in items:
 	print "finished"+putAttachment(file,url)
 
