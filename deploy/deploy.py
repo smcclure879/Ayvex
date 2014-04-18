@@ -16,16 +16,18 @@ serverPort="192.168.1.110:5984"
 designDoc="/cosmos/_design/passthru"
 sep="/"
 
-def firstFoundVal(obj,listOfKeys):
+def firstFoundVal(obj,listOfKeys,failOnErr):
 	for k in listOfKeys:
 		if (k in obj):
 			return obj[k]
 	print "no key found"
 	pprint.pprint(obj)
-	raise "no key found"
-
-def extractRev(obj):
-	return firstFoundVal(obj,['rev','_rev','etag']);			
+	if failOnErr:
+		raise "no key found"
+	return ''
+	
+def extractRev(obj,failOnErr):
+	return firstFoundVal(obj,['rev','_rev','etag'],failOnErr);			
 	
 def getFile(file):
 	content='bad'
@@ -45,16 +47,21 @@ def getMimeType(file):
 		return "image/jpeg"
 	return "application/octet-stream";
 
-def getRev():
+	
+def getRevBestEffort(doc):
+	return getRev(doc,False)
+
+
+def getRev(doc=designDoc,failOnErr=True):
 	conn = httplib.HTTPConnection(serverPort)
-	conn.request("GET",designDoc)
+	conn.request("GET",doc)
 	res = conn.getresponse()
 	print res.status, res.reason
 	data = res.read()
 	print len(data)
-	print data
+	#print data
 	obj=json.loads(data)
-	return extractRev(obj)
+	return extractRev(obj,failOnErr)
 	
 def allRelevantFilesUnder(startDir):
 	howMuchToRemoveFromStartOfPaths=len(startDir)
@@ -65,10 +72,38 @@ def allRelevantFilesUnder(startDir):
 				continue
 			filePath=os.path.join(root, name)
 			relativeUrl=filePath.replace("\\","/")[howMuchToRemoveFromStartOfPaths:]
-			yield (filePath,relativeUrl);
+			yield (filePath,relativeUrl,name);
 		# for name in dirs:
 			# pass
 			#print(os.path.join(root, name))
+
+
+def putAsData(filePath,dataId):   
+	relativeUrl = "/cosmos/"+dataId
+	rev=getRevBestEffort(relativeUrl)  #optimize this later
+	revString = "?rev="+urllib.quote(rev) if rev else ''
+	print "prevRevString="+revString
+	editUrl=relativeUrl+revString
+	print "editUrl="+editUrl
+	body=getFile(filePath)
+	mimeType=getMimeType(filePath)
+	userAndPass = b64encode(userPass).decode("ascii")
+	conn = httplib.HTTPConnection(serverPort)
+	conn.request("PUT",editUrl,body,
+			{
+				'Content-type':mimeType
+				,				'Authorization' : 'Basic %s' %  userAndPass 
+				
+			}
+		)
+	res = conn.getresponse()
+	print res.status, res.reason
+	data = res.read()
+	print len(data)
+	#print data
+	obj=json.loads(data)
+	return extractRev(obj,True)
+
 			
 def putAttachment(filePath,relativeUrl):
 	rev=getRev()  #optimize this later
@@ -92,16 +127,20 @@ def putAttachment(filePath,relativeUrl):
 	print len(data)
 	#print data
 	obj=json.loads(data)
-	return extractRev(obj)
+	return extractRev(obj,True)
 
 
 
 
 
 items=allRelevantFilesUnder(".."+sep+"web")
-for file,url in items:
+for file,url,name in items:
+	
 	while url.startswith("/"):
 		url=url[1:]
-	print "finished"+putAttachment(file,url)
+	result=putAttachment(file,url)
+	if url.endswith(".json"):  #then also put it in as "data"
+		result = result + "---" + putAsData(file,name)
+	print "finished"+result
 	time.sleep(1)
 
