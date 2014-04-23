@@ -1,3 +1,10 @@
+
+#C:\Users\steve\Documents\GitHub\Ayvex\deploy> python .\deploy.py localhost:5984 user:pazzwordHEER index.html
+#  (that is not the real user/password )
+
+
+
+
 import os,sys
 import json
 import httplib
@@ -6,13 +13,18 @@ import pprint
 import time
 from base64 import b64encode
 
+cutoffTime=time.time()-24*60*60  #day in seconds
 
 if len(sys.argv)<1:
 	raise "must provide name:pwd"
 
 
-userPass=b""+sys.argv[1]
-serverPort="192.168.1.110:5984"
+serverPort=b""+sys.argv[1]
+userPass=b""+sys.argv[2]
+if (len(sys.argv)>3):
+	pattern=sys.argv[3]
+	pattern = b""+sys.argv[3] if len(sys.argv)>3 else b""
+
 designDoc="/cosmos/_design/passthru"
 sep="/"
 
@@ -36,7 +48,7 @@ def getFile(file):
 
 def getMimeType(file):
 	if (file.endswith(".js")):
-		return "text/javascript"
+		return "application/javascript"
 	if (file.endswith(".html")):
 		return "text/html"
 	if (file.endswith(".htm")):
@@ -62,22 +74,33 @@ def getRev(doc=designDoc,failOnErr=True):
 	#print data
 	obj=json.loads(data)
 	return extractRev(obj,failOnErr)
+
+
+def fileIsRecent(file):
+	return os.stat(file).st_mtime > cutoffTime 
 	
-def allRelevantFilesUnder(startDir):
+def allRelevantFilesUnder(startDir,pattern):
 	howMuchToRemoveFromStartOfPaths=len(startDir)
 	retval=[]
 	for root, dirs, files in os.walk(startDir, topdown=True):
 		for name in files:
-			if (name.endswith("~")):
+			if name.endswith("~"):
 				continue
 			filePath=os.path.join(root, name)
+			if pattern=="recent":
+				if fileIsRecent(filePath):
+					pass
+				else:
+					continue
+			else: #normal pattern
+				if name.endswith(pattern):
+					pass
+				else:
+					continue
 			relativeUrl=filePath.replace("\\","/")[howMuchToRemoveFromStartOfPaths:]
-			yield (filePath,relativeUrl,name);
-		# for name in dirs:
-			# pass
-			#print(os.path.join(root, name))
+			yield (filePath,relativeUrl,name)
 
-
+			
 def putAsData(filePath,dataId):   
 	relativeUrl = "/cosmos/"+dataId
 	rev=getRevBestEffort(relativeUrl)  #optimize this later
@@ -133,9 +156,8 @@ def putAttachment(filePath,relativeUrl):
 
 
 
-items=allRelevantFilesUnder(".."+sep+"web")
-for file,url,name in items:
-	
+items=allRelevantFilesUnder(".."+sep+"web",pattern)
+for file,url,name in items:	
 	while url.startswith("/"):
 		url=url[1:]
 	result=putAttachment(file,url)
