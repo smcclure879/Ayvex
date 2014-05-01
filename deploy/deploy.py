@@ -13,10 +13,20 @@ import pprint
 import time
 from base64 import b64encode
 
-cutoffTime=time.time()-24*60*60  #day in seconds
 
-if len(sys.argv)<1:
-	raise "must provide name:pwd"
+usage= """
+	USAGE:python server:port name:pwd <pattern>
+		
+		<pattern> ::  one of:  recent, all,  *.jpg
+"""
+
+
+
+cutoffTime=time.time()-4*60*60  #four hours in seconds
+
+if len(sys.argv)<2:
+	print usage
+	raise BaseException("usage")
 
 
 serverPort=b""+sys.argv[1]
@@ -92,6 +102,8 @@ def allRelevantFilesUnder(startDir,pattern):
 					pass
 				else:
 					continue
+			elif pattern=="all":
+				pass
 			else: #normal pattern
 				if name.endswith(pattern):
 					pass
