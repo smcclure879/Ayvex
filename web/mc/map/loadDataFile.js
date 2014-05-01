@@ -94,7 +94,7 @@ function addTextData(drawables,text,columns,options,transformFunction)
 			var chunks=line.splitCommas();		
 			var labelledChunks = zip2(columns,chunks);
 						
-			item = new DataPoint(  //higher dimensional data point
+			item = DataPoint.FromArr(  //higher dimensional data point
 							labelledChunks
 								.map( function(colAndChunk){ return convertAndScale(colAndChunk[0],colAndChunk[1]); }     ) 
 							//,{width: color etc here based on labelledChunks
