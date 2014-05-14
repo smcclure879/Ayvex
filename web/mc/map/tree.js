@@ -106,6 +106,7 @@ function lineTo(ctx,pt)
 	ctx.lineTo(pt.x,pt.y);
 	return 1;
 }
+
 function fillPoint(ctx,pt,size)
 {
 	if (pt==null) return null;
@@ -225,7 +226,7 @@ Tree.prototype.draw=function(renderer,log2Size)
 	//bugbug how to get from above to below based on dist between camear and object?  
 	//bugbug why is this in the tree or its base object and not the "camera"?
 	var levelsToGo=4;  //bugbug for now
-	//bugbug you are here  need to only have this value high for things close to renderer
+	//bugbug   need to only have this value high for things close to renderer
 	
 	this.drawFractalPath(
 						renderer,
