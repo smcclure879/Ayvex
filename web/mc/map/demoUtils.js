@@ -682,6 +682,7 @@ var DemoUtils = (function() {
 		.keyup(  KeyTracker.onKeyUp);
 
 
+	//figure out cleaner way than this
 	function Notify(item,state)
 	{
 		switch(item)
@@ -689,12 +690,13 @@ var DemoUtils = (function() {
 			case "animate": animate=state; break;
 			case "flyToSelected": flying=true; break;
 			case "moveCamera": newCameraState=state; break;
+			case "pointAt": pointAt=state; break;  //bugbug make this work
 			case "updateBackground": black=state; break;
 			case "changeHiDim": mhi=state; break;
 			default: alert("bugbug unknown alert");
 		}
 	}
-
+	
 
 
   return {

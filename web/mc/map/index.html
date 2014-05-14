@@ -16,6 +16,7 @@
 <script src="loadDataFile.js"></script>
 <script src="localSettings.js"></script>
 <script src="DataPoint.js"></script>
+<script src="Gamer.js"></script>
 </head>
 
 <body>
@@ -31,11 +32,20 @@
 </td>
 <td valign="top">
 <span style="font-family:Arial">
-<h1>Ayvex</h1>	
-<h6>Copyright 2014 -- Ayvex Light Industries</h6><br>
+<h6>Copyright 2014 -- Ayvex Light Industries</h6>
+<br><br>
+pick dataset: 
+<select id="dataset">
+  <option value="mc2map">mc2 world map</option>
+  <option value="frcWld">fractals</option>
+  <option value="hiiDimAnlErq">erquake</option>
+  <option value="hiiDimAnlFlw">flower</option>
+</select>
+<br><br><br>
+<span  style="font-family:Arial;font-size:12">
 <div style="border:2px solid #000000;background-color:lightGray" id="controlPanel">
 <input type="button" id="flyTo" value="flyTo"/>
-<span  style="font-family:Arial;font-size:12">
+
 <input type="checkbox" value="animate" id="animate" checked>ANM</input>
 xMOD:<select id="xanimate">
 	<option value="none">none</option>
@@ -44,12 +54,6 @@ xMOD:<select id="xanimate">
 <input type="checkbox" value="lockon" id="lockon" >LCK</input>
 <input type="checkbox" value="black" id="black" checked>BLK</input>
 <input type="checkbox" value="big" id="big" >BIG</input>
-<select id="dataset">
-  <option value="mc2map">mc2 world map</option>
-  <option value="frcWld">fractals</option>
-  <option value="hiiDimAnlErq">erquake</option>
-  <option value="hiiDimAnlFlw">flower</option>
-</select>
 </span><br>
 tags:<input type="text"/>   <!-- value="<all>" id="tags" style="color:red"/> -->
 </span>
@@ -107,6 +111,20 @@ function debugSet(s)
 	toolbar.innerHTML=s;
 }
 
+
+function definedAndTrue(val)
+{
+	if (typeof val == 'undefined') return false;
+	return val;
+}
+
+function pushAll(ofThese,intoThese)  //bugbug why did a.extend(b)  not work???
+{
+	for(var ii=0,il=ofThese.length; ii<il; ii++)
+	{
+		intoThese.push(ofThese[ii]);
+	}
+}
 
 //each step needs to be set off by the step before it, but on different thread to account for dynamic code
 //function doAllSteps(arrSteps)
@@ -410,8 +428,17 @@ function setFractalWorldMap()
 	addCoordinateVectors(theDrawings);
 	//todo add perlin noise, etc etc etc
 	addTreesAndWater(theDrawings,treePoleFrac);
+	addGamer(theDrawings,"bob",62,62,62);
+	
 }
 
+function addGamer(theDrawings,name,x,y,z)
+{
+	var gamer= new Gamer();
+	gamer.moveTo(x,y,z);
+	gamer.name('bob');
+	theDrawings.push(gamer);
+}
 
 
 function setEarthquakeMap()
@@ -439,9 +466,9 @@ function setEarthquakeMap()
 		
 	var stuffToDo=StepperModule.Stepper.Create([  //bugbug should be .then()???;
 			// function() {addScript(filename);}.bind(this) //so that data set is fetchable, must be in other thread for the script to activate
-			['waiton',function(){ return (earthquakeDataLoaded==1); }]
+			['waiton',function(){ return (definedAndTrue(earthquakeDataLoaded)); }]
 			,function() {parseDataSet(dataFileOptions,columnInfo);}.bind(this)
-			,function() {theDrawings.push(new DataPoint([-2000,100,100],"stand here to start")); }.bind(this)
+			,function() {theDrawings.push(DataPoint.FromArr([-2000,100,100],"stand here to start")); }.bind(this)
 			,function() {
 							DemoUtils.Notify('moveCamera',{
 								rotate_x: rad(3),
@@ -461,8 +488,112 @@ function setEarthquakeMap()
 
 function setFlowersMap()
 {
-	alert("bugbugnyi1028");
+	var shortBaseUrl = "http://localhost:5984/cosmos";  //bugbug where to get this from??
+	var flowerUrl = shortBaseUrl+"/iris.json";  
+	
+
+	var dataToSendWithRequest = ''
+	var reqHandler = $.getJSON( flowerUrl, 
+								dataToSendWithRequest, 
+								setFlowersMapStep2)  // on success, run this next function
+		//.done(function() {
+		//	//alert( "second success" );
+		//})
+		.fail(function() {
+			alert( "error" +reqHandler.error);
+		})
+		//.always(function() {
+		//	//alert( "finishedbugbug258y" );
+		//})
+	;
+		 
+	function setFlowersMapStep2(jsonData)
+	{
+		var columnInfo=
+		[ 
+			{name:'x',readas:'float',scale:100,offset:200},  //todo what are the other columns about a column??  (isUTC, parseThisWay, limits, precision, short and long name
+			{name:'y',readas:'float',scale:100,offset:200}, 
+			{name:'z',readas:'float',scale:100,offset:200},
+			{name:'q',readas:'float',scale:10,offset:0}
+		];
+	
+		theDrawings=[];
+		addCoordinateVectors(theDrawings);
+		
+		var theNewPoints = jsonData.docs.map(function(onePointJson) {
+												scaleJson(onePointJson,columnInfo);
+												return DataPoint.FromJson(onePointJson);
+											}); 
+		pushAll(theNewPoints,theDrawings);
+		
+		DemoUtils.Notify( 'moveCamera',{  //bugbug wish i could say 'pointAt' instead
+			rotate_x: rad(0),
+			rotate_y: rad(283),
+			rotate_z: rad(0),
+			x: 17000,
+			y: 20000,
+			z: 19000});  //bugbug magic numbers.  bugbug negated?
+	}
+	
+	
+
+	function scaleJson(onePointJson,columnInfo)
+	{
+		onePointJson.x = convertAndScale(columnInfo[0],onePointJson.x);
+		onePointJson.y = convertAndScale(columnInfo[1],onePointJson.y);
+		onePointJson.z = convertAndScale(columnInfo[2],onePointJson.z);
+		
+		for(var ii=0,il=columnInfo.length; ii<il; ii++)
+		{
+			onePointJson.xd[ii] = convertAndScale(columnInfo[ii],onePointJson.xd[ii]);
+		}
+	}
+
+
 }
+
+	//changeHiDim('sequence');  //bugbug can we do this through the UI to reflect the initial state correctly??  bugbug not checkin ready							
+//							$("#xanimate").val('sequence').change();
+		//turn the json data into DataPoints
+	//	var steps=StepperModule.Stepper.Create([  //bugbug should be .then()???;
+			// function() {addScript(filename);}.bind(this) //so that data set is fetchable, must be in other thread for the script to activate
+			//['waiton',function(){ return (bugbugblahblahDataLoaded==1); }]
+			//,function() {parseDataSet(dataFileOptions,columnInfo);}.bind(this)
+			//function() {theDrawings.push(DataPoint.From([200,100,100],"bugbug is this thing on?")); }.bind(this)
+			//,function() {
+				//			DemoUtils.Notify('moveCamera',{
+				//				rotate_x: rad(3),
+				//				rotate_y: rad(90),
+				//				rotate_z: rad(0),
+				//				x: 700,
+				//				y: -550,
+				//				z: 1000});  //bugbug magic numbers.
+							
+							//changeHiDim('sequence');  //bugbug can we do this through the UI to reflect the initial state correctly??  bugbug not checkin ready							
+				//			$("#xanimate").val('sequence').change();
+				//		}.bind(this)	
+		//]);
+		//steps.run()
+			
+	
+	//might need this elsewhere bugbug 
+	// Set another completion function for the request above
+	//reqHandler.always(function() {
+	//	alert( "second finished" );
+	//});
+
+		
+	
+	
+	//old needed??? bugbug jquery fetch the string
+	//$.get(flowerUrl, function(data) {
+	//	alert("foo526"+data);	
+	//	debugSet(data);
+	//}).then(function(){alert("foo");});
+	
+	//retrieve as couchDB data set here???  //bugbug you are here
+	
+	
 
 
 
@@ -503,7 +634,7 @@ function updateBackground(ev)
 var big=1;
 function toggleBigness(ev)
 {
-	big=($("#big").is(':checked'))?2:1;
+	big=($("#big").is(':checked')) ? 2 : 1 ;
 }
 
 
@@ -576,7 +707,7 @@ function finishGettingReady()
 
 	$("#flyTo").click( function(event)
 		{
-			DemoUtils.Notify("flyToSelected","bugbugneeded158?");		
+			DemoUtils.Notify("flyToSelected","thisArgNotNeeded");		
 		});
 	
 	$("#dataset").change( function(event)

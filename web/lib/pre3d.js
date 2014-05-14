@@ -373,7 +373,12 @@ var Pre3d = (function() {
 
   // Transform the point |p| by the AffineMatrix |t|.  //assuming 3-d to 3-d
   function transformPoint(t, p) {
-    if (typeof p==='undefined' || typeof p.x === 'undefined') //bugbug hoping to avoid this repeated check in this critical code.  (can this whole file go into the GPU?)
+    if (null==t)
+	{
+		alert("bugbug bad t");
+		return { x:0, y:0, z:0 };  //bugbug it'll come along later???
+    }
+	if (typeof p==='undefined' || typeof p.x === 'undefined') //bugbug hoping to avoid this repeated check in this critical code.  (can this whole file go into the GPU?)
 		alert( "bugbug bad p" );
     return {
       x: t.e0 * p.x + t.e1 * p.y + t.e2  * p.z + t.e3,
@@ -837,7 +842,10 @@ var Pre3d = (function() {
       function projectPointsToCanvas(ps,skipOffscreenPoint) {
 	if (typeof ps === "undefined" ) return null;
 	if (ps==null)
+	{
 		debugSet("foo513");
+		return null;
+	}
     var il = ps.length;
     var out = Array(il);
     for (var i = 0; i < il; ++i) {
