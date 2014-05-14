@@ -16,6 +16,7 @@
 <script src="loadDataFile.js"></script>
 <script src="localSettings.js"></script>
 <script src="DataPoint.js"></script>
+<script src="Gamer.js"></script>
 </head>
 
 <body>
@@ -427,8 +428,17 @@ function setFractalWorldMap()
 	addCoordinateVectors(theDrawings);
 	//todo add perlin noise, etc etc etc
 	addTreesAndWater(theDrawings,treePoleFrac);
+	addGamer(theDrawings,"bob",62,62,62);
+	
 }
 
+function addGamer(theDrawings,name,x,y,z)
+{
+	var gamer= new Gamer();
+	gamer.moveTo(x,y,z);
+	gamer.name('bob');
+	theDrawings.push(gamer);
+}
 
 
 function setEarthquakeMap()
@@ -509,7 +519,6 @@ function setFlowersMap()
 	
 		theDrawings=[];
 		addCoordinateVectors(theDrawings);
-		//theDrawings.push( DataPoint.FromArr([200,100,100],"bugbug is this thing on?") );
 		
 		var theNewPoints = jsonData.docs.map(function(onePointJson) {
 												scaleJson(onePointJson,columnInfo);

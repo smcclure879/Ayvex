@@ -49,7 +49,8 @@ function start3d(theDrawings)
 			renderer.camera.transform.check();  //bugbug assert  //bugbug needed???
 			if (drawing instanceof iDrawable) 
 			{
-				drawing.draw(renderer);
+				var log2Size=1;  //a 2m object (bugbug)
+				drawing.draw(renderer,log2Size);
 			}
 			else  //have the renderer do it
 			{
