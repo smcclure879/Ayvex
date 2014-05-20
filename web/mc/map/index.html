@@ -16,7 +16,7 @@
 <script src="loadDataFile.js"></script>
 <script src="localSettings.js"></script>
 <script src="DataPoint.js"></script>
-<script src="Gamer.js"></script>
+<script src="gamer.js"></script>
 </head>
 
 <body>
@@ -266,12 +266,12 @@ function addCoordinateVectors(paths)
 }
 
  
- 
+ //bugbug make the waves into "land" and only a few are actual waves (but the "sea level" is a good "default land level" for now)
  function waterMarker(xx,zz, waveHeight, waveLength)
  {
 	if (waveHeight===undefined) waveHeight=badRnd(8)-4;
 	if (waveLength===undefined) waveLength=badRnd(7)+13;
-	return twoSegmentPath(	'blue',
+	return twoSegmentPath(	'AE4353',  //bugbug const dark brown
 							1,
 							xx,62,zz,
 							xx,64+waveHeight,zz+waveLength/3,
@@ -428,16 +428,35 @@ function setFractalWorldMap()
 	addCoordinateVectors(theDrawings);
 	//todo add perlin noise, etc etc etc
 	addTreesAndWater(theDrawings,treePoleFrac);
-	addGamer(theDrawings,"bob",62,62,62);
+	var gamerBob=addGamer(theDrawings,"bob",62,62,62);
+	
+	
+	// var stuffToDo=StepperModule.Stepper.Create([  //bugbug should be .then()???;
+			 // function() { gamerBob.reposition(102,62,162) }.bind(this)  //bugbug you are here
+	// ]);
+	// stuffToDo.run()
+
+	// set interval
+	var tid = setInterval(mycode, 50);
+	function mycode() 
+	{
+		gamerBob.moveForward();
+		gamerBob.mutateOrientation1();
+	}
+	function abortTimer() { // to be called when you want to stop the timer
+	  clearInterval(tid);
+	}
+	
 	
 }
 
 function addGamer(theDrawings,name,x,y,z)
 {
 	var gamer= new Gamer();
-	gamer.moveTo(x,y,z);
+	gamer.reposition(x,y,z);
 	gamer.name('bob');
 	theDrawings.push(gamer);
+	return gamer;
 }
 
 
