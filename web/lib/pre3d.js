@@ -392,6 +392,8 @@ var Pre3d = (function() {
 	function computeOffsetFromHi(t,pointhi)  //mostly a matrix mult
 	{
 		var p=pointhi.xd;  //the full N-dimensional vector, not the X,y,Z stuff yet
+		if (typeof p === 'undefined') 
+			return null;
 		var N = p.length;
 		var M = t.length;  //bugbug for now!  how to figure t.rows???
 

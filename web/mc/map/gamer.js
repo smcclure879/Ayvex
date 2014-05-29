@@ -34,16 +34,25 @@ function drawLineAbsAbs(ctx,from2d,to2d)
 
 function Gamer()
 {
-	this.color='pink';
+	this.color='blue';
 	this.pointh={ x:4700, y:4700, z:4700};  //more fiedlds needed?  bugbug
 	this.prevPoint={ x:4600, y:4700, z:4700};
 	this.orientation={ rotx:0, roty:0, rotz:0};
+	
+	this.stepSize=5; //bugbug until later, move up to be first class property	
 }
 
 Gamer.prototype=new iDrawable();
 Gamer.prototype.constructor=Gamer;
 
-Gamer.prototype.moveTo = function(x,y,z, rotx, roty, rotz)  //bugbug need version that takes structs....clean up this interface
+
+Gamer.prototype.reposition2 = function(newPos)
+{
+	this.prevPoint=this.pointh;
+	this.pointh=newPos; 	
+}
+
+Gamer.prototype.reposition = function(x,y,z, rotx, roty, rotz)  //bugbug need version that takes structs....clean up this interface
 {
 	//to show user "flowing" from one point to another (might generalize to a "ring buffer")
 	this.prevPoint=this.pointh;
@@ -58,6 +67,20 @@ Gamer.prototype.moveTo = function(x,y,z, rotx, roty, rotz)  //bugbug need versio
 	this.orientation.rotx=0;
 	this.orientation.roty=0;
 	this.orientation.rotz=0;  //bugbug abstract a 3D rotate-able object out and have gamer inherit from that...a later refactoring
+}
+
+Gamer.prototype.moveForward = function()
+{
+	var newPoint = projection(this.pointh, this.stepSize, this.orientation);
+	this.reposition2(newPoint);
+}
+
+Gamer.prototype.mutateOrientation1 = function()
+{
+	this.orientation.roty += rad(1); //bugbug not random enough  bugbug const
+	loop(0,twoPi,this.orientation.rotY); 
+	this.stepSize+=0.01;
+
 }
 
 Gamer.prototype.name = function(name)
@@ -97,8 +120,8 @@ Gamer.prototype.draw=function(renderer,log2size) //,gameTime)  //bugbug need to 
 	ctx.beginPath();
 	
 	
-	var footPoint2d=tpt(this.pointh);  //the foot is where you "are"
 
+	var footPoint2d=tpt(this.pointh);  //the foot is where you "are"...compute early to eliminate stuff we don't need to draw
 	if (footPoint2d==null)
 		return null;  //offscreen!
 	
@@ -108,48 +131,57 @@ Gamer.prototype.draw=function(renderer,log2size) //,gameTime)  //bugbug need to 
 		this.t == 'playerZERO?';  //bugbug
 	}
 	
+
+
+	if (footPoint2d==null) 
+		return null;
 	
-	if (this.isSelected) 
-	{
-		ctx.fillStyle='purple';
-	}
-	else
-	{
-		ctx.fillStyle=this.color;
-	}
-	
-	if (footPoint2d==null) return null;
-	
-	var noseLength=20;  //bugbug settings? or property of object?
+	var noseLength=5;  //bugbug settings? or property of object?
 	var height=100;
 	//var activity=5;  //soon there will be strings allowed for this value (activityLevel)!!! bugbug
 	//bugbug based on activity, randomly fuzz the points' positions
 	
 	//bugbug you are here ("build" the person like we built a tree)
+	var headPoint3d=mm.addPoints3d(this.pointh,{x:0,y:height,z:0});
+	var nosePoint3d=projection(headPoint3d, noseLength, this.orientation);
+
+		
+	var nosePoint2d=tpt(nosePoint3d);
+	var headPoint2d=tpt(headPoint3d);
 	var prevPoint2d=tpt(this.prevPoint);
-	var orientationPoint2d=tpt(projection(this.pointh, noseLength, this.orientation));
+	//footPoint2d already done early
 	
+	//bugbug if any more points turn that into an array or something!
 	
 	//bugbug we'll want to do more than draw lines
-	drawLineAbsRel(ctx,footPoint2d,{x:0,y:-height});
-	drawLineAbsAbs(ctx,footPoint2d,orientationPoint2d);
-	drawLineAbsAbs(ctx,footPoint2d,prevPoint2d);
+	if (this.isSelected) 
+	{
+		ctx.strokeStyle = 'purple';
+	}
+	else
+	{
+		ctx.strokeStyle = this.color;
+	}
 	
-	
-	
-	
-	//bugbug somethign else instead of...
-	// ctx.fillRect(footPoint2d.x,footPoint2d.y,headingPoint2d.x-footPoint2d.x,headingPoint2d.y-footPoint2d.y);
+	drawLineAbsAbs(ctx,nosePoint2d,headPoint2d);  //nose
+	drawLineAbsAbs(ctx,headPoint2d,footPoint2d);  //body
+	drawLineAbsAbs(ctx,footPoint2d,prevPoint2d);  //tail
 	ctx.stroke();
-
-	moveTo(ctx, orientationPoint2d);
 	
 	ctx.font="12px Arial";
 	ctx.fillStyle=contrastBackground();
 	
-	ctx.fillText(this.t,orientationPoint2d.x,orientationPoint2d.y);  //bugbug redo startingPoint logic we inherited here
+	//moveTo(ctx, headPoint2d);
+	ctx.fillText(this.t,nosePoint2d.x,nosePoint2d.y);  
 	ctx.stroke();
 	
 }
 
 
+Gamer.prototype.doStuff = function()
+{
+	//spin up a thread to move around almost randomly, but in this general direction
+	this.moveDelta({x:1,y:0,z:4})
+
+
+}
