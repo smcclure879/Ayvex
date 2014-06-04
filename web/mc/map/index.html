@@ -3,6 +3,15 @@
 <title>Ayvex Light Industries<br>multidimensional viewer</title>
 
 <!-- script src="jquery-1.10.2.min.js"></script   todo   -->
+
+<!--bugbug way to do the links this way and use from couchDB?
+// <scr  ipt src="/_utils/script/json2.js"></scr  ipt>
+// <scr  ipt src="/_utils/script/sha1.js"></scr  ipt>
+// <scr  ipt src="/_utils/script/jquery.js?1.4.2"></scr  ipt>
+// <scr  ipt src="/_utils/script/jquery.couch.js?0.11.0"></scr  ipt>
+// <scr  ipt src="/_utils/script/jquery.dialog.js?0.11.0"></scr  ipt>
+-->
+
 <script src="../../lib/jquery-1.10.2.js"></script>
 <script src="../../lib/pre3d.js"></script>
 <script src="../../lib/queryParams.js"></script>
@@ -17,6 +26,8 @@
 <script src="localSettings.js"></script>
 <script src="DataPoint.js"></script>
 <script src="gamer.js"></script>
+<script src="http://localhost:5984/_utils/script/jquery.couch.js?0.11.0"></script>
+
 </head>
 
 <body>
@@ -381,7 +392,7 @@ function setMap(dataSetName)  //no longer a callback from the cameraAndStuff.js
 	switch(dataSetName)
 	{
 		case 'mc2map': setMc2Map(); break;
-		case 'frcWld': setFractalWorldMap();  break;   		//bugbug semantics "map" for these entities is wrong....it's a full presentation around a dataset, the framing around the map, etc.
+		case 'frcWld': setFractalWorld();  break;   		//bugbug semantics "map" for these entities is wrong....it's a full presentation around a dataset, the framing around the map, etc.
 		case 'hiiDimAnlErq': setEarthquakeMap(); break;
 		case 'hiiDimAnlFlw': setFlowersMap(); break;
 		default: setErrorMap(dataSetName); break;
@@ -422,7 +433,7 @@ function setMc2Map()
 	addCoordinateVectors(theDrawings);
 }
 
-function setFractalWorldMap()
+function setFractalWorld()
 {
 	var treePoleFrac=0.5;
 	addCoordinateVectors(theDrawings);
@@ -430,8 +441,7 @@ function setFractalWorldMap()
 	addTreesAndWater(theDrawings,treePoleFrac);
 	var gamerBob=addGamer(theDrawings,"bob",62,62,62);
 	
-	
-	// var stuffToDo=StepperModule.Stepper.Create([  //bugbug should be .then()???;
+		// var stuffToDo=StepperModule.Stepper.Create([  //bugbug should be .then()???;
 			 // function() { gamerBob.reposition(102,62,162) }.bind(this)  //bugbug you are here
 	// ]);
 	// stuffToDo.run()
@@ -443,8 +453,9 @@ function setFractalWorldMap()
 		gamerBob.moveForward();
 		gamerBob.mutateOrientation1();
 	}
-	function abortTimer() { // to be called when you want to stop the timer
-	  clearInterval(tid);
+	function abortTimer() // to be called when you want to stop the timer bugbug when would we want to?
+	{
+		clearInterval(tid);
 	}
 	
 	
@@ -694,9 +705,14 @@ $(document).ready(function()
 	
 	setMap(oGetVars["dataset"]);  
 	updateBackground();
+
+
+	var opts = {
+		updateServerCallback:getUpdateServerCallback()
+	};  //bugbug
 	
 	StepperModule.Stepper.Create([
-			function(){	start3d(theDrawings); },  //in cameraAndStuff.js
+			function(){	start3d(theDrawings,opts); },  //in cameraAndStuff.js
 			function(){ finishGettingReady(); }
 		]).run();
 
@@ -742,6 +758,148 @@ function finishGettingReady()
 			toggleBigness();
 		});
 };
+
+
+function getUpdateServerCallback()
+{
+	if (oGetVars["dataset"]=="frcWld")  //bugbug hack should be a property of the dataset or something
+		return updateServerCallback;
+	else
+		return null;
+}
+
+//bugbug move this to its own module?
+
+//for now init a 
+//should this be persistent bugbug??
+var user = {
+	userId:'goo',  //bugbug should ask this
+	_rev:-1,
+	cam:null //bugbug better sentinel value?
+};
+
+//two locks...one to not run more than once per 2s, one to keep 2 copies from running at same time
+var lastCalled=Date.now();
+var serverCallbackLocked=false;  //open it  -- like a semaphore??  bugbug is this the "right" way?
+function updateServerCallback(camera_state)
+{
+	user.cam=camera_state;  //always gotta update this one!
+
+	//lock 1
+	var thisCall=Date.now();
+	if (thisCall-lastCalled<2000)  //at most every 2 sec (bugbug const)
+		return;
+	else
+		lastCalled=thisCall;
+
+	//lock 2
+	if (serverCallbackLocked)  //this is the actual door
+		return;
+	else
+		serverCallbackLocked=true;  //closes behind you, one at a time
+
+	
+	if (user._rev<1) 
+	{
+		initServerCallback(user);
+		return;
+	}
+		
+	var data = JSON.stringify(user);
+	
+	//bugbug what can't use $.couch.urlPrefix="http://localhost:5984";  $.couch.get(blah) 
+	$.ajax(
+	{
+		type:"PUT",
+		headers: { 
+			'Accept': 'application/json',
+			'Content-Type': 'application/json'
+			//'Content-Length': 1000000 //bugbugNOW
+		},
+		url: getUserDocUrl(user)+revString(user._rev),
+		data: data,
+		//contentType: "application/json",
+		//dataType: "json",
+		success: function( data, textStatus, jqXHR ) {
+			//bugbug alert(textStatus);  
+			user._rev = unquote(jqXHR.getResponseHeader("ETAG"));
+			//alert(user._rev);
+		},
+		error: function( jqXHR, textStatus, errorThrown ) {
+			alert(errorThrown);
+		},
+		complete: function(jqResp) {
+			serverCallbackLocked=false;  //open again one way or another
+		}
+		
+		
+		
+		
+  
+		
+		
+		
+	});
+}
+
+
+function unquote(x)
+{
+	for(ii=0, il=x.length; ii<il && x.substring(ii,1)=="\""; ii++);
+	for(      jj=x.length; jj>=0 && x.substring(jj,1)=="\""; --jj); 
+	return x.substring(ii,jj-ii);
+}
+
+function initServerCallback(user)
+{
+	
+	//bugbug consolidate this call with similar call above somehow?  worth it?
+	$.ajax({
+		type: "GET",
+		url: getUserDocUrl(user),
+		contentType: "application/json",
+		success: function(data) {
+			initUserFromData(user,data); //it better be a userDoc
+		},
+		error: function(resp) {
+			if (resp.status==404)
+				user._rev=1;  //which = NEW bugbug const
+			else
+				alert("do not know how to deal with this error"+JSON.stringify(resp));
+		},
+		complete: function(jqResp) {
+			serverCallbackLocked=false;  //open again one way or another
+		}
+		
+	});
+}
+
+
+function getUserDocUrl(user)
+{
+	return "http://localhost:5984/cosmos/user_"+user.userId;
+}
+
+function initUserFromData(user,data)
+{
+	var obj = $.parseJSON(data);
+	user.cam=obj.cam;
+	user._rev=obj._rev;
+	//user.  more???
+}
+
+function revString(rev)
+{
+	if (rev=='1') //brand new
+		return "";
+	if (rev.length>10) //heuristic know pattern of couchDB
+		return "?rev="+rev;
+	
+	
+	alert("problem building revString");
+		return "";
+}
+
 
 
 </script>

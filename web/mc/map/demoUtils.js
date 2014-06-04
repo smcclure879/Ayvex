@@ -429,6 +429,10 @@ var DemoUtils = (function() {
 	function redoTheCam(frameNum)
 	{
 		if (!dirtyCam) return; //no point
+		
+		//need more heuristics to avoid calling so much!
+		if (typeof opts.updateServerCallback=='function') 
+			opts.updateServerCallback(camera_state);
 
 		//update control panel
 		$("#frameNum").val(frameNum);

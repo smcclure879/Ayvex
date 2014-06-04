@@ -1,6 +1,6 @@
   
 // (c) Dean McNamee <dean@gmail.com>.  All rights reserved.
-function start3d(theDrawings) 
+function start3d(theDrawings,opts) 
 {
 	var screen_canvas = document.getElementById('c');
 	var renderer = new Pre3d.Renderer(screen_canvas);
@@ -110,12 +110,6 @@ function start3d(theDrawings)
 	renderer.camera.focal_length = 3;  //bugbug settings originally 1/2
 
 	//"this looks like a good spot"--found by flying around the model
-	// camX=-157;
-	// camY=-176;
-	// camZ=-39;
-	// camRotX=0.42;
-	// camRotY=rad(250);
-	// camRotZ=0;
 	camX=165;
 	camY=-656;
 	camZ=-683;
@@ -123,8 +117,8 @@ function start3d(theDrawings)
 	camRotY=rad(351);
 	camRotZ=0;
 
-
-	var opts = {};
+	//bugbug move some of this into structures (camPos&Orient) and into opts (e.g. draw and findNearest)
+	//bugbug are there more opts???  the callee supports more!
 	DemoUtils.autoCamera(renderer, camX, camY, camZ, camRotX, camRotY, camRotZ, draw, findNearest, opts);
 
 	var toolbar = new DemoUtils.ToggleToolbar();
