@@ -1,6 +1,6 @@
   
 // (c) Dean McNamee <dean@gmail.com>.  All rights reserved.
-function start3d(theDrawings) 
+function start3d(theDrawings,opts) 
 {
 	var screen_canvas = document.getElementById('c');
 	var renderer = new Pre3d.Renderer(screen_canvas);
@@ -46,19 +46,30 @@ function start3d(theDrawings)
 		for(var ii=0,lim=theDrawings.length; ii<lim; ii++)
 		{
 			var drawing = theDrawings[ii];			
-			renderer.camera.transform.check();  //bugbug assert  //bugbug needed???
-			if (drawing instanceof iDrawable) 
-			{
-				var log2Size=1;  //a 2m object (bugbug)
-				drawing.draw(renderer,log2Size);
-			}
-			else  //have the renderer do it
-			{
-				renderer.drawPath(drawing);
-			}
+			drawIt(drawing);
+		}
+		
+		for(var key in theDrawings.dynamic)
+		{
+			var drawing = theDrawings.dynamic[key];
+			drawIt(drawing);
 		}
 		
 		//todo renderer.drawReticle();  //in screen coords
+	}
+	
+	function drawIt(drawing)
+	{
+		renderer.camera.transform.check();  //bugbug assert  //bugbug needed???
+		if (drawing instanceof iDrawable) 
+		{
+			var log2Size=1;  //a 2m object (bugbug)
+			drawing.draw(renderer,log2Size);
+		}
+		else  //have the renderer do it
+		{
+			renderer.drawPath(drawing);
+		}
 	}
 	  
 	//bugbug move this function into the renderer (pre3d.js function getnearest )
@@ -110,12 +121,6 @@ function start3d(theDrawings)
 	renderer.camera.focal_length = 3;  //bugbug settings originally 1/2
 
 	//"this looks like a good spot"--found by flying around the model
-	// camX=-157;
-	// camY=-176;
-	// camZ=-39;
-	// camRotX=0.42;
-	// camRotY=rad(250);
-	// camRotZ=0;
 	camX=165;
 	camY=-656;
 	camZ=-683;
@@ -123,8 +128,8 @@ function start3d(theDrawings)
 	camRotY=rad(351);
 	camRotZ=0;
 
-
-	var opts = {};
+	//bugbug move some of this into structures (camPos&Orient) and into opts (e.g. draw and findNearest)
+	//bugbug are there more opts???  the callee supports more!
 	DemoUtils.autoCamera(renderer, camX, camY, camZ, camRotX, camRotY, camRotZ, draw, findNearest, opts);
 
 	var toolbar = new DemoUtils.ToggleToolbar();

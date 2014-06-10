@@ -36,6 +36,7 @@ if (len(sys.argv)>3):
 	pattern = b""+sys.argv[3] if len(sys.argv)>3 else b""
 
 designDoc="/cosmos/_design/passthru"
+viewDoc="/cosmos/_design/views"
 sep="/"
 
 def firstFoundVal(obj,listOfKeys,failOnErr):
@@ -139,7 +140,45 @@ def putAsData(filePath,dataId):
 	obj=json.loads(data)
 	return extractRev(obj,True)
 
+def putViewFile(filePath,dataId):  #this does not work right now, at all!  bugbug
+	#need to get the entire file and add to or overwrite the json in it.
+	#we should use a second design doc? one we can just overwrite?  yes
+	
+	if not filePath.endswith("views.json"):
+		raise Exception('reason','how we got here with no views.json filePath='+filePath)
+	
+	print filePath,"dataId="+dataId
 			
+	#this is the attachment code...useful here?
+	rev=getRev(viewDoc,False)  #optimize this later
+	if rev:
+		rev="?rev="+urllib.quote(rev)
+	else: 
+		rev="";
+	print "rev string:"+rev
+	editUrl=viewDoc+rev
+	print editUrl
+	body=getFile(filePath)
+	mimeType=getMimeType(filePath)
+	userAndPass = b64encode(userPass).decode("ascii")
+	conn = httplib.HTTPConnection(serverPort)
+	conn.request("PUT",editUrl,body,
+			{
+				'Content-type':mimeType
+				,				'Authorization' : 'Basic %s' %  userAndPass 
+				
+			}
+		)
+	res = conn.getresponse()
+	#print res.status, res.reason
+	data = res.read()
+	print len(data)
+	#print data
+	obj=json.loads(data)
+	return extractRev(obj,True)
+
+	
+	
 def putAttachment(filePath,relativeUrl):
 	rev=getRev()  #optimize this later
 	print "prev rev="+rev
@@ -170,11 +209,17 @@ def putAttachment(filePath,relativeUrl):
 
 items=allRelevantFilesUnder(".."+sep+"web",pattern)
 for file,url,name in items:	
+	
 	while url.startswith("/"):
 		url=url[1:]
-	result=putAttachment(file,url)
-	if url.endswith(".json"):  #then also put it in as "data"
-		result = result + "---" + putAsData(file,name)
-	print "finished"+result
+	
+	if url.endswith("views.json"):  #there better only be one file called this!
+		result = putViewFile(file,name)
+	elif url.endswith(".json"):  #then also put it in as "data"
+		result = putAsData(file,name)
+	else: #regular file
+		result = putAttachment(file,url)
+
+	print "finished---"+result
 	time.sleep(1)
 

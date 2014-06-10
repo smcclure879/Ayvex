@@ -418,17 +418,20 @@ var DemoUtils = (function() {
 		if (animate) animateIt(frameNum);
 		
 		if (flying) flyTo(frameNum);
-		if (newCameraState!=null) updateCameraState(frameNum,newCameraState);
+		if (newCameraState!=null) 
+			updateCameraState(frameNum,newCameraState);
 		if (setHiDimProj(mhi))   //bugbug every time???  only on change!
-		{
 			dirtyCam=true;
-		}
 		redoTheCam(frameNum);
 	}
 
 	function redoTheCam(frameNum)
 	{
 		if (!dirtyCam) return; //no point
+		
+		//need more heuristics to avoid calling so much!
+		if (typeof opts.updateServerCallback=='function') 
+			opts.updateServerCallback(camera_state);
 
 		//update control panel
 		$("#frameNum").val(frameNum);

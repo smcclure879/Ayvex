@@ -375,7 +375,8 @@ var Pre3d = (function() {
   function transformPoint(t, p) {
     if (null==t)
 	{
-		alert("bugbug bad t");
+		//bugbug ok to not have?alert("bugbug bad t in transformPoint");
+		console.log("bugbug bad t in transformPoint");
 		return { x:0, y:0, z:0 };  //bugbug it'll come along later???
     }
 	if (typeof p==='undefined' || typeof p.x === 'undefined') //bugbug hoping to avoid this repeated check in this critical code.  (can this whole file go into the GPU?)

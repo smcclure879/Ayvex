@@ -14,7 +14,7 @@ Each serial number below is a 'coupon' given for work on the project.  In physic
 //    1 XP : if we e*X*perience *P*rofit, so will you.
 //
 //    
-//    cash redemption value 1¢
+//    cash redemption value 1 cent
 //     
 //
 //---------------------------------------------------------------------//
@@ -33,8 +33,26 @@ The list of XP owners.
 14: steve: setting up github
 15: steve: fixing the camera to not use negative Z values in projected space
 16: steve: smoothing view in the map
-
-
+17: scott: earthquake data set help
+18: steve: acquisition of earthquake data
+19. scott: continued playtesting of minecraft world
+20. scott: minecraft subway
+21. dad: minecraft tower and enhanced map data
+22. dad: block of shares for work on borders for earthquake set  1/3
+23. dad: block continues 2/3
+24. dad: block ends   3/3
+25. steve: get multidimensional working
+26. steve: dynamic loading data sets 1/2 block
+27. steve: dynamic loading data sets 2/2 block end
+28. steve: separation of gaming world from minecraft map
+29. dad: advice and help clarifying ideas in email
+30. steve: setup couchdb
+31. steve: setup database
+32. steve: user schema
+33. steve: loading from db in ajax
+34. steve: gamer motion
+35. steve: ghost
+36. steve: theUser/gamer impedance matching
 
 
 
