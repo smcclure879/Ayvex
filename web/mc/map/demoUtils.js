@@ -418,11 +418,10 @@ var DemoUtils = (function() {
 		if (animate) animateIt(frameNum);
 		
 		if (flying) flyTo(frameNum);
-		if (newCameraState!=null) updateCameraState(frameNum,newCameraState);
+		if (newCameraState!=null) 
+			updateCameraState(frameNum,newCameraState);
 		if (setHiDimProj(mhi))   //bugbug every time???  only on change!
-		{
 			dirtyCam=true;
-		}
 		redoTheCam(frameNum);
 	}
 

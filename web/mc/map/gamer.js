@@ -76,9 +76,9 @@ Gamer.prototype.reposition = function(x,y,z, rotx, roty, rotz)  //bugbug need ve
 	//bugbug pass these in!
 	
 	//from the 'camera' or camera pulls from user?
-	this.orientation.rotx=0;
-	this.orientation.roty=0;
-	this.orientation.rotz=0;  //bugbug abstract a 3D rotate-able object out and have gamer inherit from that...a later refactoring
+	this.orientation.rotx=rotx || 0;
+	this.orientation.roty=roty || 0;
+	this.orientation.rotz=rotz || 0;  //bugbug abstract a 3D rotate-able object out and have gamer inherit from that...a later refactoring
 }
 
 Gamer.prototype.moveForward = function()
@@ -128,7 +128,8 @@ Gamer.prototype.draw=function(renderer,log2size) //,gameTime)  //bugbug need to 
 	
 	//bugbug this is copy from DataPoint...should be completely revamped....
 
-	if (this.pointh==null) return;
+	if (this.pointh==null) 
+		return;
 	
 	//bugbug move lower??
 	var ctx = renderer.ctx;
@@ -171,8 +172,15 @@ Gamer.prototype.draw=function(renderer,log2size) //,gameTime)  //bugbug need to 
 	//footPoint2d already done early
 	
 	if (nosePoint2d==null) 
+	{
+		console.log('no nose');  //bugbug
 		return null;
-	
+	}
+	if (headPoint2d==null)
+	{
+		console.log('no head');  //bugbug
+		return null;
+	}
 	//bugbug if any more points turn that into an array or something!
 	
 	//bugbug we'll want to do more than draw lines
@@ -187,7 +195,15 @@ Gamer.prototype.draw=function(renderer,log2size) //,gameTime)  //bugbug need to 
 	
 	drawLineAbsAbs(ctx,nosePoint2d,headPoint2d);  //nose
 	drawLineAbsAbs(ctx,headPoint2d,footPoint2d);  //body
-	drawLineAbsAbs(ctx,footPoint2d,prevPoint2d);  //tail
+	
+	if (prevPoint2d!=null)
+	{
+		drawLineAbsAbs(ctx,footPoint2d,prevPoint2d);  //tail
+	}
+	else
+	{
+		console.log("missing tail");  //bugbug
+	}
 	
 	if (prevPrevPoint2d!=null && prevPoint2d!=null)  //bugbug and if right scale and distance to care
 	{

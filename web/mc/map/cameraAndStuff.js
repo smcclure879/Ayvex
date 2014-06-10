@@ -46,19 +46,30 @@ function start3d(theDrawings,opts)
 		for(var ii=0,lim=theDrawings.length; ii<lim; ii++)
 		{
 			var drawing = theDrawings[ii];			
-			renderer.camera.transform.check();  //bugbug assert  //bugbug needed???
-			if (drawing instanceof iDrawable) 
-			{
-				var log2Size=1;  //a 2m object (bugbug)
-				drawing.draw(renderer,log2Size);
-			}
-			else  //have the renderer do it
-			{
-				renderer.drawPath(drawing);
-			}
+			drawIt(drawing);
+		}
+		
+		for(var key in theDrawings.dynamic)
+		{
+			var drawing = theDrawings.dynamic[key];
+			drawIt(drawing);
 		}
 		
 		//todo renderer.drawReticle();  //in screen coords
+	}
+	
+	function drawIt(drawing)
+	{
+		renderer.camera.transform.check();  //bugbug assert  //bugbug needed???
+		if (drawing instanceof iDrawable) 
+		{
+			var log2Size=1;  //a 2m object (bugbug)
+			drawing.draw(renderer,log2Size);
+		}
+		else  //have the renderer do it
+		{
+			renderer.drawPath(drawing);
+		}
 	}
 	  
 	//bugbug move this function into the renderer (pre3d.js function getnearest )

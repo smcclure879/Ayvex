@@ -1,0 +1,28 @@
+{ 
+	"_id": "_design/views",
+	"views":
+	{
+		"all": {
+			"map": "function(doc) { emit(null, doc) }"
+		},
+		
+		"allUsers": {
+			"map": "function(doc) { if (doc.userId ) emit(doc.userId,doc) }"  ,
+			"comment": " add condition:  && doc.saveTime is not Too Old  bugbug"
+		},
+		
+		
+		
+		
+		
+		"bugbug_by_lastname": {
+		  "map": "function(doc) { if (doc.Type == 'customer')  emit(doc.LastName, doc) }"
+		},
+		
+		"bugbug_total_purchases": {
+		  "map": "function(doc) { if (doc.Type == 'purchase')  emit(doc.Customer, doc.Amount) }",
+		  "reduce": "function(keys, values) { return sum(values) }"
+		}
+		
+	}
+}
