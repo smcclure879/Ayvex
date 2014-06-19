@@ -1,0 +1,14 @@
+{ 
+	"_id": "_design/validateTimeStamp",
+	
+	"validate_doc_update": "function(newDoc, oldDoc, userCtx, secObj) {
+   
+		if (newDoc.timeStamp === undefined) 
+		{
+			throw({forbidden: 'Document must have an address.'});
+		}
+   
+
+	}"
+	
+}
