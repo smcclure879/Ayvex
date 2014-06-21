@@ -162,7 +162,7 @@ Gamer.prototype.draw=function(renderer,log2size) //,gameTime)  //bugbug need to 
 	if (footPoint2d==null) 
 		return null;
 	
-	var noseLength=5;  //bugbug settings? or property of object?
+	var noseLength=25;  //bugbug settings? or property of object?
 	var height=100;
 	//var activity=5;  //soon there will be strings allowed for this value (activityLevel)!!! bugbug
 	//bugbug based on activity, randomly fuzz the points' positions
