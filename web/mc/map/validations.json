@@ -1,14 +1,56 @@
-{ 
-	"_id": "_design/validateTimeStamp",
+// This isn't a couch-ready file...  needs to be pulled in using deploy.py
+{
+	"_id": "_design/validations",
 	
-	"validate_doc_update": "function(newDoc, oldDoc, userCtx, secObj) {
+
+	"validate_user_update": "function(newDoc, oldDoc, userCtx, secObj) {
    
-		if (newDoc.timeStamp === undefined) 
+		//only deal with users...  //bugbug should we have a "type" field we always base it on???
+		if (!doc.userId)
+			return;
+			
+		if (newDoc.saveTime === 'undefined' || newDoc.saveTime<1400000000) 
 		{
-			throw({forbidden: 'Document must have an address.'});
+			throw({forbidden: 'User must have an saveTime and it must be in this decade.'});
 		}
+		
+		var serverTime = (new Date()).getTime();
+		var docAge=serverTime-doc.saveTime; 
+		if (docAge<0)
+		{
+			throw({forbidden: 'cannot save future info:'+docAge});
+		}
+		
+		if (docAge>5)
+		{
+			throw({forbidden: 'saving tooOld information:'+docAge});
+		}
+		
+		
+		//pass
    
 
-	}"
+	}"	,
+	
+
+	"shows" : {
+		// "simple": "function(doc,req){ 
+					// return {
+						// 'code': 200
+						// , 'headers': { 'Content-Type': 'text/plain'  }
+						// , 'body':'simple509bugbug'
+				   // }; 
+			  // }",
+		"now" : "function(doc, req){    
+			var now = new Date().getTime();
+			var output = JSON.parse(JSON.stringify(now)) + '\\n';
+
+			return {
+					code: 200
+					, headers: { 'Content-Type': 'text/plain'  }
+					, body:output
+				   };
+		}"
+	}
 	
 }

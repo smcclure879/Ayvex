@@ -41,18 +41,17 @@ function drawDot(ctx,ctrPoint2d,radiusPix)
 function Gamer()
 {
 	this.color='blue';
-	this.pointh={ x:4700, y:4700, z:4700 };  //more fiedlds needed?  bugbug
+	this.pointh={ x:4700, y:4700, z:4700 };  //more fiedlds needed?  bugbug   bugbug consts
 	this.prevPoint={ x:4600, y:4700, z:4700 };
 	this.prevPrevPoint=null;
 	this.lastPublicPoint=null;
 	this.orientation={ rotx:0, roty:0, rotz:0 };
-	this.isMine=true;  //used to show latency dot (different logic for ones *I* write to the DB)
-	
-	this.stepSize=5; //bugbug until later, move up to be first class property	
+	this.stepSize=5; 	
 }
 
 Gamer.prototype=new iDrawable();
 Gamer.prototype.constructor=Gamer;
+Gamer.prototype.canSelfDraw=true;  //bugbugNOW OK??
 
 
 Gamer.prototype.reposition2 = function(newPos)
@@ -63,17 +62,17 @@ Gamer.prototype.reposition2 = function(newPos)
 	this.pointh=newPos; 	
 }
 
-Gamer.prototype.reposition = function(x,y,z, rotx, roty, rotz)  //bugbug need version that takes structs....clean up this interface
+Gamer.prototype.reposition = function(x,y,z, rotx, roty, rotz, t)  //bugbug need version that takes structs....clean up this interface
 {
 	//to show user "flowing" from one point to another (might generalize to a "ring buffer")  bugbug implement this right !!!
 	this.prevPrevPoint=this.prevPoint;
 	this.prevPoint=this.pointh;
-
-	this.pointh.x=x;
-	this.pointh.y=y;
-	this.pointh.z=z;
-	
-	//bugbug pass these in!
+	this.pointh = {
+		t:t,
+		x:x,
+		y:y,
+		z:z
+	};
 	
 	//from the 'camera' or camera pulls from user?
 	this.orientation.rotx=rotx || 0;
@@ -84,6 +83,7 @@ Gamer.prototype.reposition = function(x,y,z, rotx, roty, rotz)  //bugbug need ve
 Gamer.prototype.moveForward = function()
 {
 	var newPoint = projection(this.pointh, this.stepSize, this.orientation);
+	newPoint.t=getOfficialTime();
 	this.reposition2(newPoint);
 }
 
@@ -97,13 +97,14 @@ Gamer.prototype.mutateOrientation1 = function()
 
 Gamer.prototype.name = function(name)
 {
-	this.t=name;
+	this.text=name;
 }
 
 var phase=0;
 Gamer.prototype.draw=function(renderer,log2size) //,gameTime)  //bugbug need to pass in gameTime soon where this is called--OR should time be a global???
 {
 	//bugbug this is second copy of this routine....move to some type of sharign ??
+	//and dynamically creating it each call here???
 	var tpt = function (pointh) {	
 	
 		if (pointh==null) 
@@ -128,8 +129,17 @@ Gamer.prototype.draw=function(renderer,log2size) //,gameTime)  //bugbug need to 
 	
 	//bugbug this is copy from DataPoint...should be completely revamped....
 
+	if (typeof this.selfDraw == 'function')
+		return this.selfDraw({
+				renderer:renderer,
+				log2size:log2size,
+				transformFunction:tpt
+			});  //bugbug boundingBox3d, etc etc here?  vs. how much of this already in "this"  (cache "age"?)
+		
+	
+	//else...crappy default code
 	if (this.pointh==null) 
-		return;
+		return null;  
 	
 	//bugbug move lower??
 	var ctx = renderer.ctx;
@@ -142,9 +152,9 @@ Gamer.prototype.draw=function(renderer,log2size) //,gameTime)  //bugbug need to 
 		return null;  //offscreen!
 	
 		
-	if (typeof this.t=='undefined')
+	if (typeof this.text=='undefined')
 	{
-		this.t == 'playerZERO?';  //bugbug
+		this.text == 'playerUNDEF?';  //bugbug
 	}
 	
 
@@ -214,15 +224,24 @@ Gamer.prototype.draw=function(renderer,log2size) //,gameTime)  //bugbug need to 
 	drawDot(ctx,lastPublicPoint2d,4);
 	ctx.stroke();
 	
-	ctx.font="12px Arial";
+	ctx.font="11px Arial";
 	ctx.fillStyle=contrastBackground();
 	
 	//moveTo(ctx, headPoint2d);
-	ctx.fillText(this.t,nosePoint2d.x,nosePoint2d.y);  
-	ctx.stroke();	
+	ctx.fillText(this.text + '  age='+age(this.pointh),nosePoint2d.x,nosePoint2d.y);  
+	// if (prevPrevPoint2d!=null)  //bugbug put this back in some other way (pixie dust instead of numbers?)
+		// ctx.fillText(age(this.pointh),prevPrevPoint2d.x,prevPrevPoint2d.y);
+
+	ctx.stroke();	 
 }
 
 
+function age(pointh)
+{
+	//bugbug of course, ideally draw() would get handed the current time instead of this expensive getOfficialTime() call!!!!
+	var ageSeconds=(getOfficialTime()-pointh.t)/1000;
+	return (typeof ageSeconds == 'undefined')  ?  'noAge'  :  ageSeconds.toFixed(1)	 ;  
+}
 
 // Gamer.prototype.doStuff = function()
 // {

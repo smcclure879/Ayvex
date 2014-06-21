@@ -61,8 +61,8 @@ pick dataset:
 <input type="checkbox" value="animate" id="animate" checked>ANM</input>
 xMOD:<select id="xanimate">
 	<option value="none">none</option>
-	<option value="sequence">sequence</option>
-	<option value="sequence2">sequence2</option>
+	<option value="sequence4">sequence4</option>
+	<option value="sequence5">sequence5</option>
 	<option value="magic">magic</option>
 </select>
 <input type="checkbox" value="lockon" id="lockon" >LCK</input>
@@ -114,10 +114,12 @@ camRotZ<input type="text" id="camRotZ" value="x"/><br>
 
 var floor=62;  //minecraftWaterLevel bugbug setting or ???
 
+//bugbug jquerify and consolidate...there are more of these...
 var toolbar = document.getElementById("toolbar");
+var $anim = $("#animate");
+
+//bugbug we need an OBJECT here that implements a local k-d tree  there is an opensource k-d tree we should use....	
 var theDrawings=[];
-
-
 
 function debugAdd(s)
 {
@@ -370,7 +372,7 @@ function changeHiDim(newMode)
 function changeXanimate(ev)
 {
 	var newMode=ev.target.value;
-	ev.stopPropagation(); //bugbug needed?
+	//ev.stopPropagation(); //bugbugNOW needed?
 	changeHiDim(newMode);
 }
 
@@ -413,19 +415,26 @@ function setFractalWorld()
 		ghost.moveForward();
 		ghost.mutateOrientation1();
 	}
-	function abortTimer() // to be called when you want to stop the timer bugbug when would we want to?
-	{
-		clearInterval(tid);
-	}
+	// function abortTimer() // to be called when you want to stop the timer bugbug when would we want to?
+	// {
+		// clearInterval(tid);
+	// }
 	
 	theDrawings.dynamic=dynamicObjects;  //so demoUtils etc can see them.
+
+	var tid = setTimeout(setMode,600);  //bugbug should be on some event??
+	function setMode()
+	{
+		$('#xanimate').val('magic').trigger('change');
+		$anim.prop('checked', false).change();  //bugbugNOW  not fixing the actual state, only the check!!!!
+	}
 	
 }
 
 function addGamer(theDrawings,name,x,y,z)
 {
 	var gamer= new Gamer();
-	gamer.reposition(x,y,z);
+	gamer.reposition(x,y,z,0,0,0,getOfficialTime());
 	gamer.name(name);
 	theDrawings.push(gamer);
 	return gamer;
@@ -469,8 +478,9 @@ function setEarthquakeMap()
 								y: -650,
 								z: 1100});  //bugbug magic numbers.
 							
-							//changeHiDim('sequence');  //bugbug can we do this through the UI to reflect the initial state correctly??  bugbug not checkin ready							
-							$("#xanimate").val('sequence').change();
+							$("#xanimate").val('sequence4').change();
+							$("#animate").prop('checked', true);  //bugbug needed
+							
 						}.bind(this)	
 		]);
 	stuffToDo.run()
@@ -553,11 +563,17 @@ function matrixForMode(hiDimMode)
 {
 	switch(hiDimMode)
 	{
-		case 'sequence':
+		case 'sequence4':
 			return [
 						[0,0,0,0],  //bugbug need helper to create this only giving 0,4,1
 						[0,0,0,4],
 						[0,0,0,1]  
+					];
+		case 'sequence5':
+			return [
+						[0,0,0, 0]  //,0.1],
+						[0,0,0,-3]  //,0.0],  //bugbug  why 5th dim not working????
+						[0,0,0, 2]  //,0.5]
 					];
 		case 'magic':
 			return [
@@ -626,7 +642,7 @@ isDown = DemoUtils.KeyTracker.isDown
 $(document).ready(function() 
 {
 	if (oGetVars["dataset"]) 
-		$("#dataset").val(oGetVars["dataset"]);
+		$("#dataset").val(oGetVars["dataset"]);  //not .change() ... infinite page loop???
 		
 	
 	setMap(oGetVars["dataset"]);  
@@ -644,21 +660,24 @@ $(document).ready(function()
 
 });
 
+function updateAnimation()
+{
+	DemoUtils.Notify("animate",animate.checked); 
+}
 
 function finishGettingReady()
 {
-	anim = $("#animate");
-	anim.click( function(event)
-		{
-			//turn on the animation
-			DemoUtils.Notify("animate",animate.checked );
-		});
+	$anim.click( updateAnimation );
+	
 	setTimeout(function()  //to avoid wasting CO2, we try to time out the animation...
 		{
-			anim.click();
+			$anim.prop('checked',false); //bugbug but this should be set by the world/dataset/user, not ME
+			//tell demoUtils right now too
+			updateAnimation();
 		}
 		,30*1000);//milliseconds  //bugbug settings		
-	DemoUtils.Notify("animate",animate.checked );  //and do it once right now for good measure
+	
+
 	
 	$("#xanimate").change( function(event)
 		{
@@ -740,6 +759,11 @@ function updateServerCallback(camera_state)
 	}	
 	
 	theUser.saveTime=getOfficialTime();
+	if (theUser.saveTime<1400000000) //1B, roughly 2001
+	{
+		console.log('cannot get official time');  //can't do much yet  ...wait for next callback...continue anyway with bad time...
+	}
+		
 	
 	var data = JSON.stringify(theUser);
 	var putUrl=getUserDocUrl(theUser)+revString(theUser._rev);
@@ -751,7 +775,6 @@ function updateServerCallback(camera_state)
 		headers: { 
 			'Accept': 'application/json',
 			'Content-Type': 'application/json'
-			//'Content-Length': 1000000 //bugbugNOW
 		},
 		url: putUrl,
 		data: data,
@@ -762,20 +785,20 @@ function updateServerCallback(camera_state)
 			theUser._rev = unquote(jqXHR.getResponseHeader("ETAG"));  //so we can save next time
 		},
 		error: function( jqXHR, textStatus, errorThrown ) {
-			alert(errorThrown);
+			alert('put bad'+errorThrown);
 		},
 		complete: function(jqResp) {
 			serverCallbackLocked=false;  //open again one way or another
 		}
 	});
 	
-	// call  http://localhost:5984/cosmos/_design/views/_view/allUsers
+	// call  http://localhost:5984/cosmos/_design/views/_view/currentUsers
 	//and put those users into "theDrawings" 
 	//need to get time of each user's writing from server, to show fading-of-color or ??
 		
 	$.ajax({
 		type: "GET",
-		url: getAllUsersUrl,
+		url: getcurrentUsersUrl,
 		contentType: "application/json",
 		success: function(data) {
 			updateDynamicObjects(data); //it better be a list of userDocs
@@ -800,40 +823,34 @@ function updateDynamicObjects(data)
 	var list=obj.rows;
 	for(var ii=0;ii<count; ii++)
 	{
-		var item=list[ii].value;
-		updateDynamicObjectFromServerData(item);
+		updateDynamicObjectFromServerData(list[ii]);
 	}
 }
 
 
 function updateDynamicObjectFromServerData(item)
 {
-	if (theUser._id==item._id) //bugbug for now disallow drawing self (strict first person for demo, can change later)
+	if (theUser._id==item.id) //bugbug for now disallow drawing self (strict first person for demo, can change later)
 		return; 
 		
 	//bugbug dynObj MUST for now be a gamer so we update it like a gamer...bugbug should do type check here on in this function...
 	//what other kinds of dynObjs do we have for now tho??
-	var dynObj=dynamicObjects[item._id];
+	var dynObj=dynamicObjects[item.id];
 	if (!dynObj)
 	{
-		dynamicObjects[item._id]=buildDynamicObject(item);
-		return;
+		var dynObj=new Gamer();  
+		dynObj.name(item.value.userId || item.value._id);
+		dynamicObjects[item.id]=dynObj;
 	}
 		
-	dynObj.reposition( -item.cam.x, -item.cam.y, -item.cam.z,
-						item.cam.rotate_x, item.cam.rotate_y, item.cam.rotate_z );  //bugbug a time needs to be sent thru here also
+	//bugbug again with the passing too much...change this to an object.  time should be in a pointh optionally, for instance
+	dynObj.reposition( -item.value.cam.x, -item.value.cam.y, -item.value.cam.z,  //bugbug again why the negative
+						item.value.cam.rotate_x, item.value.cam.rotate_y, item.value.cam.rotate_z,
+						item.value.saveTime
+					);
 	
 }
 
-
-function buildDynamicObject(item)
-{
-	var retval = new Gamer();  //which is always a gamer for now!!!  bugbug assumption..instead all docs in db should know their type
-	retval.reposition( -item.cam.x, -item.cam.y, -item.cam.z,
-						item.cam.rotate_x, item.cam.rotate_y, item.cam.rotate_z );  //bugbug a time needs to be sent thru here also);
-	retval.name(item.userId || item._id);//bugbug or something?
-	return retval;
-}
 
 function unquote(x)
 {
@@ -861,6 +878,7 @@ function initServerCallback(theUser)
 				alert("do not know how to deal with this error"+JSON.stringify(resp));
 		},
 		complete: function(jqResp) {
+			setServerTimeOffset(jqResp.getResponseHeader('Date'));
 			serverCallbackLocked=false;  //open again one way or another
 		}
 		
@@ -876,8 +894,8 @@ var viewLocation = "_design/views/_view";
 
 var databaseUrl = "http://"+server+":"+port+"/"+database;
 var viewPrefix = databaseUrl+"/"+viewLocation+"/";
-var getAllUsersUrl = viewPrefix+"allUsers";
-//var getAllUsersUrl = "http://localhost:5984/cosmos/_design/views/_view/allUsers";
+var getcurrentUsersUrl = viewPrefix+"currentUsers";
+//var getcurrentUsersUrl = "http://localhost:5984/cosmos/_design/views/_view/currentUsers";
 
 function getUserDocUrl(user)
 {
@@ -904,12 +922,30 @@ function revString(rev)
 	
 }
 
-
+//bugbug make a serverTimeSync module
+var timeOffset=null;  //[int?bugbug]
 function getOfficialTime()  //we want it as an int for compactness and speed of math....but ideally we'd be putting this info in on the server side!
+{
+	if (timeOffset==null)
+	{
+		return -1;  //not ready this call...try again next time
+	}
+	return getCurrentTime()+timeOffset;
+}
+
+function setServerTimeOffset(serverTime)
+{
+	serverTime=(new Date(serverTime)).getTime();
+	if (serverTime<1400000000) 
+		return;
+	timeOffset=serverTime-getCurrentTime();
+	console.log("timeOffset="+timeOffset);
+}
+
+function getCurrentTime()
 {
 	return 0+(new Date()).getTime();
 }
-
 
 </script>
 
