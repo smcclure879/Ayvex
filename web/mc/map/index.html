@@ -372,7 +372,6 @@ function changeHiDim(newMode)
 function changeXanimate(ev)
 {
 	var newMode=ev.target.value;
-	//ev.stopPropagation(); //bugbugNOW needed?
 	changeHiDim(newMode);
 }
 
@@ -395,6 +394,15 @@ function setMc2Map()
 	makeBigMap(rawData);
 	addMarkersAndWater(theDrawings);
 	addCoordinateVectors(theDrawings);
+	
+	var tid = setTimeout(setMode,1000);  //bugbug should be on some event??
+	function setMode()
+	{
+		$('#xanimate').val('none').trigger('change');
+		$anim.prop('checked', true).change();
+		updateAnimation();
+	}
+	
 }
 
 function setFractalWorld()
@@ -426,7 +434,7 @@ function setFractalWorld()
 	function setMode()
 	{
 		$('#xanimate').val('magic').trigger('change');
-		$anim.prop('checked', false).change();  //bugbugNOW  not fixing the actual state, only the check!!!!
+		$anim.prop('checked', false).change();
 	}
 	
 }
@@ -478,8 +486,8 @@ function setEarthquakeMap()
 								y: -650,
 								z: 1100});  //bugbug magic numbers.
 							
-							$("#xanimate").val('sequence4').change();
-							$("#animate").prop('checked', true);  //bugbug needed
+							$("#xanimate").val('sequence4').trigger('change');
+							$("#animate").prop('checked', true).trigger('change');  //bugbug needed
 							
 						}.bind(this)	
 		]);
