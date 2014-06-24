@@ -12,7 +12,7 @@
 
 body { margin-top:2px; margin-left:2px }
 #c {
-	background-color:rgba(0,0,25, 1);  bugbug:make black;
+	background-color:rgba(0,0,25, 1);  note:"the glow of the universe...the night sky"
 	border:2px solid #0000DD;
 	position:absolute;
 }
@@ -23,22 +23,15 @@ body { margin-top:2px; margin-left:2px }
 	vertical-align:top;	
 	z-index:1;
 	color:rgba(255,255,0, 0.3);
-	background-color:rgba(200,0,0, 0.2);
+	background-color:rgba(255,0,0, 0.05);
 	font-family:Arial;
 }
 
-#hud table tr td {
-	border-width:10px;
-	border-color:pink;
-	font-family:Arial;
-	font-size:12px;
-	color:rgba(255,255,0,0.7);  bugbug:consolidateColors;
-}
 
 #hud input {
 	background-color:rgba(0,0,0,  0.2);
-	border-style:solid;
-	color:rgba(200,200,0,0.8);
+	border: 2px solid rgba(255,255,0,  0.7);
+	color:rgba(255,255,0,   0.7);
 	font-height:10px;
 	border-width:0px;
 }
@@ -53,24 +46,23 @@ body { margin-top:2px; margin-left:2px }
 }
 
 #hud select {
-	border-width:2px;
-	color:rgba(255,255,0, 0.5);
-	border-style:solid;
-	background-color:rgba(128,128,0,  0.4);
+	border:2px solid rgba(255,255,0, 0.5);
+	color: rgba(255,255,0, 0.7); 
+	background-color:rgba(255,255,0,  0.1);
 	font-height:10px;
 }
 
 #hud option {
-	background-color:rgba(128,128,0,  0.4);
-	color:rgba(0,0,0,0.8);  
+	background-color:rgba(0,0,0,  1);
+	color:rgba(255,255,0,0.6);  
 }
 
 
 
 .hudChk {
 	background-color:rgba(0,255,0,   0.1);
-	color:rgba(255,255,0, 0.8);
-	border: 1px solid rgba(255,255,0, 0.8);
+	color:rgba(255,255,0, 0.6);
+	border: 1px solid rgba(255,255,0, 0.6);
 	width:70px;
 	padding:0px 10px 0px 0px;
 	cursor:default;
@@ -78,24 +70,31 @@ body { margin-top:2px; margin-left:2px }
 
 .unselchk {
 	background-color:rgba(255,0,0,   0.1);
-	color:rgba(255,0,0, 0.8);
+	color:rgba(255,0,0, 0.6);
 	padding:0px 10px 0px 0px;
 	border: 1px solid rgba(255,0,0, 0.8);
 }
 
 .selchk {
 	background-color:rgba(0,255,0,   0.1);
-	color:rgba(0,255,0, 0.8);
+	color:rgba(0,255,0, 0.6);
 	padding:0px 0px 0px 10px;
 	border: 1px solid rgba(0,255,0, 0.8);
 }
 
 
-#copyright { 
+#appTitle {
 	text-align:left;
-	font-height:10px;
+	font-height:11px;
 	font-weight:bold;
 }
+
+#copyright { 
+	text-align:left;
+	font-height:9px;
+	font-weight:bold;
+}
+
 
 
 
@@ -114,6 +113,7 @@ body { margin-top:2px; margin-left:2px }
 	  <option value="hiiDimAnlErq">erquake</option>
 	  <option value="hiiDimAnlFlw">flower</option>
 	</select>
+	<hr>warning this will remove all presence in this shared reality
 </div>
 
 
@@ -121,32 +121,23 @@ body { margin-top:2px; margin-left:2px }
 <canvas id="c" comment="main drawing canvas"/>
 </div>
 <div id="hud" class="hud">
-	<p id="copyright">Copyright 2014 -- Ayvex Light Industries
-	<br><input type="button" value="change dataset..." id="btnChooseDataset"/>
+	<p id="appTitle">AppName should go here</p>
+	<p id="copyright">Copyright 2014 -- Ayvex Light Industries</p>
+	<br><input type="button" value="change app..." id="btnChooseDataset"/>
 	<hr>
+	AnimateMode:
 	<select id="xanimate">
-			<option value="none">none</option>
-			<option value="sequence4">sequence4</option>
-			<option value="sequence5">sequence5</option>
-			<option value="magic">magic</option>
-		</select>
+		<option value="none">none</option>
+		<option value="sequence4">sequence4</option>
+		<option value="sequence5">sequence5</option>
+		<option value="magic">magic</option>
+	</select>
+	<span id="chkInsertionPoint" ></span>
+	<br>
 	</p>
 	<input type="button" id="flyTo" value="flyTo"/>
-	<br>
-	
 
-
-	<br id="chkInsertionPoint" />
-	
-	
-	
-	<br>
 	tags:<input type="text"/> 
-	
-	</bugbugdiv>
-	
-	
-	
 	
 	
 	
@@ -162,45 +153,12 @@ body { margin-top:2px; margin-left:2px }
 	rotZ:<input type="text" id="camRotZ" value="x"/>
 	</nobr>
 	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	<!--<br>
-	<table>
-	<tr><td colspan="2">READOUT</td>
-	<tr>
-	<td>
-	frame<input type="label" id="frameNum" value="x" /><br>
-	camX<input type="label" id="camX" value="x"/><br>
-	camY<input type="label" id="camY" value="x"/><br>
-	camZ<input type="label" id="camZ" value="x"/><br>
-	</td>
-	<td>
-	<br>
-	camRotX<input type="text" id="camRotX" value="x"/><br>
-	camRotY<input type="text" id="camRotY" value="x"/><br>
-	camRotZ<input type="text" id="camRotZ" value="x"/><br>
-	</td>
-	</tr>
-	</table>-->
-	
-	
-	<br>
+<br>
+<br>
+<br>
 
-	<div><br><br>
-	</div>
 
-	<div id="toolbar" style="position: relative; bottom: 0; left: 0; border:1px solid #000000; padding:10px; spacing:10px"> </div>
+	<div id="toolbar" style="position: relative; bottom: 0; left: 0; border:1px solid #333300; padding:10px; spacing:10px"> </div>
 
 </div>
 
@@ -227,7 +185,7 @@ $('#btnChooseDataset').click(function() {
 			height: 400,
 			buttons: {
 				"OK": function() {
-					//bugbug should navigate or whatever
+					//todo should navigate or whatever
 					$(this).dialog("close");
 				},
 				"Cancel": function() {
@@ -249,8 +207,7 @@ function sizeUpdate()
 
 	//$hud.prop('width', newWidth);
 	$hud.prop('height', newHeight);
-	$hud.css('left',newWidth-hudWidth).change();
-	
+	$hud.css('left',newWidth-hudWidth).change();	
 }
 
 
@@ -265,11 +222,14 @@ $(document).ready(function() {
 	//$chkInsertionPoint.after(makeCheck({id:"lockon",state:'on',label:'LCK'});
 	$chkInsertionPoint.after(makeCheck({id:"big",state:'on',label:'BIG'}));
 	$chkInsertionPoint.after(makeCheck({id:"black",state:'on',label:'BLK'}));
+	$chkInsertionPoint.after("<br><br>");
 	$chkInsertionPoint.after(makeCheck({id:"animate",state:'off',label:'BOB'}));
 	
 });
 
 
+
+//bugbug want this stuff to build a checkbox in its own module file!!!
 
 function fixState(state)
 {
@@ -285,7 +245,7 @@ function makeCheck(params)
 	//building
 	var retval = $('<span></span>')  //return a span...with some other stuff in it...
 		.text("♎ " + params.label + " ")
-		//.prop('label',label)
+		//.prop('label',label???todo)
 		.prop('id',params.id)
 		.prop('chkstate',params.initialState)
 		.addClass('hudChk')
@@ -296,7 +256,7 @@ function makeCheck(params)
 function checkClickHandler(event) 
 {
 	var $chk=$(event.target);
-	setState($chk,!stateAsBool($chk));  //toggling  //bugbug more state handling later....consolidate a lot of this???  why no easy lib
+	setState($chk,!stateAsBool($chk));  //toggling  //todo more state handling later....consolidate a lot of this???  why no easy lib
 }
 			
 function stateAsBool($chk)
@@ -314,29 +274,6 @@ function setState($chk,bState)
 	else
 		$chk.removeClass(  "selchk").addClass('unselchk');
 }
-
-
-
-
-
-// .chkd{
-    // background-color:Red
-// }
-// .unchkd{
-    // background-color:white;
-    // border: 1px solid black
-// }
-
-
-
-// $('div').on('click',function(){
-    // if ($(this).hasClass('unchkd')){
-        // $(this).removeClass('unchkd').addClass('chkd');
-    // }
-    // else {
-        // $(this).removeClass('chkd').addClass('unchkd');
-    // }
-// });
 
 
 </script>
