@@ -1,0 +1,345 @@
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Higher Dimensional Client</title>
+<script src="../../lib/jquery-1.10.2.js"></script>
+
+
+<link rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/themes/smoothness/jquery-ui.css" />
+<script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/jquery-ui.min.js"></script>
+
+<style>
+
+body { margin-top:2px; margin-left:2px }
+#c {
+	background-color:rgba(0,0,25, 1);  bugbug:make black;
+	border:2px solid #0000DD;
+	position:absolute;
+}
+
+#hud {
+	position:absolute;
+	text-align:left;
+	vertical-align:top;	
+	z-index:1;
+	color:rgba(255,255,0, 0.3);
+	background-color:rgba(200,0,0, 0.2);
+	font-family:Arial;
+}
+
+#hud table tr td {
+	border-width:10px;
+	border-color:pink;
+	font-family:Arial;
+	font-size:12px;
+	color:rgba(255,255,0,0.7);  bugbug:consolidateColors;
+}
+
+#hud input {
+	background-color:rgba(0,0,0,  0.2);
+	border-style:solid;
+	color:rgba(200,200,0,0.8);
+	font-height:10px;
+	border-width:0px;
+}
+
+#hud input[type=text] {
+	width:40px;
+}
+
+#hud input[type=button] {
+	border-width:2px;
+	color:rgba(255,255,0, 0.5);
+}
+
+#hud select {
+	border-width:2px;
+	color:rgba(255,255,0, 0.5);
+	border-style:solid;
+	background-color:rgba(128,128,0,  0.4);
+	font-height:10px;
+}
+
+#hud option {
+	background-color:rgba(128,128,0,  0.4);
+	color:rgba(0,0,0,0.8);  
+}
+
+
+
+.hudChk {
+	background-color:rgba(0,255,0,   0.1);
+	color:rgba(255,255,0, 0.8);
+	border: 1px solid rgba(255,255,0, 0.8);
+	width:70px;
+	padding:0px 10px 0px 0px;
+	cursor:default;
+}
+
+.unselchk {
+	background-color:rgba(255,0,0,   0.1);
+	color:rgba(255,0,0, 0.8);
+	padding:0px 10px 0px 0px;
+	border: 1px solid rgba(255,0,0, 0.8);
+}
+
+.selchk {
+	background-color:rgba(0,255,0,   0.1);
+	color:rgba(0,255,0, 0.8);
+	padding:0px 0px 0px 10px;
+	border: 1px solid rgba(0,255,0, 0.8);
+}
+
+
+#copyright { 
+	text-align:left;
+	font-height:10px;
+	font-weight:bold;
+}
+
+
+
+
+</style>
+
+
+</head>
+<body >
+
+
+<div id="datasetDialog" border="2" style="display:none;">
+	<select id="dataset">
+	  <option value="mc2map">mc2 world map</option>
+	  <option value="frcWld">fractals</option>
+	  <option value="hiiDimAnlErq">erquake</option>
+	  <option value="hiiDimAnlFlw">flower</option>
+	</select>
+</div>
+
+
+<div>
+<canvas id="c" comment="main drawing canvas"/>
+</div>
+<div id="hud" class="hud">
+	<p id="copyright">Copyright 2014 -- Ayvex Light Industries
+	<br><input type="button" value="change dataset..." id="btnChooseDataset"/>
+	<hr>
+	<select id="xanimate">
+			<option value="none">none</option>
+			<option value="sequence4">sequence4</option>
+			<option value="sequence5">sequence5</option>
+			<option value="magic">magic</option>
+		</select>
+	</p>
+	<input type="button" id="flyTo" value="flyTo"/>
+	<br>
+	
+
+
+	<br id="chkInsertionPoint" />
+	
+	
+	
+	<br>
+	tags:<input type="text"/> 
+	
+	</bugbugdiv>
+	
+	
+	
+	
+	
+	
+	
+	<nobr>frame:<input type="text" id="frameNum" value="x" />,
+	CAM: x:<input type="text" id="camX" value="x"/>
+	y:<input type="text" id="camY" value="x"/>
+	z:<input type="text" id="camZ" value="x"/>
+	</nobr>
+	<nobr>ROT: 
+	rotX:<input type="text" id="camRotX" value="x"/>
+	rotY:<input type="text" id="camRotY" value="x"/>
+	rotZ:<input type="text" id="camRotZ" value="x"/>
+	</nobr>
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	<!--<br>
+	<table>
+	<tr><td colspan="2">READOUT</td>
+	<tr>
+	<td>
+	frame<input type="label" id="frameNum" value="x" /><br>
+	camX<input type="label" id="camX" value="x"/><br>
+	camY<input type="label" id="camY" value="x"/><br>
+	camZ<input type="label" id="camZ" value="x"/><br>
+	</td>
+	<td>
+	<br>
+	camRotX<input type="text" id="camRotX" value="x"/><br>
+	camRotY<input type="text" id="camRotY" value="x"/><br>
+	camRotZ<input type="text" id="camRotZ" value="x"/><br>
+	</td>
+	</tr>
+	</table>-->
+	
+	
+	<br>
+
+	<div><br><br>
+	</div>
+
+	<div id="toolbar" style="position: relative; bottom: 0; left: 0; border:1px solid #000000; padding:10px; spacing:10px"> </div>
+
+</div>
+
+<script>
+
+
+var $canvas = $('#c');
+var $hud = $('#hud');
+var $datasetDialog = $('#datasetDialog');
+var $chkInsertionPoint = $('#chkInsertionPoint');
+var hudWidth = 300;
+
+
+$('#btnChooseDataset').click(function() {
+	$datasetDialog
+		.dialog({
+			modal: true,
+			draggable: false,
+			resizable: false,
+			title: "select new dataset:",
+			show: 'blind',
+			hide: 'blind',
+			width: 400,
+			height: 400,
+			buttons: {
+				"OK": function() {
+					//bugbug should navigate or whatever
+					$(this).dialog("close");
+				},
+				"Cancel": function() {
+					$(this).dialog("close");
+				}
+			}
+		});
+	
+});
+		
+
+function sizeUpdate()
+{	
+	var newWidth=document.body.clientWidth  * 0.99;
+	var newHeight=document.body.clientHeight * 0.98;
+	
+	$canvas.prop('width',  newWidth);
+	$canvas.prop('height', newHeight);
+
+	//$hud.prop('width', newWidth);
+	$hud.prop('height', newHeight);
+	$hud.css('left',newWidth-hudWidth).change();
+	
+}
+
+
+$(document).ready(function() {
+	
+	//fix it where we will resize correctly...
+	$(window).resize(sizeUpdate);
+	sizeUpdate();  //and do it now for good measure
+	
+	//build the checkboxes that HTML/CSS does bad job on
+	
+	//$chkInsertionPoint.after(makeCheck({id:"lockon",state:'on',label:'LCK'});
+	$chkInsertionPoint.after(makeCheck({id:"big",state:'on',label:'BIG'}));
+	$chkInsertionPoint.after(makeCheck({id:"black",state:'on',label:'BLK'}));
+	$chkInsertionPoint.after(makeCheck({id:"animate",state:'off',label:'BOB'}));
+	
+});
+
+
+
+function fixState(state)
+{
+	return (state=='on' || state=='off')?state:'unk';
+}
+
+//three states are recognized:  off, on, unk  (which null etc count as)
+function makeCheck(params)
+{
+	//validation
+	var initialState=fixState(params.state);
+	
+	//building
+	var retval = $('<span></span>')  //return a span...with some other stuff in it...
+		.text("♎ " + params.label + " ")
+		//.prop('label',label)
+		.prop('id',params.id)
+		.prop('chkstate',params.initialState)
+		.addClass('hudChk')
+		.click(checkClickHandler);
+	return retval;
+}
+
+function checkClickHandler(event) 
+{
+	var $chk=$(event.target);
+	setState($chk,!stateAsBool($chk));  //toggling  //bugbug more state handling later....consolidate a lot of this???  why no easy lib
+}
+			
+function stateAsBool($chk)
+{
+	return ($chk.prop('chkstate')=='on');
+}
+
+
+function setState($chk,bState)
+{
+	var $state=bState?'on':'off';
+	$chk.prop('chkstate',$state);
+	if (bState)
+		$chk.removeClass("unselchk").addClass(  'selchk');
+	else
+		$chk.removeClass(  "selchk").addClass('unselchk');
+}
+
+
+
+
+
+// .chkd{
+    // background-color:Red
+// }
+// .unchkd{
+    // background-color:white;
+    // border: 1px solid black
+// }
+
+
+
+// $('div').on('click',function(){
+    // if ($(this).hasClass('unchkd')){
+        // $(this).removeClass('unchkd').addClass('chkd');
+    // }
+    // else {
+        // $(this).removeClass('chkd').addClass('unchkd');
+    // }
+// });
+
+
+</script>
+
+</body>
+</html>
