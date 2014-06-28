@@ -1,0 +1,45 @@
+{ 
+	"_id": "_design/views",
+	"views":
+	{
+		"all": 
+		{
+			"map": "function(doc) { emit(null, doc) }"
+		},
+		
+		"allUsers":
+		{
+			"map": "function(doc) 
+					{
+						if (doc.userId)
+							emit(doc.userId,doc); 
+					}"
+		},
+		
+		"currentUsers": 
+		{
+			"map": "function(doc) 
+					{
+						if (!doc.userId)
+							return;  //not a user
+						
+						if (!doc.saveTime)
+							return;  //old test users, etc
+						
+						var docAge = (new Date()).getTime() - doc.saveTime ;
+						if (docAge>100*1000) //100 sec in ms
+							return;  //too old
+					
+						//got one!
+						emit(doc.userId,doc); 
+					}"  
+		}
+		
+		// "example_view__total_purchases": 
+		// {
+		  // "map": "function(doc) { if (doc.Type == 'purchase')  emit(doc.Customer, doc.Amount) }",
+		  // "reduce": "function(keys, values) { return sum(values) }"
+		// }
+		
+	}
+}

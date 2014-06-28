@@ -3,6 +3,15 @@
 <title>Ayvex Light Industries<br>multidimensional viewer</title>
 
 <!-- script src="jquery-1.10.2.min.js"></script   todo   -->
+
+<!--bugbug way to do the links this way and use from couchDB?
+// <scr  ipt src="/_utils/script/json2.js"></scr  ipt>
+// <scr  ipt src="/_utils/script/sha1.js"></scr  ipt>
+// <scr  ipt src="/_utils/script/jquery.js?1.4.2"></scr  ipt>
+// <scr  ipt src="/_utils/script/jquery.couch.js?0.11.0"></scr  ipt>
+// <scr  ipt src="/_utils/script/jquery.dialog.js?0.11.0"></scr  ipt>
+-->
+
 <script src="../../lib/jquery-1.10.2.js"></script>
 <script src="../../lib/pre3d.js"></script>
 <script src="../../lib/queryParams.js"></script>
@@ -17,6 +26,9 @@
 <script src="localSettings.js"></script>
 <script src="DataPoint.js"></script>
 <script src="gamer.js"></script>
+<!-- s c r ipt src="http://localhost:5984/_utils/script/jquery.couch.js?0.11.0"></ s c r ipt  -->
+<script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/jquery-ui.min.js"></script>
+
 </head>
 
 <body>
@@ -49,7 +61,9 @@ pick dataset:
 <input type="checkbox" value="animate" id="animate" checked>ANM</input>
 xMOD:<select id="xanimate">
 	<option value="none">none</option>
-	<option value="sequence">sequence</option>
+	<option value="sequence4">sequence4</option>
+	<option value="sequence5">sequence5</option>
+	<option value="magic">magic</option>
 </select>
 <input type="checkbox" value="lockon" id="lockon" >LCK</input>
 <input type="checkbox" value="black" id="black" checked>BLK</input>
@@ -87,6 +101,10 @@ camRotZ<input type="text" id="camRotZ" value="x"/><br>
 
 </tr>
 </table>
+<div id="dialog" title="Basic Dialog" style="border-width:1px">
+  <p>Type your user name</p>
+</div>
+
 ---
 
 
@@ -96,10 +114,12 @@ camRotZ<input type="text" id="camRotZ" value="x"/><br>
 
 var floor=62;  //minecraftWaterLevel bugbug setting or ???
 
+//bugbug jquerify and consolidate...there are more of these...
 var toolbar = document.getElementById("toolbar");
+var $anim = $("#animate");
+
+//bugbug we need an OBJECT here that implements a local k-d tree  there is an opensource k-d tree we should use....	
 var theDrawings=[];
-
-
 
 function debugAdd(s)
 {
@@ -126,53 +146,8 @@ function pushAll(ofThese,intoThese)  //bugbug why did a.extend(b)  not work???
 	}
 }
 
-//each step needs to be set off by the step before it, but on different thread to account for dynamic code
-//function doAllSteps(arrSteps)
-//{
-//	doSteps(arrSteps,0);
-//}
-//
-//var stepLimit = 20;  //bugbug const or passed into doAllSteps() ???
-//function doSteps(arrSteps,whereAt)
-//{
-//	if (whereAt>=arrSteps.length) return;
-//	if (whereAt>stepLimit)
-//	{
-//		alert("doSteps limit passed errCode333kz");
-//		return;
-//	}
-//	var thisStep = arrSteps[whereAt];
-//	if (thisStep==null) return;
-//	var thisStepType = typeof thisStep;
-//	if (thisStepType=='function')
-//	{
-//		doStep(function(){ arrSteps[whereAt](); doSteps(arrSteps,whereAt+1); });
-//	}
-//	else if (thisStepType=='array')
-//	{
-//		var command = thisStep[0];
-//		switch(command)
-//		{
-//			case "waiton": doStep(function()
-//									{ 
-//										if (thisStep[1]())
-//											doSteps(arrSteps,whereAt+1);
-//										else
-//											doSteps(arrSteps,whereAt);
-//									 
-//									}); 
-//				break;
-//			default: alert('how did we get here bugbug323wj');
-//		}
-//	}
-//}
-//
-//function doStep(step)
-//{
-//	setTimeout(step,100);
-//}
-////bugbug needed??
-//
+
+
 
 //this works, but the script won't be live until you yield the thread for a while.  call it carefully!
 function addScript(filename)
@@ -381,7 +356,7 @@ function setMap(dataSetName)  //no longer a callback from the cameraAndStuff.js
 	switch(dataSetName)
 	{
 		case 'mc2map': setMc2Map(); break;
-		case 'frcWld': setFractalWorldMap();  break;   		//bugbug semantics "map" for these entities is wrong....it's a full presentation around a dataset, the framing around the map, etc.
+		case 'frcWld': setFractalWorld();  break;   		//bugbug semantics "map" for these entities is wrong....it's a full presentation around a dataset, the framing around the map, etc.
 		case 'hiiDimAnlErq': setEarthquakeMap(); break;
 		case 'hiiDimAnlFlw': setFlowersMap(); break;
 		default: setErrorMap(dataSetName); break;
@@ -397,7 +372,6 @@ function changeHiDim(newMode)
 function changeXanimate(ev)
 {
 	var newMode=ev.target.value;
-	ev.stopPropagation(); //bugbug needed?
 	changeHiDim(newMode);
 }
 
@@ -420,41 +394,56 @@ function setMc2Map()
 	makeBigMap(rawData);
 	addMarkersAndWater(theDrawings);
 	addCoordinateVectors(theDrawings);
+	
+	var tid = setTimeout(setMode,1000);  //bugbug should be on some event??
+	function setMode()
+	{
+		$('#xanimate').val('none').trigger('change');
+		$anim.prop('checked', true).change();
+		updateAnimation();
+	}
+	
 }
 
-function setFractalWorldMap()
+function setFractalWorld()
 {
 	var treePoleFrac=0.5;
 	addCoordinateVectors(theDrawings);
 	//todo add perlin noise, etc etc etc
 	addTreesAndWater(theDrawings,treePoleFrac);
-	var gamerBob=addGamer(theDrawings,"bob",62,62,62);
 	
+	theUser.userId = prompt("Please enter your username", "HarryPotter029");  
 	
-	// var stuffToDo=StepperModule.Stepper.Create([  //bugbug should be .then()???;
-			 // function() { gamerBob.reposition(102,62,162) }.bind(this)  //bugbug you are here
-	// ]);
-	// stuffToDo.run()
-
-	// set interval
-	var tid = setInterval(mycode, 50);
-	function mycode() 
+	// a "monster" or "NPC"
+	var ghost=addGamer(theDrawings,"ghost",11162,62,62);
+	ghost.color='#FFFFFF33';
+	var tid = setInterval(moveBob, 50);
+	function moveBob() 
 	{
-		gamerBob.moveForward();
-		gamerBob.mutateOrientation1();
+		ghost.moveForward();
+		ghost.mutateOrientation1();
 	}
-	function abortTimer() { // to be called when you want to stop the timer
-	  clearInterval(tid);
-	}
+	// function abortTimer() // to be called when you want to stop the timer bugbug when would we want to?
+	// {
+		// clearInterval(tid);
+	// }
 	
+	theDrawings.dynamic=dynamicObjects;  //so demoUtils etc can see them.
+
+	var tid = setTimeout(setMode,600);  //bugbug should be on some event??
+	function setMode()
+	{
+		$('#xanimate').val('magic').trigger('change');
+		$anim.prop('checked', false).change();
+	}
 	
 }
 
 function addGamer(theDrawings,name,x,y,z)
 {
 	var gamer= new Gamer();
-	gamer.reposition(x,y,z);
-	gamer.name('bob');
+	gamer.reposition(x,y,z,0,0,0,getOfficialTime());
+	gamer.name(name);
 	theDrawings.push(gamer);
 	return gamer;
 }
@@ -497,8 +486,9 @@ function setEarthquakeMap()
 								y: -650,
 								z: 1100});  //bugbug magic numbers.
 							
-							//changeHiDim('sequence');  //bugbug can we do this through the UI to reflect the initial state correctly??  bugbug not checkin ready							
-							$("#xanimate").val('sequence').change();
+							$("#xanimate").val('sequence4').trigger('change');
+							$("#animate").prop('checked', true).trigger('change');  //bugbug needed
+							
 						}.bind(this)	
 		]);
 	stuffToDo.run()
@@ -507,7 +497,7 @@ function setEarthquakeMap()
 
 function setFlowersMap()
 {
-	var shortBaseUrl = "http://localhost:5984/cosmos";  //bugbug where to get this from??
+	var shortBaseUrl = databaseUrl;  //bugbug where to get this from??
 	var flowerUrl = shortBaseUrl+"/iris.json";  
 	
 
@@ -571,48 +561,9 @@ function setFlowersMap()
 
 }
 
-	//changeHiDim('sequence');  //bugbug can we do this through the UI to reflect the initial state correctly??  bugbug not checkin ready							
-//							$("#xanimate").val('sequence').change();
-		//turn the json data into DataPoints
-	//	var steps=StepperModule.Stepper.Create([  //bugbug should be .then()???;
-			// function() {addScript(filename);}.bind(this) //so that data set is fetchable, must be in other thread for the script to activate
-			//['waiton',function(){ return (bugbugblahblahDataLoaded==1); }]
-			//,function() {parseDataSet(dataFileOptions,columnInfo);}.bind(this)
-			//function() {theDrawings.push(DataPoint.From([200,100,100],"bugbug is this thing on?")); }.bind(this)
-			//,function() {
-				//			DemoUtils.Notify('moveCamera',{
-				//				rotate_x: rad(3),
-				//				rotate_y: rad(90),
-				//				rotate_z: rad(0),
-				//				x: 700,
-				//				y: -550,
-				//				z: 1000});  //bugbug magic numbers.
-							
-							//changeHiDim('sequence');  //bugbug can we do this through the UI to reflect the initial state correctly??  bugbug not checkin ready							
-				//			$("#xanimate").val('sequence').change();
-				//		}.bind(this)	
-		//]);
-		//steps.run()
-			
-	
-	//might need this elsewhere bugbug 
-	// Set another completion function for the request above
-	//reqHandler.always(function() {
-	//	alert( "second finished" );
-	//});
 
-		
-	
-	
-	//old needed??? bugbug jquery fetch the string
-	//$.get(flowerUrl, function(data) {
-	//	alert("foo526"+data);	
-	//	debugSet(data);
-	//}).then(function(){alert("foo");});
-	
-	//retrieve as couchDB data set here???  //bugbug you are here
-	
-	
+			
+
 
 
 
@@ -620,12 +571,23 @@ function matrixForMode(hiDimMode)
 {
 	switch(hiDimMode)
 	{
-
-		case 'sequence':
+		case 'sequence4':
 			return [
 						[0,0,0,0],  //bugbug need helper to create this only giving 0,4,1
 						[0,0,0,4],
 						[0,0,0,1]  
+					];
+		case 'sequence5':
+			return [
+						[0,0,0, 0]  //,0.1],
+						[0,0,0,-3]  //,0.0],  //bugbug  why 5th dim not working????
+						[0,0,0, 2]  //,0.5]
+					];
+		case 'magic':
+			return [
+						[0,0,0,0],  //magic dimension only tweaks into y direction
+						[0,0,0,0.1],
+						[0,0,0,0]  
 					];
 		case null: 
 		case 'null':
@@ -637,7 +599,6 @@ function matrixForMode(hiDimMode)
 	}
 
 }
-
 
 
 
@@ -689,34 +650,42 @@ isDown = DemoUtils.KeyTracker.isDown
 $(document).ready(function() 
 {
 	if (oGetVars["dataset"]) 
-		$("#dataset").val(oGetVars["dataset"]);
+		$("#dataset").val(oGetVars["dataset"]);  //not .change() ... infinite page loop???
 		
 	
 	setMap(oGetVars["dataset"]);  
 	updateBackground();
+
+
+	var opts = {
+		updateServerCallback:getUpdateServerCallback()
+	};  //bugbug
 	
 	StepperModule.Stepper.Create([
-			function(){	start3d(theDrawings); },  //in cameraAndStuff.js
+			function(){	start3d(theDrawings,opts); },  //in cameraAndStuff.js
 			function(){ finishGettingReady(); }
 		]).run();
 
 });
 
+function updateAnimation()
+{
+	DemoUtils.Notify("animate",animate.checked); 
+}
 
 function finishGettingReady()
 {
-	anim = $("#animate");
-	anim.click( function(event)
-		{
-			//turn on the animation
-			DemoUtils.Notify("animate",animate.checked );
-		});
+	$anim.click( updateAnimation );
+	
 	setTimeout(function()  //to avoid wasting CO2, we try to time out the animation...
 		{
-			anim.click();
+			$anim.prop('checked',false); //bugbug but this should be set by the world/dataset/user, not ME
+			//tell demoUtils right now too
+			updateAnimation();
 		}
 		,30*1000);//milliseconds  //bugbug settings		
-	DemoUtils.Notify("animate",animate.checked );  //and do it once right now for good measure
+	
+
 	
 	$("#xanimate").change( function(event)
 		{
@@ -743,6 +712,248 @@ function finishGettingReady()
 		});
 };
 
+
+function getUpdateServerCallback()
+{
+	if (oGetVars["dataset"]=="frcWld")  //bugbug hack should be a property of the dataset or something
+		return updateServerCallback;
+	else
+		return null;
+}
+
+//bugbug move this to its own module?
+
+//should this be persistent bugbug??
+var theUser = {
+	userId:'',  //later set right value in a sub sub sub of doc.ready()
+	_rev:-1,
+	cam:null, //bugbug better sentinel value?
+	_id:''
+};
+
+//two locks...one to not run more than once per 2s, one to keep 2 copies from running at same time
+var lastCalled=Date.now();
+var serverCallbackLocked=false;  //open it  -- like a semaphore??  bugbug is this the "right" way?
+function updateServerCallback(camera_state)
+{
+	theUser.cam=camera_state;  //always gotta update this one!
+	if (theUser.userId==null || theUser.userId=='') 
+		return;
+
+	//lock 1
+	var thisCall=Date.now();
+	if (thisCall-lastCalled<2000)  //at most every 2 sec (bugbug const)
+		return;
+	else
+		lastCalled=thisCall;
+
+	//lock 2
+	if (serverCallbackLocked)  //this is the actual door
+		return;
+	else
+		serverCallbackLocked=true;  //closes behind you, one at a time
+
+	
+	if (theUser._rev<1) 
+	{
+		initServerCallback(theUser);
+		return;
+	}
+
+	if (theUser._rev==1) 
+	{
+		delete theUser._rev;  //we'll get a new one, this is just sentinel value  bugbug did this work??
+		theUser._id="user_"+theUser.userId;   //bugbug const
+	}	
+	
+	theUser.saveTime=getOfficialTime();
+	if (theUser.saveTime<1400000000) //1B, roughly 2001
+	{
+		console.log('cannot get official time');  //can't do much yet  ...wait for next callback...continue anyway with bad time...
+	}
+		
+	
+	var data = JSON.stringify(theUser);
+	var putUrl=getUserDocUrl(theUser)+revString(theUser._rev);
+	
+	//bugbug what can't use $.couch.urlPrefix="http://localhost:5984";  $.couch.get(blah) 
+	$.ajax(
+	{
+		type:"PUT",
+		headers: { 
+			'Accept': 'application/json',
+			'Content-Type': 'application/json'
+		},
+		url: putUrl,
+		data: data,
+		//contentType: "application/json",
+		//dataType: "json",
+		success: function( data, textStatus, jqXHR ) {
+			//bugbug alert(textStatus);  
+			theUser._rev = unquote(jqXHR.getResponseHeader("ETAG"));  //so we can save next time
+		},
+		error: function( jqXHR, textStatus, errorThrown ) {
+			alert('put bad'+errorThrown);
+		},
+		complete: function(jqResp) {
+			serverCallbackLocked=false;  //open again one way or another
+		}
+	});
+	
+	// call  http://localhost:5984/cosmos/_design/views/_view/currentUsers
+	//and put those users into "theDrawings" 
+	//need to get time of each user's writing from server, to show fading-of-color or ??
+		
+	$.ajax({
+		type: "GET",
+		url: getcurrentUsersUrl,
+		contentType: "application/json",
+		success: function(data) {
+			updateDynamicObjects(data); //it better be a list of userDocs
+		},
+		error: function(resp) {
+			if (resp.status==404)
+				theUser._rev=1;  //which = a NEW bugbug const
+			else
+				alert("do not know how to deal with this error"+resp.status+"  "+JSON.stringify(resp));
+		},
+		complete: function(jqResp) {
+		}
+		
+	});	
+}
+
+var dynamicObjects={};  //eventually needs to be some space partitioning class  kd-dataStructure?  bugbug
+function updateDynamicObjects(data)
+{
+	var obj=$.parseJSON(data);
+	var count=obj.total_rows;
+	var list=obj.rows;
+	for(var ii=0;ii<count; ii++)
+	{
+		updateDynamicObjectFromServerData(list[ii]);
+	}
+}
+
+
+function updateDynamicObjectFromServerData(item)
+{
+	if (theUser._id==item.id) //bugbug for now disallow drawing self (strict first person for demo, can change later)
+		return; 
+		
+	//bugbug dynObj MUST for now be a gamer so we update it like a gamer...bugbug should do type check here on in this function...
+	//what other kinds of dynObjs do we have for now tho??
+	var dynObj=dynamicObjects[item.id];
+	if (!dynObj)
+	{
+		var dynObj=new Gamer();  
+		dynObj.name(item.value.userId || item.value._id);
+		dynamicObjects[item.id]=dynObj;
+	}
+		
+	//bugbug again with the passing too much...change this to an object.  time should be in a pointh optionally, for instance
+	dynObj.reposition( -item.value.cam.x, -item.value.cam.y, -item.value.cam.z,  //bugbug again why the negative
+						item.value.cam.rotate_x, item.value.cam.rotate_y, item.value.cam.rotate_z,
+						item.value.saveTime
+					);
+	
+}
+
+
+function unquote(x)
+{
+	for(ii=0, il=x.length; ii<il && x.substring(ii,1)=="\""; ii++);
+	for(      jj=x.length; jj>=0 && x.substring(jj,1)=="\""; --jj); 
+	return x.substring(ii,jj-ii);
+}
+
+function initServerCallback(theUser)
+{
+	console.log("called init server callback");
+	
+	//bugbug consolidate this call with similar call above somehow?  worth it?
+	$.ajax({
+		type: "GET",
+		url: getUserDocUrl(theUser),
+		contentType: "application/json",
+		success: function(data) {
+			initUserFromData(theUser,data); //it better be a userDoc
+		},
+		error: function(resp) {
+			if (resp.status==404)
+				theUser._rev=1;  //which = NEW bugbug const
+			else
+				alert("do not know how to deal with this error"+JSON.stringify(resp));
+		},
+		complete: function(jqResp) {
+			setServerTimeOffset(jqResp.getResponseHeader('Date'));
+			serverCallbackLocked=false;  //open again one way or another
+		}
+		
+	});
+}
+
+//bugbug figure both of these programmatically...find all "localhost" and fix them
+var server=window.location.hostname;  //bugbug must figure dynamically
+var port = "5984";
+var database = "cosmos";
+var viewLocation = "_design/views/_view";
+//bugbug all the above from config???
+
+var databaseUrl = "http://"+server+":"+port+"/"+database;
+var viewPrefix = databaseUrl+"/"+viewLocation+"/";
+var getcurrentUsersUrl = viewPrefix+"currentUsers";
+//var getcurrentUsersUrl = "http://localhost:5984/cosmos/_design/views/_view/currentUsers";
+
+function getUserDocUrl(user)
+{
+	return databaseUrl+"/user_"+user.userId;
+}
+
+//this user is probably "theUser"...but maybe we change our mind later?
+function initUserFromData(user,data)
+{
+	var obj = $.parseJSON(data);
+	user.cam=obj.cam;
+	user._rev=obj._rev;
+	user._id=obj._id;
+	//etc bugbug
+}
+
+function revString(rev)
+{
+	if (typeof rev == 'undefined') 
+		return "";
+	if (rev<=1) //brand new
+		return "";
+	return "?rev="+rev;
+	
+}
+
+//bugbug make a serverTimeSync module
+var timeOffset=null;  //[int?bugbug]
+function getOfficialTime()  //we want it as an int for compactness and speed of math....but ideally we'd be putting this info in on the server side!
+{
+	if (timeOffset==null)
+	{
+		return -1;  //not ready this call...try again next time
+	}
+	return getCurrentTime()+timeOffset;
+}
+
+function setServerTimeOffset(serverTime)
+{
+	serverTime=(new Date(serverTime)).getTime();
+	if (serverTime<1400000000) 
+		return;
+	timeOffset=serverTime-getCurrentTime();
+	console.log("timeOffset="+timeOffset);
+}
+
+function getCurrentTime()
+{
+	return 0+(new Date()).getTime();
+}
 
 </script>
 
