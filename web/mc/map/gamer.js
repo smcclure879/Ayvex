@@ -51,8 +51,7 @@ function Gamer()
 
 Gamer.prototype=new iDrawable();
 Gamer.prototype.constructor=Gamer;
-Gamer.prototype.canSelfDraw=true;  //bugbugNOW OK??
-
+Gamer.prototype.canSelfDraw=true;  //bugbug OK??
 
 Gamer.prototype.reposition2 = function(newPos)
 {

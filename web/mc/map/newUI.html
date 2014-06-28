@@ -2,6 +2,10 @@
 <head>
 <meta charset="UTF-8">
 <title>Higher Dimensional Client</title>
+<script>  
+	//bugbug did this work???
+	var checkIndicatorCharacter="♎";
+</script>
 <script src="../../lib/jquery-1.10.2.js"></script>
 
 
@@ -225,7 +229,7 @@ $(document).ready(function() {
 	$chkInsertionPoint.after("<br><br>");
 	$chkInsertionPoint.after(makeCheck({id:"animate",state:'off',label:'BOB'}));
 	
-});
+});  
 
 
 
@@ -236,7 +240,7 @@ function fixState(state)
 	return (state=='on' || state=='off')?state:'unk';
 }
 
-//three states are recognized:  off, on, unk  (which null etc count as)
+//three states are recogn:  off, on, unk  (which null etc count as)
 function makeCheck(params)
 {
 	//validation
@@ -244,7 +248,7 @@ function makeCheck(params)
 	
 	//building
 	var retval = $('<span></span>')  //return a span...with some other stuff in it...
-		.text("♎ " + params.label + " ")
+		.text(checkIndicatorCharacter+" " + params.label + " ")
 		//.prop('label',label???todo)
 		.prop('id',params.id)
 		.prop('chkstate',params.initialState)
