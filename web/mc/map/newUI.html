@@ -70,6 +70,7 @@ body { margin-top:2px; margin-left:2px }
 	width:70px;
 	padding:0px 10px 0px 0px;
 	cursor:default;
+	margin: 5px;
 }
 
 .unselchk {
@@ -142,7 +143,6 @@ body { margin-top:2px; margin-left:2px }
 	<input type="button" id="flyTo" value="flyTo"/>
 
 	tags:<input type="text"/> 
-	
 	
 	
 	
@@ -224,11 +224,11 @@ $(document).ready(function() {
 	//build the checkboxes that HTML/CSS does bad job on
 	
 	//$chkInsertionPoint.after(makeCheck({id:"lockon",state:'on',label:'LCK'});
-	$chkInsertionPoint.after(makeCheck({id:"big",state:'on',label:'BIG'}));
-	$chkInsertionPoint.after(makeCheck({id:"black",state:'on',label:'BLK'}));
-	$chkInsertionPoint.after("<br><br>");
-	$chkInsertionPoint.after(makeCheck({id:"animate",state:'off',label:'BOB'}));
-	
+	$chkInsertionPoint.before("<br><br>");
+	$chkInsertionPoint.before(makeCheck({id:"animate",state:'off',label:'BOB'}));
+	$chkInsertionPoint.before(makeCheck({id:"black",state:'on',label:'BLK'}));
+	$chkInsertionPoint.before(makeCheck({id:"big",state:'on',label:'BIG'}));
+	$chkInsertionPoint.before("<br><br>");
 });  
 
 
@@ -248,12 +248,14 @@ function makeCheck(params)
 	
 	//building
 	var retval = $('<span></span>')  //return a span...with some other stuff in it...
-		.text(checkIndicatorCharacter+" " + params.label + " ")
+		.text(" "+checkIndicatorCharacter+" " + params.label + " ")
 		//.prop('label',label???todo)
 		.prop('id',params.id)
 		.prop('chkstate',params.initialState)
 		.addClass('hudChk')
-		.click(checkClickHandler);
+		.click(checkClickHandler)
+		.dblclick(dblclickHandler)
+		;
 	return retval;
 }
 
@@ -262,6 +264,13 @@ function checkClickHandler(event)
 	var $chk=$(event.target);
 	setState($chk,!stateAsBool($chk));  //toggling  //todo more state handling later....consolidate a lot of this???  why no easy lib
 }
+
+function dblclickHandler(event)
+{
+	//prevent selection here
+	deselectAll();
+}
+
 			
 function stateAsBool($chk)
 {
@@ -277,9 +286,14 @@ function setState($chk,bState)
 		$chk.removeClass("unselchk").addClass(  'selchk');
 	else
 		$chk.removeClass(  "selchk").addClass('unselchk');
+	deselectAll();
 }
 
 
+function deselectAll()
+{
+	document.getSelection().removeAllRanges();
+}
 </script>
 
 </body>
