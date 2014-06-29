@@ -1,12 +1,31 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Higher Dimensional Client</title>
-<script>  
-	//bugbug did this work???
+<title>Frakture</title>
+<script>
 	var checkIndicatorCharacter="♎";
 </script>
-<script src="../../lib/jquery-1.10.2.js"></script>
+
+
+
+<script src="../lib/jquery-1.10.2.js"></script>
+<script src="../lib/pre3d.js"></script>
+<script src="../lib/queryParams.js"></script>
+<script src="../mc/map/demoUtils.js"></script>
+<script src="../mc/map/cameraAndStuff.js"></script>
+<script src="../mc/map/mc2data.js"></script>
+<script src="../mc/map/memoize.js"></script>
+<script src="../mc/map/stepper.js"></script>
+<script src="../mc/map/tree.js"></script>
+<script src="../mc/map/hasher.js"></script>
+<script src="../mc/map/loadDataFile.js"></script>
+<script src="../mc/map/localSettings.js"></script>
+<script src="../mc/map/DataPoint.js"></script>
+<script src="../mc/map/gamer.js"></script>
+<!-- s c r ipt src="http://localhost:5984/_utils/script/jquery.couch.js?0.11.0"></ s c r ipt  -->
+
+
+
 
 
 <link rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/themes/smoothness/jquery-ui.css" />
@@ -26,9 +45,15 @@ body { margin-top:2px; margin-left:2px }
 	text-align:left;
 	vertical-align:top;	
 	z-index:1;
-	color:rgba(255,255,0, 0.3);
+	color:rgba(255,255,0, 0.5);
 	background-color:rgba(255,0,0, 0.05);
 	font-family:Arial;
+	font-size:12px;
+}
+
+#hud hr {
+	background-color:green;
+	color:rgba(255,255,0,  0.1);
 }
 
 
@@ -36,7 +61,7 @@ body { margin-top:2px; margin-left:2px }
 	background-color:rgba(0,0,0,  0.2);
 	border: 2px solid rgba(255,255,0,  0.7);
 	color:rgba(255,255,0,   0.7);
-	font-height:10px;
+	font-size:10px;
 	border-width:0px;
 }
 
@@ -45,19 +70,17 @@ body { margin-top:2px; margin-left:2px }
 }
 
 #hud input[type=button] {
-	border-width:2px;
-	color:rgba(255,255,0, 0.5);
+	border-width:1px;
 }
 
 #hud select {
-	border:2px solid rgba(255,255,0, 0.5);
-	color: rgba(255,255,0, 0.7); 
-	background-color:rgba(255,255,0,  0.1);
-	font-height:10px;
+	color:rgba(255,255,0, 0.7); 
+	background-color:rgba(11,11,0,  0.1);
+	border:1px solid rgba(255,255,0,  0.3);
 }
 
 #hud option {
-	background-color:rgba(0,0,0,  1);
+	background-color:rgba(0,0,50,  0.5);   because:transparency-no-work-anyway
 	color:rgba(255,255,0,0.6);  
 }
 
@@ -77,27 +100,27 @@ body { margin-top:2px; margin-left:2px }
 	background-color:rgba(255,0,0,   0.1);
 	color:rgba(255,0,0, 0.6);
 	padding:0px 10px 0px 0px;
-	border: 1px solid rgba(255,0,0, 0.8);
+	border-color: rgba(255,0,0, 0.6);
 }
 
 .selchk {
 	background-color:rgba(0,255,0,   0.1);
 	color:rgba(0,255,0, 0.6);
 	padding:0px 0px 0px 10px;
-	border: 1px solid rgba(0,255,0, 0.8);
+	border-color: rgba(0,255,0,  0.6);
 }
 
 
 #appTitle {
 	text-align:left;
-	font-height:11px;
+	font-size:16px;
 	font-weight:bold;
+	color:rgba(255,255,55,  0.7);
 }
 
 #copyright { 
 	text-align:left;
-	font-height:9px;
-	font-weight:bold;
+	font-size:9px;
 }
 
 
@@ -112,13 +135,14 @@ body { margin-top:2px; margin-left:2px }
 
 
 <div id="datasetDialog" border="2" style="display:none;">
-	<select id="dataset">
+	<select id="dataset"  bugbug="make this a link to homepage instead">
 	  <option value="mc2map">mc2 world map</option>
-	  <option value="frcWld">fractals</option>
+	  <option value="frcWld">Frakture</option>
 	  <option value="hiiDimAnlErq">erquake</option>
 	  <option value="hiiDimAnlFlw">flower</option>
 	</select>
-	<hr>warning this will remove all presence in this shared reality
+	<hr />
+	<b>Warning: This will leave the world of Frakture!</b>
 </div>
 
 
@@ -126,18 +150,18 @@ body { margin-top:2px; margin-left:2px }
 <canvas id="c" comment="main drawing canvas"/>
 </div>
 <div id="hud" class="hud">
-	<p id="appTitle">AppName should go here</p>
-	<p id="copyright">Copyright 2014 -- Ayvex Light Industries</p>
-	<br><input type="button" value="change app..." id="btnChooseDataset"/>
-	<hr>
-	AnimateMode:
+	<span id="appTitle">Frakture / </span>
+	<span id="copyright">Copyright 2014 -- Ayvex Light Industries</span>
+	<br><input type="button" value="other apps..." id="btnChangeApp"/>
+	<hr/>
+	Anim:<span id="chkInsertionPoint" ></span>
 	<select id="xanimate">
 		<option value="none">none</option>
 		<option value="sequence4">sequence4</option>
 		<option value="sequence5">sequence5</option>
 		<option value="magic">magic</option>
 	</select>
-	<span id="chkInsertionPoint" ></span>
+	
 	<br>
 	</p>
 	<input type="button" id="flyTo" value="flyTo"/>
@@ -176,13 +200,13 @@ var $chkInsertionPoint = $('#chkInsertionPoint');
 var hudWidth = 300;
 
 
-$('#btnChooseDataset').click(function() {
+$('#btnChangeApp').click(function() {
 	$datasetDialog
 		.dialog({
 			modal: true,
 			draggable: false,
 			resizable: false,
-			title: "select new dataset:",
+			title: "other apps:",
 			show: 'blind',
 			hide: 'blind',
 			width: 400,
@@ -224,11 +248,11 @@ $(document).ready(function() {
 	//build the checkboxes that HTML/CSS does bad job on
 	
 	//$chkInsertionPoint.after(makeCheck({id:"lockon",state:'on',label:'LCK'});
-	$chkInsertionPoint.before("<br><br>");
+	//$chkInsertionPoint.before("<br><br>");
 	$chkInsertionPoint.before(makeCheck({id:"animate",state:'off',label:'BOB'}));
-	$chkInsertionPoint.before(makeCheck({id:"black",state:'on',label:'BLK'}));
-	$chkInsertionPoint.before(makeCheck({id:"big",state:'on',label:'BIG'}));
-	$chkInsertionPoint.before("<br><br>");
+	//$chkInsertionPoint.before(makeCheck({id:"black",state:'on',label:'BLK'}));
+	//$chkInsertionPoint.before(makeCheck({id:"big",state:'on',label:'BIG'}));
+	//$chkInsertionPoint.before("<br><br>");
 });  
 
 
@@ -248,7 +272,7 @@ function makeCheck(params)
 	
 	//building
 	var retval = $('<span></span>')  //return a span...with some other stuff in it...
-		.text(" "+checkIndicatorCharacter+" " + params.label + " ")
+		.text(checkIndicatorCharacter+" " + params.label + " ")
 		//.prop('label',label???todo)
 		.prop('id',params.id)
 		.prop('chkstate',params.initialState)
