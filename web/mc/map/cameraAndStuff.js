@@ -43,6 +43,7 @@ function start3d(theDrawings,opts)
 		renderer.ctx.setFillColor(mainBgColor);  //bugbug settings
 		renderer.drawBackground();
 
+		
 		for(var ii=0,lim=theDrawings.length; ii<lim; ii++)
 		{
 			var drawing = theDrawings[ii];			
@@ -54,6 +55,9 @@ function start3d(theDrawings,opts)
 			var drawing = theDrawings.dynamic[key];
 			drawIt(drawing);
 		}
+		
+		
+		renderer.drawBuffer();
 		
 		//todo renderer.drawReticle();  //in screen coords
 	}

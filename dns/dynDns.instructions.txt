@@ -1,0 +1,58 @@
+
+dynDns script...
+
+fix this line and use it...
+
+curl "http://ayvex: bugbugPazzWORDbugbug @members.dyndns.org/nic/update?hostname=ayvex.dnsalias.com&myip=50.46.150.190&wildcard=NOCHG&mx=NOCHG&backmx=NOCHG"
+
+
+
+Raw HTTP GET Request
+Actual HTTP request should look like 
+following fragment. Note that there is the bare minimum set of headers. Request should be followed by sending an empty line.
+
+Fragment base-64-authorization should be represented by Base 64 encoded username:password string.
+
+GET /nic/update?hostname=yourhostname&myip=ipaddress&wildcard=NOCHG&mx=NOCHG&backmx=NOCHG HTTP/1.0
+Host: members.dyndns.org
+Authorization: Basic base-64-authorization
+User-Agent: Company - Device - Version Number
+
+
+hostname=test.dyndns.org,customtest.dyndns.org
+
+myip	
+IP address to set for the update.
+
+If this parameter is not specified, the best IP address the server can determine will be used (some proxy configurations pass the IP in a header, and that is detected by the server). If the IP address passed to the system is not properly formed, it will be ignored and the system’s best guess will be used.
+
+wildcard	
+Parameter enables or disables wildcards for this host. (Deprecated: Flag is currently ignored)
+
+ON should be used to enable wildcard. NOCHG value will keep current wildcard settings. Any other value will disable wildcard for hosts in update.
+
+Parameter is ignored for Dyn Standard DNS hosts.
+
+mx	
+Specifies an eMail eXchanger for use with the hostname being modified. (Deprecated: Flag is currently ignored)
+
+The specified MX must resolve to an IP address, or it will be ignored. Specifying an MX of NOCHG will cause the existing MX setting to be preserved in whatever state it was previously updated via a client or the Dyn website.
+
+Parameter is ignored for Dyn Standard DNS hosts.
+
+backmx	
+Requests the MX in the previous parameter to be set up as a backup MX by listing the host itself as an MX with a lower preference value. (Deprecated: Flag is currently ignored)
+
+YES activates preferred MX record pointed to hostname itself, NOCHG keeps the previous value, any other value is considered as NO and deactivates the corresponding DNS record.
+
+Parameter is ignored for situations when no MX value is set for host and for Dyn Standard DNS hosts.
+
+offline	
+Sets the hostname to offline mode.
+
+YES activates feature and turns on offline redirect for hostname (if set). NOCHG could be used to keep current state.
+
+Parameter is ignored for static DNS hosts.
+
+This feature is only available to credited users. The !donatorreturn will be used if the account is not credited.
+

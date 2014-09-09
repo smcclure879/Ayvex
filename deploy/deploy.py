@@ -52,9 +52,8 @@ def firstFoundVal(obj,listOfKeys,failOnErr):
 def extractRev(obj,failOnErr):
 	return firstFoundVal(obj,['rev','_rev','etag'],failOnErr);			
 	
-def getFile(file):
-	content='bad'
-	with open(file, 'r') as fh:
+def getFileBytes(file):
+	with open(file, 'rb') as fh:
 		return fh.read()
 
 def getMimeType(file):
@@ -80,7 +79,7 @@ def getRev(doc=designDoc,failOnErr=True):
 	conn.request("GET",doc)
 	res = conn.getresponse()
 	print res.status, res.reason
-	data = res.read()
+	data = res.read().decode('utf-8')
 	print len(data)
 	#print data
 	obj=json.loads(data)
@@ -121,20 +120,19 @@ def putAsData(filePath,dataId):
 	print "prevRevString="+revString
 	editUrl=relativeUrl+revString
 	print "editUrl="+editUrl
-	body=getFile(filePath)  #bugbug purify!!!
+	body=getFileBytes(filePath)  #bugbug purify!!!
 	mimeType=getMimeType(filePath)
-	userAndPass = b64encode(userPass).decode("ascii")
 	conn = httplib.HTTPConnection(serverPort)
 	conn.request("PUT",editUrl,body,
 			{
-				'Content-type':mimeType
-				,				'Authorization' : 'Basic %s' %  userAndPass 
+				'Content-type':mimeType,
+				'Authorization' : authString
 				
 			}
 		)
 	res = conn.getresponse()
 	print res.status, res.reason
-	data = res.read()
+	data = res.read().decode('utf-8')
 	print len(data)
 	#print data
 	obj=json.loads(data)
@@ -160,12 +158,11 @@ def putViewFile(filePath,dataId):
 	print editUrl
 	body=json.dumps(getPurifiedJson(filePath))
 	mimeType=getMimeType(filePath)
-	userAndPass = b64encode(userPass).decode("ascii")
 	conn = httplib.HTTPConnection(serverPort)
 	conn.request("PUT",editUrl,body,
 			{
-				'Content-type':mimeType
-				,				'Authorization' : 'Basic %s' %  userAndPass 
+				'Content-type' : mimeType,
+				'Authorization' : authString
 				
 			}
 		)
@@ -174,7 +171,7 @@ def putViewFile(filePath,dataId):
 	
 	res = conn.getresponse()
 	#print res.status, res.reason
-	data = res.read()
+	data = res.read().decode('utf-8')
 	
 	print len(data)
 	#print data
@@ -191,20 +188,21 @@ def putAttachment(filePath,relativeUrl):
 	print "prev rev="+rev
 	editUrl=designDoc+'/'+relativeUrl+"?rev="+urllib.quote(rev)
 	print editUrl
-	body=getFile(filePath)  #can't purify...probably not JSON!
+	
+	body=getFileBytes(filePath)  #can't purify...probably not JSON!
 	mimeType=getMimeType(filePath)
-	userAndPass = b64encode(userPass).decode("ascii")
 	conn = httplib.HTTPConnection(serverPort)
-	conn.request("PUT",editUrl,body,
+	#pdb.set_trace()
+	conn.request("PUT",editUrl.encode('utf-8'),body,
 			{
-				'Content-type':mimeType
-				,				'Authorization' : 'Basic %s' %  userAndPass 
-				
+				'Content-type':mimeType,
+				'Authorization':authString			
 			}
 		)
 	res = conn.getresponse()
 	#print res.status, res.reason
-	data = res.read()
+	data = res.read().decode('utf-8')
+
 	print len(data)
 	#print data
 	obj=json.loads(data)
@@ -212,7 +210,7 @@ def putAttachment(filePath,relativeUrl):
 
 
 def getPurifiedJson(someFile):  #bugbug shorten later
-	data=getFile(someFile)
+	data=getFileBytes(someFile)
 	data=purify(data)
 	obj=json.loads(data)
 	return obj
@@ -233,7 +231,8 @@ def purifyLine(s):
 	
 	
 #bugbug apply the __main__ pattern here...
-
+userAndPass = b64encode(userPass).decode("ascii")
+authString = u'Basic %s' %  userAndPass
 items=allRelevantFilesUnder(".."+sep+"web",pattern)
 for file,url,name in items:	
 	

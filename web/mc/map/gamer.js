@@ -24,12 +24,13 @@ function drawLineAbsAbs(ctx,from2d,to2d)
 	lineTo(ctx,to2d);
 }
 
+
 function drawDot(ctx,ctrPoint2d,radiusPix)
 {
-	ctx.fillStyle="red";  //bugbug make an arg?
-	//bugbug should this be a circle given these arg names?
+	ctx.fillStyle="red";  //todo make an arg?
+	//todo should this be a circle given these arg names? 
 	if (fillPoint(ctx,ctrPoint2d,radiusPix)==null)
-		return null;  //bugbug retval check even needed?
+		return null;  //todo is retval check even needed?
 }
 
 
@@ -40,8 +41,8 @@ function drawDot(ctx,ctrPoint2d,radiusPix)
 
 function Gamer()
 {
-	this.color='blue';
-	this.pointh={ x:4700, y:4700, z:4700 };  //more fiedlds needed?  bugbug   bugbug consts
+	this.color='7777FF';
+	this.pointh={ x:4700, y:4700, z:4700 };  //more fiedlds needed?  todo todo consts
 	this.prevPoint={ x:4600, y:4700, z:4700 };
 	this.prevPrevPoint=null;
 	this.lastPublicPoint=null;
@@ -49,10 +50,9 @@ function Gamer()
 	this.stepSize=5; 	
 }
 
-Gamer.prototype=new iDrawable();
-Gamer.prototype.constructor=Gamer;
-Gamer.prototype.canSelfDraw=true;  //bugbugNOW OK??
 
+Gamer.prototype=new iDrawable();  //todo should be "tree"??? else why sharing so much code?
+Gamer.prototype.constructor=Gamer;
 
 Gamer.prototype.reposition2 = function(newPos)
 {
@@ -62,9 +62,9 @@ Gamer.prototype.reposition2 = function(newPos)
 	this.pointh=newPos; 	
 }
 
-Gamer.prototype.reposition = function(x,y,z, rotx, roty, rotz, t)  //bugbug need version that takes structs....clean up this interface
+Gamer.prototype.reposition = function(x,y,z, rotx, roty, rotz, t)  //todo should take structs....clean up this interface
 {
-	//to show user "flowing" from one point to another (might generalize to a "ring buffer")  bugbug implement this right !!!
+	//to show user "flowing" from one point to another (might generalize to a "ring buffer")  todo implement this as ring buffer???
 	this.prevPrevPoint=this.prevPoint;
 	this.prevPoint=this.pointh;
 	this.pointh = {
@@ -77,7 +77,7 @@ Gamer.prototype.reposition = function(x,y,z, rotx, roty, rotz, t)  //bugbug need
 	//from the 'camera' or camera pulls from user?
 	this.orientation.rotx=rotx || 0;
 	this.orientation.roty=roty || 0;
-	this.orientation.rotz=rotz || 0;  //bugbug abstract a 3D rotate-able object out and have gamer inherit from that...a later refactoring
+	this.orientation.rotz=rotz || 0;  //todo abstract a 3D rotate-able object out and have gamer inherit from that...a later refactoring
 }
 
 Gamer.prototype.moveForward = function()
@@ -89,7 +89,7 @@ Gamer.prototype.moveForward = function()
 
 Gamer.prototype.mutateOrientation1 = function()
 {
-	this.orientation.roty += rad(Math.random()*100-50); //bugbug not random enough  bugbug const
+	this.orientation.roty += rad(Math.random()*100-50); //todo not random enough  && const
 	loop(0,twoPi,this.orientation.rotY); 
 	this.stepSize+=0.01;
 
@@ -101,9 +101,9 @@ Gamer.prototype.name = function(name)
 }
 
 var phase=0;
-Gamer.prototype.draw=function(renderer,log2size) //,gameTime)  //bugbug need to pass in gameTime soon where this is called--OR should time be a global???
+Gamer.prototype.draw=function(renderer,log2size) //,gameTime)  //todo need to pass in gameTime soon where this is called--OR should time be a global???
 {
-	//bugbug this is second copy of this routine....move to some type of sharign ??
+	//todo this is second copy of this routine....move to some type of sharign ??
 	//and dynamically creating it each call here???
 	var tpt = function (pointh) {	
 	
@@ -111,11 +111,11 @@ Gamer.prototype.draw=function(renderer,log2size) //,gameTime)  //bugbug need to 
 			return null;
 	
 		var scaleDim = -1;
-		var phaseMax= 50000; //bugbug settings?
+		var phaseMax= 50000; //todo settings?
 		phase--;
-		phase %= phaseMax;	//bugbug base off the absolute frameNum or time or something???? unify time-handling
+		phase %= phaseMax;	//todo base off the absolute frameNum or time or something???? unify time-handling
 		
-		//bugbug
+		//todo
 		//knock it down to 3 dimensions based on hiDimProjection settings (controller should have told renderer, what is the control structure?)
 		var offsetForHiDim = computeOffsetFromHi(renderer,pointh);  //   projection N ==> 3,   code in/near iDrawable?
 		var plainPoint3 = vecMultAdd(pointh,offsetForHiDim,scaleDim*phase/phaseMax);
@@ -127,25 +127,22 @@ Gamer.prototype.draw=function(renderer,log2size) //,gameTime)  //bugbug need to 
 		return point2d;
 	} ;  
 	
-	//bugbug this is copy from DataPoint...should be completely revamped....
+	//todo this is copy from DataPoint...should be completely revamped....
 
 	if (typeof this.selfDraw == 'function')
-		return this.selfDraw({
+		this.selfDraw({
 				renderer:renderer,
 				log2size:log2size,
 				transformFunction:tpt
-			});  //bugbug boundingBox3d, etc etc here?  vs. how much of this already in "this"  (cache "age"?)
+			});  //todo boundingBox3d, etc etc here?  vs. how much of this already in "this"  (cache "age"?)
 		
 	
-	//else...crappy default code
+	//else...crappy default code...can we call the superclass instead???
 	if (this.pointh==null) 
 		return null;  
 	
-	//bugbug move lower??
 	var ctx = renderer.ctx;
 	ctx.beginPath();
-	
-	
 
 	var footPoint2d=tpt(this.pointh);  //the foot is where you "are"...compute early to eliminate stuff we don't need to draw
 	if (footPoint2d==null)
@@ -154,7 +151,7 @@ Gamer.prototype.draw=function(renderer,log2size) //,gameTime)  //bugbug need to 
 		
 	if (typeof this.text=='undefined')
 	{
-		this.text == 'playerUNDEF?';  //bugbug
+		this.text == 'playerUNDEF?';  
 	}
 	
 
@@ -162,12 +159,12 @@ Gamer.prototype.draw=function(renderer,log2size) //,gameTime)  //bugbug need to 
 	if (footPoint2d==null) 
 		return null;
 	
-	var noseLength=25;  //bugbug settings? or property of object?
+	var noseLength=25;  //todo settings? or property of object?
 	var height=100;
-	//var activity=5;  //soon there will be strings allowed for this value (activityLevel)!!! bugbug
-	//bugbug based on activity, randomly fuzz the points' positions
+	//var activity=5;  //soon there will be strings allowed for this value (activityLevel)!!! todo
+	//todo based on activity, randomly fuzz the points' positions
 	
-	//bugbug you are here ("build" the person like we built a tree)
+	//todo("build" the person like we built a tree)
 	var headPoint3d=mm.addPoints3d(this.pointh,{x:0,y:height,z:0});
 	var nosePoint3d=projection(headPoint3d, noseLength, this.orientation);
 
@@ -183,62 +180,62 @@ Gamer.prototype.draw=function(renderer,log2size) //,gameTime)  //bugbug need to 
 	
 	if (nosePoint2d==null) 
 	{
-		console.log('no nose');  //bugbug
+		//console.log('no nose');  
 		return null;
 	}
 	if (headPoint2d==null)
 	{
-		console.log('no head');  //bugbug
+		//console.log('no head');  
 		return null;
 	}
-	//bugbug if any more points turn that into an array or something!
+	//todo if any more points turn that into an array or something!
 	
-	//bugbug we'll want to do more than draw lines
-	if (this.isSelected) 
-	{
-		ctx.strokeStyle = 'purple';
-	}
-	else
-	{
-		ctx.strokeStyle = this.color;
-	}
+	//todo gamer can't be selected, can it?
+	// if (this.isSelected) ctx.strokeStyle = 'purple';  etc etc
 	
+	//ctx.drawTetrahedron()  TODO do this now with drawTriangleAbs()
+	
+	ctx.beginPath();
+	ctx.strokeStyle = this.color;
 	drawLineAbsAbs(ctx,nosePoint2d,headPoint2d);  //nose
-	drawLineAbsAbs(ctx,headPoint2d,footPoint2d);  //body
+	//drawLineAbsAbs(ctx,headPoint2d,footPoint2d);  //body
 	
-	if (prevPoint2d!=null)
-	{
-		drawLineAbsAbs(ctx,footPoint2d,prevPoint2d);  //tail
-	}
-	else
-	{
-		console.log("missing tail");  //bugbug
-	}
-	
-	if (prevPrevPoint2d!=null && prevPoint2d!=null)  //bugbug and if right scale and distance to care
+	if (prevPrevPoint2d!=null && prevPoint2d!=null)  //todo:   && ghostCloseEnoughAndLargeEnoughToMatter() 
 	{
 		drawLineAbsAbs(ctx,prevPoint2d,prevPrevPoint2d); 
 	}
+	
+	if (prevPoint2d!=null)
+	{
+		//drawLineAbsAbs(ctx,footPoint2d,prevPoint2d);  //tail
+		drawTriangleAbs(ctx,headPoint2d,footPoint2d,prevPoint2d,this.color);  
+	}
+	else
+	{
+		console.log("missing tail");  
+	}
+	
+	
 	ctx.stroke();
 	
-	drawDot(ctx,lastPublicPoint2d,4);
-	ctx.stroke();
+	//drawDot(ctx,lastPublicPoint2d,4);
+	//ctx.stroke();
 	
 	ctx.font="11px Arial";
-	ctx.fillStyle=contrastBackground();
+	ctx.strokeStyle="rgba(128,128,128,0.0)";
+	ctx.fillStyle="rgba(128,128,128,0.7)";
+	// ctx.fillStyle=contrastBackground();  TODO
 	
-	//moveTo(ctx, headPoint2d);
-	ctx.fillText(this.text + '  age='+age(this.pointh),nosePoint2d.x,nosePoint2d.y);  
-	// if (prevPrevPoint2d!=null)  //bugbug put this back in some other way (pixie dust instead of numbers?)
-		// ctx.fillText(age(this.pointh),prevPrevPoint2d.x,prevPrevPoint2d.y);
-
-	ctx.stroke();	 
+	ctx.fillText(this.text,headPoint2d.x,headPoint2d.y-10);   //RETAIN for debugging... + '  age='+age(this.pointh)
+	//todo is a ctx.fill needed here???  why not needed so far?
+	ctx.stroke();
+	ctx.strokeStyle="red";
 }
 
 
 function age(pointh)
 {
-	//bugbug of course, ideally draw() would get handed the current time instead of this expensive getOfficialTime() call!!!!
+	//todo of course, ideally draw() would get handed the current time instead of this expensive getOfficialTime() call!!!!
 	var ageSeconds=(getOfficialTime()-pointh.t)/1000;
 	return (typeof ageSeconds == 'undefined')  ?  'noAge'  :  ageSeconds.toFixed(1)	 ;  
 }

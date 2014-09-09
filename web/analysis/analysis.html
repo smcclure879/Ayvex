@@ -1,0 +1,327 @@
+<html>
+<head>
+
+
+
+<meta charset="UTF-8">
+<title>Multidimensional Data Analyzer</title>
+<script>
+	var checkIndicatorCharacter="♎";
+</script>
+
+
+
+<script src="../lib/jquery-1.10.2.js"></script>
+<script src="../lib/pre3d.js"></script>
+<script src="../lib/queryParams.js"></script>
+<script src="../mc/map/demoUtils.js"></script>
+<script src="../mc/map/cameraAndStuff.js"></script>
+<script src="../mc/map/mc2data.js"></script>
+<script src="../mc/map/memoize.js"></script>
+<script src="../mc/map/stepper.js"></script>
+<script src="../mc/map/tree.js"></script>
+<script src="../mc/map/hasher.js"></script>
+<script src="../mc/map/loadDataFile.js"></script>
+<script src="../mc/map/localSettings.js"></script>
+<script src="../mc/map/DataPoint.js"></script>
+<script src="../mc/map/gamer.js"></script>
+<!-- s c r ipt src="http://localhost:5984/_utils/script/jquery.couch.js?0.11.0">
+<note>bugbug this should be modified to be the data analysis UI</note></ s c r ipt  -->
+
+
+
+
+<link rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/themes/smoothness/jquery-ui.css" />
+<script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/jquery-ui.min.js"></script>
+
+<style>
+
+body { margin-top:2px; margin-left:2px }
+#c {
+	background-color:rgba(0,0,25, 1);  note:"the glow of the universe...the night sky"
+	border:2px solid #0000DD;
+	position:absolute;
+}
+
+#hud {
+	position:absolute;
+	text-align:left;
+	vertical-align:top;	
+	z-index:1;
+	color:rgba(255,255,0, 0.5);
+	background-color:rgba(255,0,0, 0.05);
+	font-family:Arial;
+	font-size:12px;
+}
+
+#hud hr {
+	color:green;
+	xxcolor:rgba(255,255,0,  0.1);
+}
+
+
+#hud input {
+	background-color:rgba(0,0,0,  0.2);
+	border: 2px solid rgba(255,255,0,  0.7);
+	color:rgba(255,255,0,   0.7);
+	font-size:10px;
+	border-width:0px;
+}
+
+#hud input[type=text] {
+	width:40px;
+}
+
+#hud input[type=button] {
+	border-width:1px;
+}
+
+#hud select {
+	color:rgba(255,255,0, 0.7); 
+	background-color:rgba(11,11,0,  0.1);
+	border:1px solid rgba(255,255,0,  0.3);
+}
+
+#hud option {
+	background-color:rgba(0,0,50,  0.5);   because:transparency-no-work-anyway
+	color:rgba(255,255,0,0.6);  
+}
+
+
+
+.hudChk {
+	background-color:rgba(0,255,0,   0.1);
+	color:rgba(255,255,0, 0.6);
+	border: 1px solid rgba(255,255,0, 0.6);
+	width:70px;
+	padding:0px 10px 0px 0px;
+	cursor:default;
+	margin: 5px;
+}
+
+.unselchk {
+	background-color:rgba(255,0,0,   0.1);
+	color:rgba(255,0,0, 0.6);
+	padding:0px 10px 0px 0px;
+	border-color: rgba(255,0,0, 0.6);
+}
+
+.selchk {
+	background-color:rgba(0,255,0,   0.1);
+	color:rgba(0,255,0, 0.6);
+	padding:0px 0px 0px 10px;
+	border-color: rgba(0,255,0,  0.6);
+}
+
+
+#appTitle {
+	text-align:left;
+	font-size:16px;
+	font-weight:bold;
+	color:rgba(255,255,55,  0.7);
+}
+
+#copyright { 
+	text-align:left;
+	font-size:9px;
+}
+
+
+
+
+
+</style>
+
+
+</head>
+<body >
+
+
+<div id="datasetDialog" border="2" style="display:none;">
+	<select id="dataset"  bugbug="make this a link to homepage instead">
+	  <option value="mc2map">mc2 world map</option>
+	  <option value="frcWld">Frakture</option>
+	  <option value="hiiDimAnlErq">erquake</option>
+	  <option value="hiiDimAnlFlw">flower</option>
+	</select>
+	<hr />
+	<b>Warning: This will abandon data analysis session!</b>
+</div>
+
+
+<div>
+<canvas id="c" comment="main drawing canvas"/>
+</div>
+<div id="hud" class="hud">
+	<span id="appTitle">Earthquake Data Set / </span>
+	<span id="copyright">Copyright 2014 -- Ayvex Light Industries</span>
+	<br><input type="button" value="other apps..." id="btnChangeApp"/>
+	<hr/>
+	Anim:<span id="chkInsertionPoint" ></span>
+	<select id="xanimate">
+		<option value="none">none</option>
+		<option value="sequence4">sequence4</option>
+		<option value="sequence5">sequence5</option>
+		<option value="magic">magic</option>
+	</select>
+	
+	<br>
+	</p>
+	<input type="button" id="flyTo" value="flyTo"/>
+
+	tags:<input type="text"/> 
+	
+	
+	
+	<nobr>frame:<input type="text" id="frameNum" value="x" />,
+	CAM: x:<input type="text" id="camX" value="x"/>
+	y:<input type="text" id="camY" value="x"/>
+	z:<input type="text" id="camZ" value="x"/>
+	</nobr>
+	<nobr>ROT: 
+	rotX:<input type="text" id="camRotX" value="x"/>
+	rotY:<input type="text" id="camRotY" value="x"/>
+	rotZ:<input type="text" id="camRotZ" value="x"/>
+	</nobr>
+	
+<br>
+<br>
+<br>
+
+
+	<div id="toolbar" style="position: relative; bottom: 0; left: 0; border:1px solid #333300; padding:10px; spacing:10px"> </div>
+
+</div>
+
+<script>
+
+
+var $canvas = $('#c');
+var $hud = $('#hud');
+var $datasetDialog = $('#datasetDialog');
+var $chkInsertionPoint = $('#chkInsertionPoint');
+var hudWidth = 300;
+
+
+$('#btnChangeApp').click(function() {
+	$datasetDialog
+		.dialog({
+			modal: true,
+			draggable: false,
+			resizable: false,
+			title: "other apps:",
+			show: 'blind',
+			hide: 'blind',
+			width: 400,
+			height: 400,
+			buttons: {
+				"OK": function() {
+					//todo should navigate or whatever
+					$(this).dialog("close");
+				},
+				"Cancel": function() {
+					$(this).dialog("close");
+				}
+			}
+		});
+	
+});
+		
+
+function sizeUpdate()
+{	
+	var newWidth=document.body.clientWidth  * 0.99;
+	var newHeight=document.body.clientHeight * 0.98;
+	
+	$canvas.prop('width',  newWidth);
+	$canvas.prop('height', newHeight);
+
+	//$hud.prop('width', newWidth);
+	$hud.prop('height', newHeight);
+	$hud.css('left',newWidth-hudWidth).change();	
+}
+
+
+$(document).ready(function() {
+	
+	//fix it where we will resize correctly...
+	$(window).resize(sizeUpdate);
+	sizeUpdate();  //and do it now for good measure
+	
+	//build the checkboxes that HTML/CSS does bad job on
+	
+	$chkInsertionPoint.after(makeCheck({id:"lockon",state:'on',label:'LCK'}));
+	$chkInsertionPoint.before("<br><br>");
+	$chkInsertionPoint.before(makeCheck({id:"animate",state:'off',label:'BOB'}));
+	$chkInsertionPoint.before(makeCheck({id:"black",state:'on',label:'BLK'}));
+	$chkInsertionPoint.before(makeCheck({id:"big",state:'on',label:'BIG'}));
+	$chkInsertionPoint.before("<br><br>");
+});  
+
+
+
+//bugbug want this stuff to build a checkbox in its own module file!!!
+
+function fixState(state)
+{
+	return (state=='on' || state=='off')?state:'unk';
+}
+
+//three states are recogn:  off, on, unk  (which null etc count as)
+function makeCheck(params)
+{
+	//validation
+	var initialState=fixState(params.state);
+	
+	//building
+	var retval = $('<span></span>')  //return a span...with some other stuff in it...
+		.text(checkIndicatorCharacter+" " + params.label + " ")
+		//.prop('label',label???todo)
+		.prop('id',params.id)
+		.prop('chkstate',params.initialState)
+		.addClass('hudChk')
+		.click(checkClickHandler)
+		.dblclick(dblclickHandler)
+		;
+	return retval;
+}
+
+function checkClickHandler(event) 
+{
+	var $chk=$(event.target);
+	setState($chk,!stateAsBool($chk));  //toggling  //todo more state handling later....consolidate a lot of this???  why no easy lib
+}
+
+function dblclickHandler(event)
+{
+	//prevent selection here
+	deselectAll();
+}
+
+			
+function stateAsBool($chk)
+{
+	return ($chk.prop('chkstate')=='on');
+}
+
+
+function setState($chk,bState)
+{
+	var $state=bState?'on':'off';
+	$chk.prop('chkstate',$state);
+	if (bState)
+		$chk.removeClass("unselchk").addClass(  'selchk');
+	else
+		$chk.removeClass(  "selchk").addClass('unselchk');
+	deselectAll();
+}
+
+
+function deselectAll()
+{
+	document.getSelection().removeAllRanges();
+}
+</script>
+
+</body>
+</html>
