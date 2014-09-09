@@ -353,6 +353,7 @@ var DemoUtils = (function() {
       ct.rotateZ(camera_state.rotate_z);
       ct.rotateY(camera_state.rotate_y);
       ct.rotateX(camera_state.rotate_x);
+	  //ct.prepForInfinityBugbug();  //bugbugSOON maybe something like this?  do the /(1-epsilon) trick??
 	  ct.check();
     }
 
@@ -376,6 +377,8 @@ var DemoUtils = (function() {
 	
 	function pointAtSelected()
 	{
+		if (selectedItem==null) 
+			return;
 		//given cam xyz and selected point xyz, set cam rotY and rotX to point at it. 		
 		pointAt(selectedItem);
 	}

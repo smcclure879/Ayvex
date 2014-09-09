@@ -53,6 +53,20 @@ The list of XP owners.
 34. steve: gamer motion
 35. steve: ghost
 36. steve: theUser/gamer impedance matching
+37. steve: much debugging on triangles/lines/transform of point behind
+38. steve: "
+39. steve: "
+40. steve: "
+41. steve: "
+42. john carrothers: help with the transform for points behind the camera
+43. jin jia: "
+44. jin jia: "
+45. faye simp: facebook support
+46. bilal: for initial consulting 
+47. justin: for the hell of it
+48. steve: keeping minecraft going
+49. steve: paying for the domain name
+
 
 
 
@@ -60,12 +74,12 @@ Ayvex Corporation is an experimental corporation dedicated to democratizing the 
 and applying gaming technology outside the traditional gaming world (e.g. bringing gamelike UI to business
 applications, scientific visualization, etc)
 
-We don't think there is benefit in secret dealings, secret source code, etc etc.  It will all be on github.
+We don't think there is usually a benefit to secret dealings, secret source code, etc etc.  It will all be on github.
 We aren't allergic to money.  We intend to make a profit. Just not right away.  If/When we become profitable,
 we want to share with everyone who helped.  This might be in the form of shares in an eventual  IPO, or 
 extra kickstarter bonus (if we go that route), or cash dividend.  Things are still loose so this will be steve's 
 call about the reward structure.  Worst case scenario you can trade these coupons in for the face redemption value.
 
 These *are* intended to be negotiable:  See steve to transfer XP. It will be done via edits to this file in
-the master branch of the Ayvex project.
-
+the master branch of the Ayvex project.  It has been suggested to build a market in similar "penny options" 
+for startups...Trading them online, etc.  

@@ -1,5 +1,20 @@
 //many modifications by smcclure879 (here and farther down)
 
+function constrain(x,xmin,xmax)
+{
+	if (x<xmin) return xmin;
+	if (x>xmax) return xmax;
+	return x;
+}
+
+function sgn(x) {
+	if (x<0) return -1;
+	if (x==0) return 0;
+	if (typeof x===undefined) return undefined;
+	return 1;
+}
+
+
 function min(a, b) {
 	if (a < b) return a;
 	return b;
@@ -373,14 +388,22 @@ var Pre3d = (function() {
 
   // Transform the point |p| by the AffineMatrix |t|.  //assuming 3-d to 3-d
   function transformPoint(t, p) {
-    if (null==t)
+	if (null==t)
 	{
-		//bugbug ok to not have?alert("bugbug bad t in transformPoint");
 		console.log("bugbug bad t in transformPoint");
-		return { x:0, y:0, z:0 };  //bugbug it'll come along later???
+		return { x:-777, y:-777, z:777 };  
     }
-	if (typeof p==='undefined' || typeof p.x === 'undefined') //bugbug hoping to avoid this repeated check in this critical code.  (can this whole file go into the GPU?)
-		alert( "bugbug bad p" );
+	if (typeof p=='undefined' || !p || typeof p.x == 'undefined' )
+	{
+		//alert( "bugbug bad p case1" );
+		return null;
+	}
+	if (! ('x' in p))
+	{
+		//alert("bugbug bad p case2" );
+		return null;
+	}
+	
     return {
       x: t.e0 * p.x + t.e1 * p.y + t.e2  * p.z + t.e3,
       y: t.e4 * p.x + t.e5 * p.y + t.e6  * p.z + t.e7,
@@ -511,6 +534,22 @@ var Pre3d = (function() {
     tm.m = dupAffine(this.m);
     return tm;
   };
+  
+  
+  
+  // Transform.prototype.prepForInfinityBugbug = function() {
+  
+    // var m = this.m;
+	// var K=-79;
+	// if (m.e11<K) 
+		// m.el11 = K;
+	
+  // }
+  
+  
+  
+  
+  
 
   // Transform and return a new array of points with transform matrix |t|.
   function transformPoints(t, ps){
@@ -616,6 +655,50 @@ var Pre3d = (function() {
     this.i3 = null;
   };
 
+  
+  ////smcclure879 big note...bugbug
+  //when eventually switch to using GPU/shaders, 
+  // we won't think in quads anyway.  everything should be triangle.  
+  //for now I just want this to work at all....
+  
+  
+  //smcclure879
+  QuadFace.prototype.fixTriangle = function(vertices) {
+	
+	
+	var verts=[vertices[this.i0],
+	           vertices[this.i1],
+			   vertices[this.i2]
+			   ];
+			   
+			   //.map([this.i0,this.i1,this.i2],function(ii){ this.vertices[ii]; });
+	
+	
+	
+      // crossProduct: crossProduct,
+      // dotProduct2d: dotProduct2d,
+      // dotProduct3d: dotProduct3d,
+      // subPoints2d: subPoints2d,
+      // subPoints3d: subPoints3d,
+      // addPoints2d: addPoints2d,
+    
+	var dir = crossProduct(subPoints3d(verts[1],verts[0]), subPoints3d(verts[2],verts[0]));
+	
+	
+	this.normal1=unitVector3d(dir);  
+	this.normal2 = this.normal1;  //explicitly ignore non-triangle verts  bugbug fix later where we check normal2 to skip that check since it won't exist
+	this.centroid = averagePoints(verts);
+
+  };
+	
+  
+  
+  
+  
+  
+  
+  
+  
   // A Shape represents a mesh, a collection of QuadFaces.  The Shape stores
   // a list of all vertices (so they can be shared across QuadFaces), and the
   // QuadFaces store indices into this list.
@@ -719,7 +802,7 @@ var Pre3d = (function() {
     // Should we inflate quads to visually cover up antialiasing gaps.
     this.draw_overdraw = true;
     // Should we skip backface culling.
-    this.draw_backfaces = false;
+    this.draw_backfaces = false;  
 
     this.texture = null;
     this.fill_rgba = new RGBA(1, 0, 0, 1);
@@ -809,7 +892,7 @@ var Pre3d = (function() {
   };
 
   Renderer.prototype.emptyBuffer = function() {
-    this.buffered_quads_ = [ ];
+    this.buffered_quads_ = {};  //bugbug was array instead!
   };
 
   // TODO(deanm): Pull the project stuff off the class if possible.
@@ -820,24 +903,98 @@ var Pre3d = (function() {
   // Takes the current focal_length_ in account.
   Renderer.prototype.projectPointToCanvas = function projectPointToCanvas(p,skipOffscreenPoint) {
   
+	if (!p) return null;
+  
+	//var zclip = p.z;
+	var zclip = p.z-this.camera.focal_length;
+	
+	//clamp(p.z,1000000,-1000000); 
+	//if (zclip>-1 && zclip<1) 
+	//	zclip=1;
+
+	//if (zclip>1)
+	//	zclip=-0.999;//-Math.sqrt(zclip)*1000;  //best so far bugbug
+  
     // We're looking down the z-axis in the negative direction...
-    var v = this.camera.focal_length / -p.z;  //bugbug removed negative on p.z but that's wrong too apparently
+    var v = this.camera.focal_length / -zclip;  
+	
+	
+	//if (v<-10) 
+	//	v=-10;
+	
+	// if (v>0.1)
+	// {
+		// v=0.1;
+	// }
+	
     var scale = this.scale_;
   
   	if (skipOffscreenPoint)
 	{
-		if (p.x*v<-20 || p.x*v>20) return null;
-		if (p.y*v<-20 || p.y*v>20) return null;  //bugbug const or setting
-		if (p.z>0)  return null;  //this culls out stuff behind the camera  (it's already projected into camera space
+		if (p.x*v<-20 || p.x*v>20) 
+			return null;
+		if (p.y*v<-20 || p.y*v>20) 
+			return null;  //bugbug const or setting
+		if (p.z>0)  
+			return null;  //this culls out stuff behind the camera  (it's already projected into camera space
 	}
+
 	
-	// Map the height to -1 .. 1, and the width to maintain aspect.
-	var x = p.x * v * scale + this.xoff_;
-	var y = p.y * v * -scale + scale;
-    
-    return { x:x, y:y };
+	
+	
+	var x, y;
+	
+	if (!skipOffscreenPoint & v<0)
+		v=10*Math.sqrt(1/-v)  //bugbug seems to want something else here but what???;
+	
+	// if (!skipOffscreenPoint & v<0)  //behind me and care about the point
+	// {
+		// var maxrad=100;
+		// var pi=Math.PI;
+		// var theta = atan3(p.y,p.x)+pi/2;
+	
+		// x = cos(theta)*maxrad * scale + this.xoff_;
+		// y = -sin(theta)*maxrad * scale + scale;
+	// }
+	// else
+	// {	
+		//bugbug why do I have to do this, and why does it not work 100%???  almost works but some line dipping
+		// var vx=v;
+		// var vy=v;
+		// if (!skipOffscreenPoint & v<0)
+		// {
+			// vx= -v*2000*slumper(-v);
+			// vy= -v*1000*slumper(-v);	
+		// }
+		
+		x = p.x * v * scale + this.xoff_;
+		y = p.y * v * -scale + scale;
+	// }
+    return { x:x, 
+			 y:y , 
+			 debug: ""+fix(p.x)+"  "+fix(p.y)+"   "+fix(p.z)+ "   "+fix(v)   
+		};  //bugbug
+				
   };
 
+  
+  function atan3(y,x)
+  {
+	return Math.atan(y,x);
+  }
+  
+  
+  function slumper(x)
+  {
+	x=Math.abs(x);
+	return (x>1) ?  Math.sqrt(x)  :  x;
+  }
+  
+  function fix(x)
+  {
+	return Number(x).toPrecision(4);
+  }
+  
   // Project a 3d point onto the 2d canvas surface (pixel coordinates).
   // Takes the current focal_length in account.
   // TODO: flatten this calculation so we don't need make a method call.
@@ -863,12 +1020,17 @@ var Pre3d = (function() {
   
 
   Renderer.prototype.projectQuadFaceToCanvasIP = function(qf) {
-    qf.i0 = this.projectPointToCanvas(qf.i0,false);
-    qf.i1 = this.projectPointToCanvas(qf.i1,false);
-    qf.i2 = this.projectPointToCanvas(qf.i2,false);
+  
+	//bugbug this is wrong....the callers of this function expect us to overwrite each item from 3d --> 2d.
+	//but then how to know if the shape has changed???  since we are moving the camera, the transform always changes.  
+	//...clearly, clearly the 2d coords need to be separate from the 3d!
+	//sooooo...now try...  i=3d, j=2d ???? and fixing the callers too
+    qf.j0 = this.projectPointToCanvas(qf.i0,false);
+    qf.j1 = this.projectPointToCanvas(qf.i1,false);
+    qf.j2 = this.projectPointToCanvas(qf.i2,false);
     if (!qf.isTriangle())
-      qf.i3 = this.projectPointToCanvas(qf.i3,false);
-    return qf;
+      qf.j3 = this.projectPointToCanvas(qf.i3,false);
+    //return qf;
   };
 
   // Textured triangle drawing by Thatcher Ulrich.  Draw a triangle portion of
@@ -940,7 +1102,8 @@ var Pre3d = (function() {
 
   // Put a shape into the draw buffer, transforming it by the current camera,
   // applying any current render state, etc.
-  Renderer.prototype.bufferShape = function bufferShape(shape) {
+  Renderer.prototype.setShape = function setShape(name,shape) {
+  
     var draw_backfaces = this.draw_backfaces;
     var quad_callback = this.quad_callback;
 
@@ -962,6 +1125,8 @@ var Pre3d = (function() {
     for (var j = 0, jl = shape.quads.length; j < jl; ++j) {
       var qf = quads[j];
 
+	  qf.fixTriangle(shape.vertices);  //in case the centroids are still null, etc.
+	  
       // Call the optional quad callback.  This gives a chance to update the
       // render state per-quad, before we emit into the buffered quads.  It
       // also gives the earliest chance to skip a quad.
@@ -973,7 +1138,7 @@ var Pre3d = (function() {
       // Cull quads that are behind the camera.
       // TODO(deanm): this should probably involve the focal point?
       if (centroid.z >= -1)
-        continue;
+        continue;  
 
       // NOTE: The transform tn isn't going to always keep the vectors unit
       // length, so n1 and n2 should be normalized if needed.
@@ -1032,7 +1197,7 @@ var Pre3d = (function() {
         normal2_rgba: this.normal2_rgba
       };
 
-      this.buffered_quads_.push(obj);
+      this.buffered_quads_[name]=obj;  //bugbug did this work?
     }
   };
 
@@ -1051,10 +1216,17 @@ var Pre3d = (function() {
     this.ctx.clearRect(0, 0, this.width_, this.height_);
   };
 
+  
+  function getValues(hash)
+  {
+	return $.map(hash, function(v,k){return v;});  
+  }
+  
+  //problems getting this part of library to work, instead handling it outself over in gamer and tree .js
   Renderer.prototype.drawBuffer = function drawBuffer() {
     var ctx = this.ctx;
 
-    var all_quads = this.buffered_quads_;
+    var all_quads = getValues(this.buffered_quads_);  //bugbug  is this even used or needed later? (buffered quads as a hash?) this will be inefficient?...need instead to keep as array, this is debugging?
     var num_quads = all_quads.length;
 
     // Sort the quads by z-index for painters algorithm :(
@@ -1063,11 +1235,14 @@ var Pre3d = (function() {
     if (this.perform_z_sorting === true)
       all_quads.sort(zSorter);
 
+	if (num_quads>4)
+		alert("bugbug: too many ghosts"+num_quads);
+	  
     for (var j = 0; j < num_quads; ++j) {
       var obj = all_quads[j];
       var qf = obj.qf;
 
-      this.projectQuadFaceToCanvasIP(qf);
+      this.projectQuadFaceToCanvasIP(qf);  //mutates qf!
 
       var is_triangle = qf.isTriangle();
 
@@ -1081,23 +1256,23 @@ var Pre3d = (function() {
         // Chrome doesn't support shadows correctly now.  It does in trunk, but
         // using shadows to fill the gaps looks awful, and also seems slower.
 
-        pushPoints2dIP(qf.i0, qf.i1);
-        pushPoints2dIP(qf.i1, qf.i2);
+        pushPoints2dIP(qf.j0, qf.j1);
+        pushPoints2dIP(qf.j1, qf.j2);
         if (is_triangle === true) {
-          pushPoints2dIP(qf.i2, qf.i0);
+          pushPoints2dIP(qf.j2, qf.j0);
         } else {  // Quad.
-          pushPoints2dIP(qf.i2, qf.i3);
-          pushPoints2dIP(qf.i3, qf.i0);
+          pushPoints2dIP(qf.j2, qf.j3);
+          pushPoints2dIP(qf.j3, qf.j0);
         }
       }
 
       // Create our quad as a <canvas> path.
       ctx.beginPath();
-      ctx.moveTo(qf.i0.x, qf.i0.y);
-      ctx.lineTo(qf.i1.x, qf.i1.y);
-      ctx.lineTo(qf.i2.x, qf.i2.y);
+      ctx.moveTo(qf.j0.x, qf.j0.y);
+      ctx.lineTo(qf.j1.x, qf.j1.y);
+      ctx.lineTo(qf.j2.x, qf.j2.y);
       if (is_triangle !== true)
-        ctx.lineTo(qf.i3.x, qf.i3.y);
+        ctx.lineTo(qf.j3.x, qf.j3.y);
       // Don't bother closing it unless we need to.
 
       // Fill...
@@ -1244,9 +1419,11 @@ var Pre3d = (function() {
 	}
 	else
 	{
-		ctx.strokeStyle=contrast(path.color);  //bugbug is deciding and setting every time a perf hit?
+		ctx.strokeStyle=contrast2(path.color);  //bugbug is deciding and setting every time a perf hit?
 		ctx.lineWidth=path.width;
+		ctx.strokeStyle="green";
 	}
+	
 	
     var curves = path.curves;
     for (var j = 0, jl = curves.length; j < jl; ++j) {
@@ -1291,9 +1468,11 @@ var Pre3d = (function() {
 	
   };
   
-  function contrast(color)
+  function contrast2(color)
   {
-	if (color=='black' && mainBgColor=='black') return 'cyan';
+	if (color=='black' && mainBgColor=='black') 
+		return 'cyan';
+
 	return color;
   }
   
@@ -1307,9 +1486,11 @@ var Pre3d = (function() {
 	
 	for(var ii=0; ii<path.points.length; ii++)
 	{
-		if (screen_points[ii]==null) continue;
+		if (screen_points[ii]==null) 
+			continue;
 		var newQuadrance = quadr(x,y,screen_points[ii]);
-		if (newQuadrance >= best.bestQuadranceSoFar) continue;
+		if (newQuadrance >= best.bestQuadranceSoFar) 
+			continue;
 		
 		best.bestQuadranceSoFar = newQuadrance;
 		best.closestPointIndex = ii;
