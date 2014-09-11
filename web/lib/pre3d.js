@@ -944,7 +944,7 @@ var Pre3d = (function() {
 	
 	var x, y;
 	
-	if (!skipOffscreenPoint & v<0)
+	if (!skipOffscreenPoint && v<0)
 		v=10*Math.sqrt(1/-v)  //bugbug seems to want something else here but what???;
 	
 	// if (!skipOffscreenPoint & v<0)  //behind me and care about the point
@@ -970,6 +970,12 @@ var Pre3d = (function() {
 		x = p.x * v * scale + this.xoff_;
 		y = p.y * v * -scale + scale;
 	// }
+	// function slumper(x)
+    // {
+	// x=Math.abs(x);
+	// return (x>1) ?  Math.sqrt(x)  :  x;
+    // }
+
     return { x:x, 
 			 y:y , 
 			 debug: ""+fix(p.x)+"  "+fix(p.y)+"   "+fix(p.z)+ "   "+fix(v)   
@@ -984,11 +990,7 @@ var Pre3d = (function() {
   }
   
   
-  function slumper(x)
-  {
-	x=Math.abs(x);
-	return (x>1) ?  Math.sqrt(x)  :  x;
-  }
+  
   
   function fix(x)
   {
