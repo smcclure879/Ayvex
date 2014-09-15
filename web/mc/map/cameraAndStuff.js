@@ -50,6 +50,7 @@ function start3d(theDrawings,opts)
 			drawIt(drawing);
 		}
 		
+		//dynamic: e.g. from the DB
 		for(var key in theDrawings.dynamic)
 		{
 			var drawing = theDrawings.dynamic[key];
