@@ -26,7 +26,9 @@
 <script src="localSettings.js"></script>
 <script src="DataPoint.js"></script>
 <script src="gamer.js"></script>
+<script src="standardTransform.js"></script>
 <script src="bigTriangle.js"></script>
+
 <!-- s c r ipt src="http://localhost:5984/_utils/script/jquery.couch.js?0.11.0"></ s c r ipt  -->
 <script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/jquery-ui.min.js"></script>
 
@@ -63,6 +65,7 @@ xMOD:<select id="xanimate">
 	<option value="sequence5">sequence5</option>
 	<option value="magic">magic</option>
 </select>
+<br>
 <input type="checkbox" value="lockon" id="lockon" >LCK</input>
 <input type="checkbox" value="black" id="black" checked>BLK</input>
 <input type="checkbox" value="big" id="big" >BIG</input>
@@ -106,6 +109,8 @@ camRotZ<input type="text" id="camRotZ" value="x"/><br>
 
 
 var floor=62;  //minecraftWaterLevel todo setting or ???
+
+var darkBrown='rgba(101,67,33,1.0)';
 
 //todo jquerify and consolidate...there are more of these...
 var toolbar = document.getElementById("toolbar");
@@ -177,7 +182,7 @@ function makeBigMap(data)
 		var pt = data[ii];
 		path.points[jj]={x:pt[0],y:pt[1],z:pt[2],t:pt[3]};   
 		path.curves[jj]=new Pre3d.Curve(jj,jj,jj);
-		path.color='brown';
+		path.color=darkBrown;
 		path.width=2;
 		jj++;
 	}
@@ -239,7 +244,7 @@ function addCoordinateVectors(paths)
  {
 	if (waveHeight===undefined) waveHeight=badRnd(8)-4;
 	if (waveLength===undefined) waveLength=badRnd(7)+13;
-	return twoSegmentPath(	'AE4353',  //todo const dark brown
+	return twoSegmentPath(	darkBrown,  
 							1,
 							xx,62,zz,
 							xx,64+waveHeight,zz+waveLength/3,
@@ -264,7 +269,7 @@ function addCoordinateVectors(paths)
  {
 	if (mainBgColor=='white') return 'black';
 	if (mainBgColor=='black') return 'white';
-	return 'cyan'; //todo const
+	return 'red'; //todo const
  }
 
 
@@ -278,8 +283,8 @@ function addCoordinateVectors(paths)
  function infoLine(ptA,ptB)
  {
 	return linePath(	
-						'6666FF',
-						0.1,
+						'rgba(77,77,255,0.7)',  //'6666FF',
+						0.3,
 						ptA,
 						ptB
 					);
@@ -403,20 +408,9 @@ function setFractalWorld()
 	var treePoleFrac=0.5;
 	addCoordinateVectors(theDrawings);
 	//todo add perlin noise, etc etc etc
-	var theWorldForRealz=newWorld();
-	theDrawings.push(theWorldForRealz);
+	addPolarRays(theDrawings);
 	
-	//bugbugSOON attempt at making line from two pieces
-	var secondLineBugbug=new BigTriangle();
-	secondLineBugbug.isDebug=true;  //so it will print onscreen  //save to use for a selected item??  should be its own class
-	secondLineBugbug.pointh={ x: 0 , y:62, z: 0, skipOffscreenPoint:false};
-	secondLineBugbug.pointb={ x: 500000, y:62, z: 500000, skipOffscreenPoint:false};  
-	secondLineBugbug.pointc={ x: -500000, y:62, z: 500000, skipOffscreenPoint:false};  //bugbugDRY
-	secondLineBugbug.skipOffscreenPoint=false;  //important MUST be here  bugbugNOW did this work?  or in the points?
-	theDrawings.push(secondLineBugbug);
-		
 	
-
 	var theHorizonTexts = getHorizon();
 	pushAll(theHorizonTexts,theDrawings);
 	
@@ -424,17 +418,18 @@ function setFractalWorld()
 		
 	theUser.userId = prompt("Please enter your username", "HarryPotter029");  
 	
-	// a "monster" or "NPC"
-	var ghost=[];
 	
-	for(var ii=0; ii<10; ii++)
+	// "monsters" or "NPCs"
+	var ghost=[];
+	var numGhosts=10;
+	for(var ii=0; ii<numGhosts; ii++)
 	{
 		ghost[ii]=addGamer(theDrawings,"ghost",1162,62,62);
-		ghost[ii].color="rgba(33,33,255,0.3)"; //'#00000000';
+		ghost[ii].color="rgba(99,99,99,0.3)";///transparentblue="rgba(33,33,255,0.3)"; //'#00000000';
 	}
 	
 	setInterval(function() {
-					for(var ii=0; ii<10; ii++)
+					for(var ii=0; ii<numGhosts; ii++)
 					{
 						ghost[ii].moveForward();
 						ghost[ii].mutateOrientation1();
@@ -457,11 +452,23 @@ function setFractalWorld()
 	
 }
 
-function newWorld()
+function addPolarRays(drawings)
 {
-	var world = new BigTriangle();
-	world.color="rgba(0,128,255,0.6)";
-	return world;
+	//bugbug consts
+	var M = 1000000;
+	var polarColor = "rgba(0,128,0,0.6)"; 
+	
+	var polarLine = MakeBigLine( {x: 0,y:sealevel,z:0}
+								,{x: M,y:sealevel,z:0});  
+	polarLine.color="red"; //polarColor; bugbug
+	polarLine.isDebug=true;
+	drawings.push(polarLine);
+	polarLine=MakeBigLine( 	 {x:  0,y:sealevel,z:0}
+							,{x: -M,y:sealevel,z:0});  
+	polarLine.color=polarColor;  
+	polarLine.isDebug=false;  //not necc.
+	
+	drawings.push(polarLine);
 }
 
 function getHorizon()
@@ -469,7 +476,7 @@ function getHorizon()
 	var LEN = 10000000;  //todo const
 	var sealevel = 62; //todo const
 	var retvals=[];
-	for(var ang=0; ang<360; ang+=5)
+	for(var ang=0; ang<360; ang+=15)
 	{
 		var angrad=Math.PI*ang/180;
 		var pt = new DataPoint();

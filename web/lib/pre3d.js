@@ -131,11 +131,11 @@ var Pre3d = (function() {
 	
   function rotate(ang,aboutVec3d,vec3d) {
   
-	return vec3d; //bugbug
+	return vec3d; //bugbug  NYI
   
   }
   
-   //bugbug move to helpers??
+   //todo move to helpers??
   function quadrancePts(a,b)
   {
 	var dx=a.x-b.x;
@@ -144,7 +144,7 @@ var Pre3d = (function() {
 	return dx*dx + dy*dy + dz*dz;
   }
    
-  function quadr(x,y,point)  //bugbug rename as quadrance
+  function quadr(x,y,point)  //todo rename as quadrance
   {
 	var dx=x-point.x;
 	var dy=y-point.y;
@@ -536,15 +536,6 @@ var Pre3d = (function() {
   };
   
   
-  
-  // Transform.prototype.prepForInfinityBugbug = function() {
-  
-    // var m = this.m;
-	// var K=-79;
-	// if (m.e11<K) 
-		// m.el11 = K;
-	
-  // }
   
   
   
@@ -944,9 +935,17 @@ var Pre3d = (function() {
 	
 	var x, y;
 	
-	if (!skipOffscreenPoint & v<0)
+	if (!skipOffscreenPoint && v<0)
 		v=10*Math.sqrt(1/-v)  //bugbug seems to want something else here but what???;
 	
+	
+	// function slumper(x)
+    // {
+	// x=Math.abs(x);
+	// return (x>1) ?  Math.sqrt(x)  :  x;
+    // }
+
+	//didn't work but may still want to use this "polar" approach...remove in future checkin?  todo
 	// if (!skipOffscreenPoint & v<0)  //behind me and care about the point
 	// {
 		// var maxrad=100;
@@ -970,7 +969,7 @@ var Pre3d = (function() {
 		x = p.x * v * scale + this.xoff_;
 		y = p.y * v * -scale + scale;
 	// }
-    return { x:x, 
+     return { x:x, 
 			 y:y , 
 			 debug: ""+fix(p.x)+"  "+fix(p.y)+"   "+fix(p.z)+ "   "+fix(v)   
 		};  //bugbug
@@ -984,11 +983,7 @@ var Pre3d = (function() {
   }
   
   
-  function slumper(x)
-  {
-	x=Math.abs(x);
-	return (x>1) ?  Math.sqrt(x)  :  x;
-  }
+  
   
   function fix(x)
   {
@@ -1197,7 +1192,7 @@ var Pre3d = (function() {
         normal2_rgba: this.normal2_rgba
       };
 
-      this.buffered_quads_[name]=obj;  //bugbug did this work?
+      this.buffered_quads_[name]=obj;  
     }
   };
 
@@ -1389,9 +1384,6 @@ var Pre3d = (function() {
     var ctx = this.ctx;
     opts = opts || { };
 	
-	//bugbug remove later for perf??
-	//this.camera.transform.check();
-	
 	this.setCurrentTransform();  //bugbug do we really need to do this every time?  fix here or in .setCurrentTransform()?
 	this.doLateDrawIfApplicable(path);
 	
@@ -1406,12 +1398,15 @@ var Pre3d = (function() {
 	if (path.starting_point==null) path.starting_point=0;
     var start_point = screen_points[path.starting_point];
 
-    ctx.beginPath();
-    ctx.moveTo(start_point.x, start_point.y);
+
 	ctx.font="10px Arial";
 	ctx.fillStyle=contrastBackground();
-	ctx.fillText(path.points[path.starting_point].t,start_point.x,start_point.y);  //bugbug redo startingPoint logic we inherited here
-
+	//ctx.fillText(path.points[path.starting_point].t,start_point.x,start_point.y);  //bugbug redo startingPoint logic we inherited here
+	
+	
+	ctx.beginPath();
+    ctx.moveTo(start_point.x, start_point.y);
+	
 	if (path.isSelected)
 	{
 		ctx.strokeStyle='purple';
@@ -1419,11 +1414,9 @@ var Pre3d = (function() {
 	}
 	else
 	{
-		ctx.strokeStyle=contrast2(path.color);  //bugbug is deciding and setting every time a perf hit?
+		ctx.strokeStyle=contrast2(path.color,"red");  //bugbug is deciding and setting every time a perf hit?
 		ctx.lineWidth=path.width;
-		ctx.strokeStyle="green";
 	}
-	
 	
     var curves = path.curves;
     for (var j = 0, jl = curves.length; j < jl; ++j) {
@@ -1468,13 +1461,22 @@ var Pre3d = (function() {
 	
   };
   
-  function contrast2(color)
+  function contrast2(color,defaultColor)
   {
+    //bugbug old code...
 	if (color=='black' && mainBgColor=='black') 
 		return 'cyan';
 
-	return color;
+	
+	//in the menatime...
+	if (color.startsWith('rgba('))
+		return color;
+	
+	alert("bad color"+color);
+	
+	return defaultColor;  // can't do any better....really need the background color as well...so we can contrast to it!  bugbug
   }
+  
   
   Renderer.prototype.getNearest = function getNearest(path,x,y,best,thisDrawingIndex) 
   {
