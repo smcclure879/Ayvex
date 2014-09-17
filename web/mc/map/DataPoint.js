@@ -16,7 +16,7 @@ DataPoint.FromArr = function(arr,text)
 }
 
 
-DataPoint.FromJson=function(jsonData)   //bugbug should be 
+DataPoint.FromJson=function(jsonData)   
 {
 	var retval=new DataPoint();
 	retval.initFromJson(jsonData);
@@ -70,7 +70,7 @@ DataPoint.prototype.initFromArrDims=function (arrDims,text)
 //}
 
 var phase=0;
-DataPoint.prototype.draw=function(renderer,log2Size) //,gameTime)  //bugbug need to pass in gameTime soon where this is called--OR should time be a global???
+DataPoint.prototype.realDraw=function(renderer,log2Size) //,gameTime)  //bugbug need to pass in gameTime soon where this is called--OR should time be a global???
 {
 	var tpt = function (pointh) {	
 	

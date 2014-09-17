@@ -101,7 +101,7 @@ Gamer.prototype.name = function(name)
 }
 
 var phase=0;
-Gamer.prototype.draw=function(renderer,log2size) //,gameTime)  //todo need to pass in gameTime soon where this is called--OR should time be a global???
+Gamer.prototype.realDraw=function(renderer,log2size) //,gameTime)  //todo need to pass in gameTime soon where this is called--OR should time be a global???
 {
 	//todo this is second copy of this routine....move to some type of sharign ??
 	//and dynamically creating it each call here???

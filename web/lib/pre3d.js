@@ -1401,7 +1401,8 @@ var Pre3d = (function() {
 
 	ctx.font="10px Arial";
 	ctx.fillStyle=contrastBackground();
-	//ctx.fillText(path.points[path.starting_point].t,start_point.x,start_point.y);  //bugbug redo startingPoint logic we inherited here
+	if (start_point && start_point.t && start_point.x && start_point.y)
+		ctx.fillText(start_point.t,start_point.x,start_point.y);  //bugbug redo startingPoint logic we inherited here
 	
 	
 	ctx.beginPath();

@@ -1,4 +1,4 @@
-//bigTriangle.js
+//bigShape.js
 
 var sealevel=62;   //bugbug consts
 var lowerPlane = sealevel; //-1000;
@@ -6,9 +6,9 @@ var lowerPlaneScale = 500000;  //1e+5;  //bugbug should be 7?
 
 
 
-//////// section DRAW HELPERS  //////
+//////// section DRAW HELPERS  todo this section to separate file?  //////
 
-//todo move to main helpers!!!
+//todo move to main helpers file!!!
 // function shallowCopy(oldObject)
 // {
 	// var retObj = jQuery.extend({}, oldObject);
@@ -103,17 +103,17 @@ function MakeBigLine(pointhA,pointB)  //={x: 0 , y:lowerPlane, z: 0, skipOffscre
 	return retval;
 }
 
-BigLine.prototype.draw=function(renderer,log2size) //,gameTime)  //bugbug need to pass in gameTime soon where this is called--OR should time be a global???
+BigLine.prototype.realDraw=function(renderer,log2size) //,gameTime)  //bugbug need to pass in gameTime soon where this is called--OR should time be a global???
 {
-	if (typeof this.selfDraw == 'function')  //bugbug needed???
-	{
-		return	this.selfDraw({    
-						renderer:renderer,
-						log2size:log2size,
-						transformFunction:this.tpt
-						//bugbug boundingBox3d, etc etc here?  vs. how much of this already in "this"  (cache "age"?)
-					});     
-	}	
+	// if (typeof this.selfDraw == 'function')  //bugbug needed???
+	// {
+		// return	this.selfDraw({    
+						// renderer:renderer,
+						// log2size:log2size,
+						// transformFunction:this.tpt
+						// //bugbug boundingBox3d, etc etc here?  vs. how much of this already in "this"  (cache "age"?)
+					// });     
+	// }	
 	
 	if (this.pointh==null) 
 		return null;  
@@ -151,17 +151,19 @@ function BigTriangle()
 BigTriangle.prototype=new BigShape();  //bugbug should be "tree"??? else why sharing so much code?
 BigTriangle.prototype.constructor=BigTriangle;
 
-BigTriangle.prototype.draw=function(renderer,log2size) //,gameTime)  //bugbug need to pass in gameTime soon where this is called--OR should time be a global???
+BigTriangle.prototype.realDraw=function(renderer,log2size) //,gameTime)  //bugbug need to pass in gameTime soon where this is called--OR should time be a global???
 {
-	//bugbug pull this into the BigShape class somehow since it's behavior-in-common
-	if (typeof this.selfDraw == 'function')
-		//return   bugbug
-			this.selfDraw({
-				renderer:renderer,
-				log2size:log2size,
-				transformFunction:tpt
-			});  //bugbug boundingBox3d, etc etc here?  vs. how much of this already in "this"  (cache "age"?)
+	//bugbugNOW in theory change to "realDraw" fixed this  
+	//bugbugNOW pull this into the BigShape class somehow since it's behavior-in-common
+	// if (typeof this.selfDraw == 'function')
+		// //return   bugbug
+			// this.selfDraw({
+				// renderer:renderer,
+				// log2size:log2size,
+				// transformFunction:tpt
+			// });  //bugbug boundingBox3d, etc etc here?  vs. how much of this already in "this"  (cache "age"?)
 			
+	//bugbug can this go in the regular "draw()" also instead of "realDraw()"  (realdr
 	if (this.pointh==null) 
 		return null;  
 	
