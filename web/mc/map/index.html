@@ -27,7 +27,8 @@
 <script src="DataPoint.js"></script>
 <script src="gamer.js"></script>
 <script src="standardTransform.js"></script>
-<script src="bigTriangle.js"></script>
+<script src="bigShape.js"></script>
+<script src="bigSign.js"></script>
 
 <!-- s c r ipt src="http://localhost:5984/_utils/script/jquery.couch.js?0.11.0"></ s c r ipt  -->
 <script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/jquery-ui.min.js"></script>
@@ -415,7 +416,8 @@ function setFractalWorld()
 	pushAll(theHorizonTexts,theDrawings);
 	
 	addTreesAndWater(theDrawings,treePoleFrac);
-		
+	pushAll(getWelcomeSign(),theDrawings);
+	
 	theUser.userId = prompt("Please enter your username", "HarryPotter029");  
 	
 	
@@ -452,6 +454,14 @@ function setFractalWorld()
 	
 }
 
+function getWelcomeSign(pointh,text)
+{
+	var pointh = { x: 100, y:sealevel, z:10 };
+	var sign=new BigSign(pointh,text);
+	return sign;
+}
+
+
 function addPolarRays(drawings)
 {
 	//bugbug consts
@@ -460,7 +470,7 @@ function addPolarRays(drawings)
 	
 	var polarLine = MakeBigLine( {x: 0,y:sealevel,z:0}
 								,{x: M,y:sealevel,z:0});  
-	polarLine.color="red"; //polarColor; bugbug
+	polarLine.color="red"; //polarColor; bugbugSOON
 	polarLine.isDebug=true;
 	drawings.push(polarLine);
 	polarLine=MakeBigLine( 	 {x:  0,y:sealevel,z:0}

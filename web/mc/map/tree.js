@@ -143,9 +143,22 @@ function drawTriangleAbs(ctx,a2,b2,c2,color,edgeColor)  //a,b,c=2d pts!!!
 //todo make separate class  //this is an "abstract class"
 function iDrawable() {}  
 
+//NOTE: this should be the ONLY draw function around.....everyone else should use "realDraw".  This gives a change to intercept draw call dynamically.
 iDrawable.prototype.draw=function (renderer,log2Size)
 {
-	alert("errCode100p7: cannot directly draw a raw iDrawable...treat it like abstract!");
+	if (this.wantsToSelfDraw())
+	{
+		this.selfDraw(renderer,log2Size);
+	}
+	else
+	{
+		this.realDraw(renderer,log2Size);
+	}
+}
+
+iDrawable.prototype.wantsToSelfDraw=function()
+{
+	return (typeof this.selfDraw==='function');
 }
 
 //near dup of code in renderer...can we consolidate?  todo
@@ -245,7 +258,7 @@ function Tree(x,y,z,h)  //tree has this position forever, and can be regrown fro
 Tree.prototype=new iDrawable();
 Tree.prototype.constructor=Tree;
 
-Tree.prototype.draw=function(renderer,log2Size)
+Tree.prototype.realDraw=function(renderer,log2Size)
 {
 	var oldStroke=renderer.ctx.strokeStyle;
 	var oldFill = renderer.ctx.fillStyle;
