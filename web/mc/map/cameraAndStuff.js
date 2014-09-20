@@ -44,9 +44,21 @@ function start3d(theDrawings,opts)
 		renderer.drawBackground();
 
 		
-		for(var ii=0,lim=theDrawings.length; ii<lim; ii++)
+		for(
+				var ii=0,lim=theDrawings.length;
+				ii<lim; 
+				ii++
+			)
 		{
-			var drawing = theDrawings[ii];			
+		    var drawing = theDrawings[ii];	
+			
+			//for debugging drawings of certain types (keep) bugbug revisit
+			// if (!drawing.isSign)  //bugbug
+			// {
+				// continue;
+			// }
+			
+					
 			drawIt(drawing);
 		}
 		
@@ -69,9 +81,9 @@ function start3d(theDrawings,opts)
 		if (drawing instanceof iDrawable) 
 		{
 			var log2Size=1;  //a 2m object (bugbug)
-			drawing.draw(renderer,log2Size);
+			drawing.draw(renderer,log2Size);  //new path
 		}
-		else  //have the renderer do it
+		else  //have the renderer do it  (old lib code path)
 		{
 			renderer.drawPath(drawing);
 		}

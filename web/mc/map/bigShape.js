@@ -16,6 +16,7 @@ var lowerPlaneScale = 500000;  //1e+5;  //bugbug should be 7?
 // }
 
 
+
 function drawLine(ctx,a,b,isDebug)
 {
 	ctx.lineWidth=2;
@@ -74,18 +75,20 @@ BigShape.prototype=new iDrawable();  //bugbug should be "tree"??? else why shari
 BigShape.prototype.constructor=BigShape;
 BigShape.prototype.get2dPoints=function(renderer){
 	return $.map(	this.pointList,
-					function(pt3d){ 
-						return this.tpt(renderer,pt3d,pt3d.skipOffscreenPoint); 
-					}
+					function(pt3d,seqNum,foo){ 
+						return foo.tpt(renderer,pt3d,pt3d.skipOffscreenPoint); 
+					},
+					this  // --> foo above
 				);
 }
+
 
 
 ////////  class  /////////
 
 function BigLine()
 {
-
+	//bugbug still gotta fill in some fields! see function BigSign()
 
 }
 
@@ -167,15 +170,14 @@ BigTriangle.prototype.realDraw=function(renderer,log2size) //,gameTime)  //bugbu
 	if (this.pointh==null) 
 		return null;  
 	
-	var ctx = renderer.ctx;
-	this.drawTri(ctx);  //the "real" draw function!
-	ctx.strokeStyle="red";  //NB: to insure we've closed the stroke! 
+	this.drawTri(renderer);  //the "real" draw function!
+	renderer.ctx.strokeStyle="red";  //NB: to insure we've closed the stroke! 
 }
 
-BigTriangle.prototype.drawTri=function drawTri(ctx)  
+BigTriangle.prototype.drawTri=function drawTri(renderer)  
 {	
-	ctx.beginPath();
-	var pts2 = this.get2dPoints();
+	renderer.ctx.beginPath();
+	var pts2 = this.get2dPoints(renderer);
 	var a=pts2[0], b=pts2[1], c=pts2[2];
 	
 	if (   a && a.isBehind 

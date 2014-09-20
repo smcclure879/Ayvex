@@ -27,8 +27,10 @@
 <script src="DataPoint.js"></script>
 <script src="gamer.js"></script>
 <script src="standardTransform.js"></script>
+<script src="buildPointList.js"></script>
 <script src="bigShape.js"></script>
 <script src="bigSign.js"></script>
+
 
 <!-- s c r ipt src="http://localhost:5984/_utils/script/jquery.couch.js?0.11.0"></ s c r ipt  -->
 <script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/jquery-ui.min.js"></script>
@@ -139,12 +141,18 @@ function definedAndTrue(val)
 
 function pushAll(ofThese,intoThese)  
 {
-	for(var ii=0,il=ofThese.length; ii<il; ii++)
+	if (ofThese instanceof Array)
 	{
-		intoThese.push(ofThese[ii]);
+		for(var ii=0,il=ofThese.length; ii<il; ii++)
+		{
+			intoThese.push(ofThese[ii]);
+		}
+	}
+	else
+	{
+		intoThese.push(ofThese);
 	}
 }
-
 
 
 
@@ -452,10 +460,26 @@ function setFractalWorld()
 		$anim.prop('checked', false).change();
 	}
 	
+	setTimeout(function() {
+						DemoUtils.Notify('moveCamera',{
+								rotate_x: rad(8),
+								rotate_y: rad(46),
+								rotate_z: rad(0),
+								x: 289,
+								y: -292,
+								z: -637});  //todo fix magic numbers.
+							
+							$("#xanimate").val('sequence4').trigger('change');
+							$("#animate").prop('checked', true).trigger('change');  //todoneeded??
+							
+						},20);
+						
+	
 }
 
 function getWelcomeSign(pointh,text)
 {
+	var text="Welcome to Frakture";
 	var pointh = { x: 100, y:sealevel, z:10 };
 	var sign=new BigSign(pointh,text);
 	return sign;
