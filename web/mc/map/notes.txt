@@ -1,0 +1,39 @@
+http://www.w3schools.com/tags/tryit.asp?filename=tryhtml5_canvas_transform
+
+<!DOCTYPE html>
+<html>
+<body>
+
+<canvas id="myCanvas" width="450" height="450" style="border:1px solid #d3d3d3;">
+Your browser does not support the HTML5 canvas tag.</canvas>
+
+<script>
+
+var c=document.getElementById("myCanvas");
+var ctx=c.getContext("2d");
+ctx.beginPath();
+	ctx.font="30px Georgia";
+	ctx.fillStyle="red"; //bugbug
+var x=50;
+var y=170;
+//	var theta = 45;  //bugbug
+var rat=6/8;
+var magX=rat;  //Math.cos(theta);
+var skewX=-Math.sqrt(1-rat*rat)*0.1;
+var skewY=0;
+var magY=1;
+var moveX=x;
+var moveY=y;
+
+ctx.setTransform(magX,skewX,skewY,magY,moveX,moveY);
+ctx.fillText("hey there buddy",0,0);
+ctx.setTransform(1,0,0,1,0,0); //ctx.untransform();  bugbug
+ctx.fillStyle="blue";
+ctx.fillText("hey there buddy",x,y);
+ctx.fill();
+ctx.stroke();
+ctx.fillStyle="purple";
+</script>
+
+</body>
+</html>
