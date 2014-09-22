@@ -30,6 +30,7 @@
 <script src="buildPointList.js"></script>
 <script src="bigShape.js"></script>
 <script src="bigSign.js"></script>
+<script src="talk.js"></script>
 
 
 <!-- s c r ipt src="http://localhost:5984/_utils/script/jquery.couch.js?0.11.0"></ s c r ipt  -->
@@ -72,6 +73,7 @@ xMOD:<select id="xanimate">
 <input type="checkbox" value="lockon" id="lockon" >LCK</input>
 <input type="checkbox" value="black" id="black" checked>BLK</input>
 <input type="checkbox" value="big" id="big" >BIG</input>
+<input type="checkbox" value="grav" id="grav" >GRV</input>
 </span><br>
 tags:<input type="text"/>   <!-- value="<all>" id="tags" style="color:red"/> -->
 </span>
@@ -732,7 +734,7 @@ function parseDataSet(dataFileOptions,columnInfo)
 
 
 //used to track what keys are down
-isDown = DemoUtils.KeyTracker.isDown
+isDown = DemoUtils.KeyTracker.isDown;
 
 $(document).ready(function() 
 {
@@ -851,7 +853,7 @@ function updateServerCallback(camera_state)
 		delete theUser._rev;  //we'll get a new one, this is just sentinel value  
 		theUser._id="user_"+theUser.userId;   //todo const
 	}	
-	
+	theUser.mostRecentQuote=userQuote;
 	theUser.saveTime=getOfficialTime();
 	if (theUser.saveTime<1400000000) //1B, roughly 2001
 	{
@@ -940,7 +942,7 @@ function updateDynamicObjectFromServerData(item)
 	//todo again with the passing too much...change this to an object.  time should be in a pointh optionally, for instance
 	dynObj.reposition( -item.value.cam.x, -item.value.cam.y, -item.value.cam.z,  //todo again why the negative
 						item.value.cam.rotate_x, item.value.cam.rotate_y, item.value.cam.rotate_z,
-						item.value.saveTime
+						item.value.saveTime, item.value.mostRecentQuote
 					);
 	
 }
