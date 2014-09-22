@@ -62,7 +62,7 @@ Gamer.prototype.reposition2 = function(newPos)
 	this.pointh=newPos; 	
 }
 
-Gamer.prototype.reposition = function(x,y,z, rotx, roty, rotz, t)  //todo should take structs....clean up this interface
+Gamer.prototype.reposition = function(x,y,z, rotx, roty, rotz, t, quote)  //todo should take structs....clean up this interface
 {
 	//to show user "flowing" from one point to another (might generalize to a "ring buffer")  todo implement this as ring buffer???
 	this.prevPrevPoint=this.prevPoint;
@@ -73,12 +73,14 @@ Gamer.prototype.reposition = function(x,y,z, rotx, roty, rotz, t)  //todo should
 		y:y,
 		z:z
 	};
-	
+	this.mostRecentQuote=quote;
 	//from the 'camera' or camera pulls from user?
 	this.orientation.rotx=rotx || 0;
 	this.orientation.roty=roty || 0;
 	this.orientation.rotz=rotz || 0;  //todo abstract a 3D rotate-able object out and have gamer inherit from that...a later refactoring
 }
+
+
 
 Gamer.prototype.moveForward = function()
 {
@@ -221,17 +223,29 @@ Gamer.prototype.realDraw=function(renderer,log2size) //,gameTime)  //todo need t
 	//drawDot(ctx,lastPublicPoint2d,4);
 	//ctx.stroke();
 	
-	ctx.font="11px Arial";
+	
 	ctx.strokeStyle="rgba(128,128,128,0.0)";
 	ctx.fillStyle="rgba(128,128,128,0.7)";
+	ctx.lineWidth=4;
 	// ctx.fillStyle=contrastBackground();  TODO
-	
+	ctx.font="11px Arial";
 	ctx.fillText(this.text,headPoint2d.x,headPoint2d.y-10);   //RETAIN for debugging... + '  age='+age(this.pointh)
-	//todo is a ctx.fill needed here???  why not needed so far?
+	ctx.fill();
+	ctx.font="13px Arial";
+	ctx.fillText(fixQuote(this.mostRecentQuote),headPoint2d.x-20,headPoint2d.y-20);   
+	ctx.fill();//todo is a ctx.fill needed here???  why not needed so far?
+	
 	ctx.stroke();
 	ctx.strokeStyle="red";
 }
 
+function fixQuote(str)
+{
+	if (typeof str==='undefined' || str==null || str=='') 
+		return '';
+		
+	return "\""+str+"\"";
+}
 
 function age(pointh)
 {
