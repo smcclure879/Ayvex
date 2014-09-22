@@ -177,7 +177,11 @@ def putViewFile(filePath,dataId):
 	#print data
 	obj=json.loads(data)
 	if 'error' in obj or res.status>299:
-		raise('bugbug786s:'+res.reason+' - '+data+' - '+res.status)
+		print "error"
+		print res.reason
+		print data
+		print res.status
+		raise('bugbug786s:') 
 	
 	return extractRev(obj,True)  # true because we expect to get a 
 

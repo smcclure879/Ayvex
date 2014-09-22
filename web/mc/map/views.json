@@ -20,6 +20,7 @@
 		{
 			"map": "function(doc) 
 					{
+						//blahbugbug
 						if (!doc.userId)
 							return;  //not a user
 						
@@ -27,9 +28,14 @@
 							return;  //old test users, etc
 						
 						var docAge = (new Date()).getTime() - doc.saveTime ;
-						if (docAge>100*1000) //100 sec in ms
+						//bugbug this doesn't work  log(docAge);
+						
+						if (docAge>1000000)     //100*1000) //100 sec in ms  bugbug really?
 							return;  //too old
-					
+							
+						//if (docAge<10)
+						//	return; //why too young?? bugbug revisit
+										
 						//got one!
 						emit(doc.userId,doc); 
 					}"  
