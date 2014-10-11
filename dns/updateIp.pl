@@ -44,6 +44,17 @@ if (!$ipAddr)
 
 
 
+#work with dyn.org
+
+my $url="http://ayvex:$pazzword\@members.dyndns.org/nic/update?hostname=ayvex.dnsalias.com&myip=$ipAddr&wildcard=NOCHG&mx=NOCHG&backmx=NOCHG";
+#       http://username:password@members.dyndns.org/nic/update?hostname=yourhostname&myip=ipaddress&wildcard=NOCHG&mx=NOCHG&backmx=NOCHG
+print $url;
+my $output=`curl \"$url\"`;
+print $output,"\n";
+($output =~ /good/) or die ;
+
+
+
 
 
 #check old IP before rewriting file
@@ -75,22 +86,5 @@ else
 {
     print "not writing file...same IP, not forced\n";
 }
-
-
-
-#work with dyn.org
-
-
-
-
-
-
-
-my $url="http://ayvex:$pazzword\@members.dyndns.org/nic/update?hostname=ayvex.dnsalias.com&myip=$ipAddr&wildcard=NOCHG&mx=NOCHG&backmx=NOCHG";
-#       http://username:password@members.dyndns.org/nic/update?hostname=yourhostname&myip=ipaddress&wildcard=NOCHG&mx=NOCHG&backmx=NOCHG
-print $url;
-my $output=`curl \"$url\"`;
-print $output,"\n";
-($output =~ /good/) or die ;
 
 
