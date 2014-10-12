@@ -2,6 +2,8 @@
 use strict;
 use LWP::Simple;
 use Socket;
+use Cwd 'abs_path';
+use File::Basename;
 
 
 my $MINUTES = 60;
@@ -13,20 +15,53 @@ my $pazzword="20abd9bc512f11e4814ccd0e1d232429";
 
 
 print "remember this sleeps 5 minutes in case internet is just down for a while after power out\n";
-sleep 5 * $MINUTES;   #bugbug restore this!
+sleep 5 * $MINUTES;   
 print "sleep is done\n";
 
+
+
+
+
+
+
+my $correctTime = get "http://www.timeapi.org/utc/now"  || print "ERROR: where is the internet1???\n";
+print $correctTime;
+
+
+
+
+
+
+my $logDir = dirname(abs_path($0))."/logs";
+my $logFile = "$logDir/ip-update.".$correctTime.".log";
+print "opening log in $logFile\n"; 
+
+
+
 #start logging
-open my $fhw, ">", "/home/pi/autorun/ip-update.".time().".log";
+open my $fhw, ">", $logFile  || die "$!\n";
+
+
+
+
+
+my $timeStr = gmtime()." UTC    local=".time();
+print $fhw "computer clock: $timeStr\n";
+print $fhw "timeapi.org has: $correctTime\n";
+
+
+
+
+
 
 
 
 ####todo more sophistication for later...
 ####my @addresses = gethostbyname($name)   or die "Can't resolve $name: $!\n";
 ####@addresses = map { inet_ntoa($_) } @addresses[4 .. $#addresses];
-my $foundAddress = inet_ntoa(inet_aton($dnsName));
+my $dnsAddress = inet_ntoa(inet_aton($dnsName));
 
-print $fhw "found address $foundAddress\n";
+print $fhw "dns address $dnsAddress\n";
 
 
 
@@ -41,20 +76,20 @@ if ($content =~ /(\d{1,3}\.){3}\d{1,3}/gio )
 }
 else
 {
-    print $fhw "ERROR: no IP address: here is start of content:".substr($content,0,300)."\n\n";
+    print $fhw "ERROR: no IP address at checkIP: here is start of content:".substr($content,0,300)."\n\n";
     die "noIPaddr\n";
 }
 
 if (!$ipAddr)
 {
-    print $fhw "ERROR: no IP found\n";
+    print $fhw "ERROR: no IP found at checkIP \n";
     die "noIPaddr2\n";
 }
 
 
 
-print "ipAddr:   measured = $ipAddr  ...  found=$foundAddress\n";
-if ($ipAddr eq $foundAddress)
+print "ipAddr:   actual=$ipAddr  ...  dns=$dnsAddress\n";
+if ($ipAddr eq $dnsAddress)
 {
     print $fhw "not updating: no need\n";
     close $fhw;
@@ -68,13 +103,11 @@ else
 
 
 
-my $correctTime = get "http://www.timeapi.org/utc/now"  || print "ERROR: where is the internet1???\n";
-print $correctTime;
-print $fhw $correctTime;
 
 
 
-
+close $fhw;
+die "for now";
 
 
 
@@ -93,8 +126,8 @@ my $mcLocalFolder = "../../web/mc/";
 my $mcGuideFile = 'guide.htm';
 
 
-my $timeStr = gmtime()." UTC";
-print "running at $timeStr\n";
+
+
 
 
 
