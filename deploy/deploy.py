@@ -14,7 +14,7 @@ from base64 import b64encode
 
 
 usage= """
-	USAGE:python server:port name:pwd <pattern>
+	USAGE:   python deploy.py server:port name:pwd <pattern>
 		
 		<pattern> ::  one of:  recent, all,  *.jpg
 """
@@ -252,6 +252,8 @@ for file,url,name in items:
 	else: #regular file
 		result = putAttachment(file,url)
 
-	print "finished---"+result
+	print "finished---"+result,"\a"
 	time.sleep(1)
 
+print "--------finished-----"
+print time.ctime(),"\a\a"
