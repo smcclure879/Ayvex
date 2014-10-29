@@ -60,6 +60,16 @@ function startTests()
 	if (iAmSender())
 	{
 		trace('sender');
+		//to receive the answer to the offer...
+		$recv.on('click',function(x)
+						{ 
+							var answer=JSON.parse($ta.val());
+							trace('answer='+answer);
+							maybeDoTeleconf({yep:"notnull"},  //in a fake other-user-record
+									{value:{telecInfo:{answer:answer,
+														callee:"junkfornow"}}}  //bugbug is this right for the response?
+							);
+						});
 		conferenceJsHook();
 	}
 	else  //must be receiver
@@ -69,7 +79,7 @@ function startTests()
 						{ 
 							var offer=JSON.parse($ta.val());
 							trace('offer='+offer);
-							maybeDoTeleconf({yep:"notnull"},
+							maybeDoTeleconf({yep:"notnull"},    //in a fake other-user-record
 									{value:{telecInfo:{currentOffer:offer,
 														callee:"junkfornow"}}}
 							);
@@ -85,7 +95,7 @@ function getSelectedItem()
 
 function postOfferSend(x)
 {
-	output("sdp=\r\n"+JSON.stringify(x)+"\r\n");
+	output(JSON.stringify(x));
 }
 
 

@@ -1,16 +1,13 @@
 //conference.js
 
-var servers=null;
+var servers = null; //["stun4.l.google.com:19302"];  //need correct config format....   did this work???    later this should be list of stun servers etc???
+	
 var pc = null;  //the peer connection (RTCPeerConnection)  (webrtc)
 
 var inCall=false;  //state bit
 
 var dumps = JSON.stringify;
 
-function trace(text) 
-{
-	console.log((performance.now() / 1000).toFixed(3) + ": " + text);
-}
 
 
 
@@ -21,47 +18,16 @@ var telecInfo={};  //global for now bugbugSOON
 
 
 
-//hook to make a call...
+////////     "PUBLIC INTERFACE"     ////////
 function conferenceJsHook()  //don't change this name
 {
 	initiateTheCall();
 }
 
-//hook to maybe receive a call...
 function maybeDoTeleconf(localCopyOfItem,itemFromServer)  
 {
-	if (!localCopyOfItem) //bugbugSoon do we even need this here?  maybe to mark who is calling us, e.g. to paint larger or something.
-		return;	
-	
-	var otherParty=itemFromServer.value;
-	if (!otherParty || !otherParty.telecInfo)
-		return;
-	
-	//explicitly already tested to make sure this is not us, but maybe do it again???
-	
-	var calleeKey = otherParty.telecInfo.callee;
-	if (!inCall && calleeKey && isMe(calleeKey) )  
-	{
-		processAsIncomingCall(otherParty);
-	}
-	else if (inCall==true && otherParty.telecInfo.answer)  //might be in THIS call, so can't use that bit!!!
-	{
-		inCall=2;  //see below  bugbug this should be a FSM
-		if (theyAreWhoWeCalled(otherParty))
-			finalizeConnection(otherParty);
-	}
-	else if (inCall==2)
-	{
-		return; //already answered
-	}
-	else
-	{
-		//passthru: telecInfo, but not for us
-		return;  //for good measure
-	}
-	
+	maybeDoTeleconf2(localCopyOfItem,itemFromServer)  ;
 }
-
 
 function hangup() 
 {
@@ -75,144 +41,37 @@ function hangup()
 
 
 
-
-//===============end public api============
-
-
-
-function processAsIncomingCall(callee)
-{
-	var currentOffer = callee.telecInfo.currentOffer;
-	if (!currentOffer)
-		return;
-	
-	if (!confirm("accept call from "+dumps(callee)+"?"))  //bugbug just the key??
-		return; //ignoring it  //prolly need to record this somehow?bugbug
-
-	if (inCall) 
-		return; //busy
-	inCall=true;
-		
-	pc=new RTCPeerConnection(servers);  //bugbug servers?
-	pc.oniceconnectionstatechange = showIceConnectionStateChange; 
-	
-	pc.onicecandidate = gotIceCandidate;  //function(ev) { gotIceCandidate(ev,blah); } ;
-	pc.onaddstream = gotRemoteStream;  //bugbug think this is remote stream, in ev.
-	
-	getUserMedia(
-			{video:true},
-			function(stream){return localResponseMedia(stream,currentOffer);},
-			errorHandler
-		);
-}
-
-function localResponseMedia(localStream,currentOffer)
-{
-	//pc.onaddstream({stream: localStream});  //calling gotRemoteStream with local???
-	//show it locally
-	$localVideo.prop( 'src', URL.createObjectURL(localStream) ).change();
-	
-	//send it to originator  (bugbug is this too early, move to createAnswer??)
-	pc.addStream(localStream);
-	
-	
-	var description=new RTCSessionDescription(currentOffer);
-	pc.setRemoteDescription(description,createAnswer,errorHandler);
-	
-
-}
-
-
-//bugbugNOW where???  $remoteVideo.prop('src',remoteStream).change();  //bugbugNOW needed real soon
-// function streamAddedNowWhat(ev) 
-// {
-	// var remoteStream=ev.stream; 
-	// var remoteStreamUrl=window.URL.createObjectURL(remoteStream);
-	// alert("starting remoteStreamUrl="+remoteStreamUrl);
-	// $remoteVideo.prop('src',remoteStreamUrl).change();  
-	// //$remoteVideo.get().play();bugbug
-	// alert("remote video should be playing");
-// }
-
-function createAnswer()
-{
-	alert("creatingAsnwer");
-	pc.createAnswer(answerCreated,errorHandler);
-}
-
-function answerCreated(answer)
-{
-	alert("answer created");
-	pc.setLocalDescription(new RTCSessionDescription(answer), function(){sendAnswer(answer)}, errorHandler);
-}
-
-function sendAnswer(answer) 
-{
-	alert("setting global answer");
-	//alert("yay bugbug250");
-    // send the answer to a server to be forwarded back to the caller (you)
-	//getSelectedItem().telecInfo.answer=answer;
-	telecInfo.answer=answer;
-	
-}
- 
-
-//answer codepath above
-/////////////////////
-//answer to the answer...that's below...
-
-
-
 //note this should be a lambda from the caller bugbug
 function theyAreWhoWeCalled(otherParty)
 {
 	return true; //bugbug for now
 }
 
-function finalizeConnection(otherParty)
-{
-	alert("finalizeConn")
-	pc.setRemoteDescription(new RTCSessionDescription(otherParty.telecInfo.answer),successqqq,errorHandler);
-}
 
 
-function successqqq(returnOffer)
-{
-	alert("success");
-}
+///////////   END PUBLIC INTERFACE  /////////////
 
-///////////////////////////
-/// init below
-//bugbug try to share more code later!
+
+//===============end public api============
 
 
 
+////INITIATOR CODE//////
 function initiateTheCall() 
-{
-	//bugbugNOW temporarily hijack this function to test reception!!!  
-	//fakeRingBugbug();
-	//return;
-		//end bugbugNOW
-	//disable($callButton);
-	//enable($hangupButton);
-	//trace("Starting call");
-	
-	//var servers = ["stun4.l.google.com:19302"];  //need correct config format....   did this work???    later this should be list of stun servers etc???
-	var servers = null;
-	
+{	
 	pc=new RTCPeerConnection(servers);
 	pc.oniceconnectionstatechange = showIceConnectionStateChange;
 	
-	pc.onicecandidate = gotIceCandidate;
+	pc.onicecandidate = gotIceCandidateForSender;
 	pc.onaddstream = gotRemoteStream;  //for when we get the answer back!
 		
 	//local self video
 	var constraints = {video:true, audio:true};
 	inCall=true;
-	getUserMedia(constraints, gotGoodLocalStream, errorHandler);
+	getUserMedia(constraints, initiateConnection, errorHandler);
 }
 //THENTO
-function gotGoodLocalStream(localStream) 
+function initiateConnection(localStream) 
 {
 	//bugbug still needed??? 
 	//window.stream = localStream; // stream available to console
@@ -231,21 +90,42 @@ function gotGoodLocalStream(localStream)
 
 	pc.addStream(localStream);
 	trace("Added localStream to connection");
+	//createAndUseOffer called by the last (null) ice candidate (see gotIceCandidate)
+	createAndUseOffer();  //trickle didn't work, have to have this here.
+}
+//sorta THENTO
+function gotIceCandidateForSender(event) //,outgoingStream)
+{
+	if (!event.candidate) 
+	{
+		//alert("probably last event candidate..."+dumps(event));
+		trace("last of sender trickle: here is SDP"+pc.localDescription.sdp);
+		//This should be the last offer of the trickle????
+		//createAndUseOffer();  //but this didn't work bugbug bugbug so put it above???  no trickle on sender for now
+	}
+	else
+	{
+		//pc.addIceCandidate(new RTCIceCandidate(event.candidate));
+		trace("saw outgoing ICE candidate: " + dumps(event));
+	}
+}
+//sorta THENTO 
+function createAndUseOffer()
+{
 	pc.createOffer(useLocalOffer,errorHandler);	//constraints as 3rd arg??? bugbug
 }
 //THENTO
 function useLocalOffer(offer)
 {
-	//alert(dumps(offer));
-	pc.setLocalDescription(new RTCSessionDescription(offer), function() {gotFirstOffer(offer)}, errorHandler);
+	trace("use local offer="+dumps(offer));
+	pc.setLocalDescription(new RTCSessionDescription(offer), function() {sendMyOffer(offer)}, errorHandler);
 }
 //THENTO
-function gotFirstOffer(offer)
+function sendMyOffer(offer)
 {
 	//trace("sending the following offer from localPeerConnection: \n" + offer);
 	telecInfo.currentOffer=offer;  
 	telecInfo.callee=getSelectedItem().key;  //bugbug we should have done this sooner--almost right after "v" is pushed!!!
-	
 	
 	alert("state while postOfferSend:"+pc.iceConnectionState);
 
@@ -254,31 +134,163 @@ function gotFirstOffer(offer)
 		postOfferSend(offer);
 }
 
-function gotLastOffer(offer)
+
+////////  RECEIVER AND RECEIVE-ANSWER CODE  //////////
+
+//hook to maybe receive a call...
+function maybeDoTeleconf2(localCopyOfItem,itemFromServer)  
 {
-	alert("gotLastOffer");
+	if (!localCopyOfItem) //bugbugSoon do we even need this here?  maybe to mark who is calling us, e.g. to paint larger or something.
+		return;	
+	
+	var otherParty=itemFromServer.value;
+	if (!otherParty || !otherParty.telecInfo)
+		return;
+	
+	//explicitly already tested to make sure this is not us, but maybe do it again???
+	var calleeKey = otherParty.telecInfo.callee;
+	if (!inCall && calleeKey && isMe(calleeKey) )  
+	{
+		processAsIncomingCall(otherParty);
+	}
+	else if (inCall==true && otherParty.telecInfo.currentOffer.type=="answer")  //might be in THIS call, so can't use that bit!!!
+	{
+		inCall=2;  //see below  bugbug this should be a FSM
+		if (theyAreWhoWeCalled(otherParty))
+			finalizeConnection(otherParty);
+	}
+	else if (inCall==2)
+	{
+		if (debug) 
+			alert("bugbug115w: unanswer");
+		return; //already answered
+	}
+	else
+	{
+		//passthru: telecInfo, but not for us
+		if (debug)
+			alert("bugbug115p: unknown state");
+		return;  //for good measure
+	}
+	
 }
 
 
+////////  RECEIVER CODE  ////////
+
+function processAsIncomingCall(callee)
+{
+	var currentOffer = callee.telecInfo.currentOffer;
+	if (!currentOffer)
+		return;
+	
+	if (!confirm("accept call from "+dumps(callee)+"?"))  //bugbug just the key??
+		return; //ignoring it  //prolly need to record this somehow?bugbug
+
+	if (inCall) 
+		return; //busy
+	inCall=true;
+		
+	pc=new RTCPeerConnection(servers);  
+	pc.oniceconnectionstatechange = showIceConnectionStateChange; 
+	
+	//bugbug try without ice candidates on this side as well...
+	//pc.onicecandidate = gotIceCandidateForReceiver;  //function(ev) { gotIceCandidate(ev,blah); } ;  
+	pc.onaddstream = function(event) { gotRemoteStream(event,createAnswer); } ;  //bugbugnow if this worked???? then eliminate other call to createAnswer
+	
+	getUserMedia(
+			{video:true},
+			function(stream){acknowledgeConnection(stream,currentOffer);},
+			errorHandler
+		);
+}
+// THENTO
+function acknowledgeConnection(localStream,currentOffer)
+{
+	//pc.onaddstream({stream: localStream});  //calling gotRemoteStream with local???
+	//show it locally
+	$localVideo.prop( 'src', URL.createObjectURL(localStream) ).change();
+	
+	//send it to originator  (bugbug is this too early, move to createAnswer??)
+	pc.addStream(localStream);
+	
+	
+	var description=new RTCSessionDescription(currentOffer);
+	alert("about to set description to:"+dumps(description));
+	pc.setRemoteDescription(description,createAnswer,errorHandler);
+}
+// THENTO
+function createAnswer()
+{
+	alert("creatingAsnwer");
+	pc.createAnswer(useAnswer,errorHandler);
+}
+// THENTO
+function useAnswer(answer)
+{
+	alert("answer created:"+dumps(answer));
+	pc.setLocalDescription(new RTCSessionDescription(answer), function(){sendAnswer(answer)}, errorHandler);
+}
+// THENTO
+function sendAnswer(answer) 
+{
+	alert("setting global answer--state while postOfferSend from receiver: "+pc.iceConnectionState);
+	telecInfo.answer=answer;
+
+	if (typeof postOfferSend=='function')
+		postOfferSend(answer);
+}
 
 
-function gotIceCandidate(event) //,outgoingStream)
+function gotIceCandidateForReceiver(event)  //skipped for now actually
 {
 	if (!event.candidate) 
 	{
-		alert("probably last event candidate..."+dumps(event));
-		alert("localsdp"+pc.localDescription.sdp);
-		gotLastOffer();
-		//pc.addStream(outgoingStream);
+		alert("receiver trickle done????     localsdp"+pc.localDescription.sdp);
 	}
 	else
 	{
 		//pc.addIceCandidate(new RTCIceCandidate(event.candidate));
-		alert("not sending ICE candidate: \n" + dumps(event));
+		trace("got ICE candidate: \n" + dumps(event));
 	}
 }
 
-function gotRemoteStream(ev)  //note similar function elsewhere in this file  _mine
+
+
+ 
+ 
+//bugbugNOW where???  $remoteVideo.prop('src',remoteStream).change();  //bugbugNOW needed real soon
+// function streamAddedNowWhat(ev) 
+// {
+	// var remoteStream=ev.stream; 
+	// var remoteStreamUrl=window.URL.createObjectURL(remoteStream);
+	// alert("starting remoteStreamUrl="+remoteStreamUrl);
+	// $remoteVideo.prop('src',remoteStreamUrl).change();  
+	// //$remoteVideo.get().play();bugbug
+	// alert("remote video should be playing");
+// }
+
+ 
+
+/////////  ANSWER TO THE ANSWER  ////////////
+function finalizeConnection(otherParty)
+{
+	alert("finalizeConn")
+	pc.setRemoteDescription(new RTCSessionDescription(otherParty.telecInfo.answer),successqqq,errorHandler);
+}
+
+function successqqq(returnOffer)
+{
+	alert("success");
+}
+
+
+
+
+
+
+//////  EVERYBODY //////
+function gotRemoteStream(ev,then)  //note similar function elsewhere in this file  _mine
 {
 	var remoteStream=ev.stream; //bugbug
 	//alert("gotRemoteStream"+dumps(remoteStream));
@@ -288,7 +300,10 @@ function gotRemoteStream(ev)  //note similar function elsewhere in this file  _m
 	alert("remote stream url="+remoteStreamUrl);
 	
 	$remoteVideo.prop('src',remoteStreamUrl).change();  //bugbugNOW needed real soon   
-	$remoteVideo.get().play();
+	//$remoteVideo.get().play();
+	
+	if (then) 
+		then();
 }
 
 function gotRemoteStream_his(event) {  //bugbugNOW _his
@@ -301,9 +316,6 @@ function showIceConnectionStateChange(ev)
 {
 	alert( "iceChange:"+	iceConnectionState + dumps(ev) );
 }
-
-
-
 
 function errorHandler(err)  //bugbug consolidate with other similars.  3 functions!
 {
@@ -319,31 +331,30 @@ function getStackTrace()
 	return obj.stack;
 }
 
+function trace(text) 
+{
+	console.log((performance.now() / 1000).toFixed(3) + ": " + text);
+}
 
-// setTimeout(function(){
-				// enable($startButton)
-				// $startButton.on('click',start); //bugbug??on('click',start );  
-								
-				// disable($callButton);
-				// $callButton.on('click',call );
-				// disable($hangupButton)
-				// $hangupButton.on('click',hangup);
-			// },500);
 
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
+
+
 			
 			
 //keep for testing...
+
+
+
+//bugbug move these elsewhere...valuable!!!?
+// function enable(jqButton)
+// {
+	// jqButton.prop('disabled', false).change();
+// }
+
+// function disable(jqButton)
+// {
+	// jqButton.prop('disabled', true).change();
+// }
 
 			
 // var testConfRecepJson={_id: "user_HarryPotter029", _rev: "21547-8878e4e8b0e01a49f2452902f204628f", userId: "HarryPotter029", 
@@ -386,16 +397,14 @@ function getStackTrace()
   // trace("called");
 // }
 
+// setTimeout(function(){
+				// enable($startButton)
+				// $startButton.on('click',start); //bugbug??on('click',start );  
+								
+				// disable($callButton);
+				// $callButton.on('click',call );
+				// disable($hangupButton)
+				// $hangupButton.on('click',hangup);
+			// },500);
 
-
-
-//bugbug move these elsewhere...valuable!!!
-function enable(jqButton)
-{
-	jqButton.prop('disabled', false).change();
-}
-
-function disable(jqButton)
-{
-	jqButton.prop('disabled', true).change();
-}
+			
