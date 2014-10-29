@@ -153,7 +153,7 @@ function maybeDoTeleconf2(localCopyOfItem,itemFromServer)
 	{
 		processAsIncomingCall(otherParty);
 	}
-	else if (inCall==true && otherParty.telecInfo.currentOffer.type=="answer")  //might be in THIS call, so can't use that bit!!!
+	else if (inCall==true && otherParty.telecInfo.answer)  //might be in THIS call, so can't use that bit!!!
 	{
 		inCall=2;  //see below  bugbug this should be a FSM
 		if (theyAreWhoWeCalled(otherParty))
@@ -196,7 +196,7 @@ function processAsIncomingCall(callee)
 	
 	//bugbug try without ice candidates on this side as well...
 	//pc.onicecandidate = gotIceCandidateForReceiver;  //function(ev) { gotIceCandidate(ev,blah); } ;  
-	pc.onaddstream = function(event) { gotRemoteStream(event,createAnswer); } ;  //bugbugnow if this worked???? then eliminate other call to createAnswer
+	pc.onaddstream = function(event) { gotRemoteStream(event,createAnswer); } ;  //bugbug WHY did this make it go farther....why did I have to do this
 	
 	getUserMedia(
 			{video:true},
@@ -259,7 +259,7 @@ function gotIceCandidateForReceiver(event)  //skipped for now actually
 
  
  
-//bugbugNOW where???  $remoteVideo.prop('src',remoteStream).change();  //bugbugNOW needed real soon
+
 // function streamAddedNowWhat(ev) 
 // {
 	// var remoteStream=ev.stream; 
@@ -299,17 +299,13 @@ function gotRemoteStream(ev,then)  //note similar function elsewhere in this fil
 	var remoteStreamUrl = window.URL.createObjectURL(remoteStream);  //bugbug release all of these on hangup
 	alert("remote stream url="+remoteStreamUrl);
 	
-	$remoteVideo.prop('src',remoteStreamUrl).change();  //bugbugNOW needed real soon   
-	//$remoteVideo.get().play();
+	$remoteVideo.prop('src',remoteStreamUrl).change();  
+	//$remoteVideo.get().play();  //bugbug needed???
 	
 	if (then) 
 		then();
 }
 
-function gotRemoteStream_his(event) {  //bugbugNOW _his
-    var mediaStreamSource = context.createMediaStreamSource(event.stream);
-    mediaStreamSource.connect(context.destination);
-}
 
 
 function showIceConnectionStateChange(ev)
@@ -407,4 +403,8 @@ function trace(text)
 				// $hangupButton.on('click',hangup);
 			// },500);
 
-			
+
+// function gotRemoteStream_his(event) {  // _his  keep for testing...
+    // var mediaStreamSource = context.createMediaStreamSource(event.stream);
+    // mediaStreamSource.connect(context.destination);
+// }			
