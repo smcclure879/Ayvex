@@ -243,7 +243,9 @@ for file,url,name in items:
 	while url.startswith("/"):
 		url=url[1:]
 	
-	if url.endswith("views.json"):  #there better only be one file called this!
+	if url.endswith(".no"):
+		result = "ignoring"
+	elif url.endswith("views.json"):  #there better only be one file called this!
 		result = putViewFile(file,name)
 	elif url.endswith("validations.json"):
 		result = putViewFile(file,name)  #bugbug note rename to design file???
