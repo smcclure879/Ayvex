@@ -2,9 +2,9 @@
 <script src="adapter.js"></script>
 <script src="../../lib/jquery-1.10.2.js"></script>
 
-<body>
+<body style="font-size:8.5px">
 
-<div id="output" style="border-width:2px">output</div>
+<div id="output" style="border-width:2px">output<br/><br/></div>
 
 <form>
 <textArea id="ta" style="border-width:2px" rows="10" columns="60">yep this is input area</textArea>
@@ -19,6 +19,9 @@
 
 
 <script>
+var debug=1; 
+
+
 function output(x)
 {
 	$output.append(x);
@@ -93,9 +96,18 @@ function getSelectedItem()
 }
 
 
-function postOfferSend(x)
+var breaks="<br/><br/><br/><br/><br/><br/>";
+
+function postOfferSend(text)
 {
-	output(JSON.stringify(x));
+	output(text+breaks);
+	//window.prompt("offer:", text);
+}
+
+function postIceSend(text)
+{
+	output(text+breaks);
+	//window.prompt("iceSdpStuff:", text);
 }
 
 

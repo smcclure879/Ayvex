@@ -1,7 +1,26 @@
 //conference.js
 
-var servers = null; //["stun4.l.google.com:19302"];  //need correct config format....   did this work???    later this should be list of stun servers etc???
-	
+
+
+var STUN = {
+    url: 'stun:stun.l.google.com:19302'   //bugbug need more complete list
+};
+
+// var TURN = {    //bugbug don't want to "relay" so don't want to use TURN
+    // url: 'turn:homeo@turn.bistri.com:80',
+    // credential: 'homeo'
+// };
+
+var servers = {
+   iceServers: [STUN
+				//, TURN  //bugbug probably don't want to use this since it's leakier
+				]
+};
+
+
+
+
+
 var pc = null;  //the peer connection (RTCPeerConnection)  (webrtc)
 
 var inCall=false;  //state bit
@@ -14,7 +33,7 @@ var dumps = JSON.stringify;
 
 
 //smcclure
-var telecInfo={};  //global for now bugbugSOON
+var telecInfo={};  //global for now bugbug
 
 
 
@@ -26,7 +45,7 @@ function conferenceJsHook()  //don't change this name
 
 function maybeDoTeleconf(localCopyOfItem,itemFromServer)  
 {
-	maybeDoTeleconf2(localCopyOfItem,itemFromServer)  ;
+	maybeDoTeleconf2(localCopyOfItem,itemFromServer);
 }
 
 function hangup() 
@@ -60,7 +79,9 @@ function theyAreWhoWeCalled(otherParty)
 function initiateTheCall() 
 {	
 	pc=new RTCPeerConnection(servers);
+	pc.onconnection = function() { alert("bugbugNOW you are here onConnection fired"); };
 	pc.oniceconnectionstatechange = showIceConnectionStateChange;
+	//bugbug doesn't seem to work   pc.ongatheringchange = showGatheringStateChange;
 	
 	pc.onicecandidate = gotIceCandidateForSender;
 	pc.onaddstream = gotRemoteStream;  //for when we get the answer back!
@@ -90,26 +111,10 @@ function initiateConnection(localStream)
 
 	pc.addStream(localStream);
 	trace("Added localStream to connection");
-	//createAndUseOffer called by the last (null) ice candidate (see gotIceCandidate)
+	//createAndUseOffer called by the last (null) ice candidate (see gotIceCandidate)??bugbug
 	createAndUseOffer();  //trickle didn't work, have to have this here.
 }
 //sorta THENTO
-function gotIceCandidateForSender(event) //,outgoingStream)
-{
-	if (!event.candidate) 
-	{
-		//alert("probably last event candidate..."+dumps(event));
-		trace("last of sender trickle: here is SDP"+pc.localDescription.sdp);
-		//This should be the last offer of the trickle????
-		//createAndUseOffer();  //but this didn't work bugbug bugbug so put it above???  no trickle on sender for now
-	}
-	else
-	{
-		//pc.addIceCandidate(new RTCIceCandidate(event.candidate));
-		trace("saw outgoing ICE candidate: " + dumps(event));
-	}
-}
-//sorta THENTO 
 function createAndUseOffer()
 {
 	pc.createOffer(useLocalOffer,errorHandler);	//constraints as 3rd arg??? bugbug
@@ -118,22 +123,11 @@ function createAndUseOffer()
 function useLocalOffer(offer)
 {
 	trace("use local offer="+dumps(offer));
-	pc.setLocalDescription(new RTCSessionDescription(offer), function() {sendMyOffer(offer)}, errorHandler);
+	pc.setLocalDescription(new RTCSessionDescription(offer), 
+							function() {/* sendMyOffer(offer)  */  },
+							errorHandler);
 }
 //THENTO
-function sendMyOffer(offer)
-{
-	//trace("sending the following offer from localPeerConnection: \n" + offer);
-	telecInfo.currentOffer=offer;  
-	telecInfo.callee=getSelectedItem().key;  //bugbug we should have done this sooner--almost right after "v" is pushed!!!
-	
-	alert("state while postOfferSend:"+pc.iceConnectionState);
-
-	//extra hooks for tests
-	if (typeof postOfferSend=='function')
-		postOfferSend(offer);
-}
-
 
 ////////  RECEIVER AND RECEIVE-ANSWER CODE  //////////
 
@@ -155,25 +149,31 @@ function maybeDoTeleconf2(localCopyOfItem,itemFromServer)
 	}
 	else if (inCall==true && otherParty.telecInfo.answer)  //might be in THIS call, so can't use that bit!!!
 	{
-		inCall=2;  //see below  bugbug this should be a FSM
 		if (theyAreWhoWeCalled(otherParty))
-			finalizeConnection(otherParty);
+		{
+			finalizeOfferCycle(otherParty);  //sets inCall to 2
+		}
 	}
-	else if (inCall==2)
-	{
-		if (debug) 
-			alert("bugbug115w: unanswer");
+	else if (otherParty.telecInfo.iceCandidate)  //bugbug this should be a FSM  (inCall has more than true/false states)
+	{  // && if inCall==2  //don't know if this is still valid logic even!
+	
+		handleIceCandidateMessage(otherParty.telecInfo.iceCandidate);
+		inCall=3;
+		
+		alert("bugbug115w: unanswer"+dumps(otherParty));
+		
 		return; //already answered
 	}
 	else
 	{
 		//passthru: telecInfo, but not for us
-		if (debug)
-			alert("bugbug115p: unknown state");
+		//if (debug)  bugbugSOON still needed?
+		//	alert("bugbug115p: unknown state:")+inCall+" "+dumps(pc);
 		return;  //for good measure
 	}
 	
 }
+
 
 
 ////////  RECEIVER CODE  ////////
@@ -195,8 +195,9 @@ function processAsIncomingCall(callee)
 	pc.oniceconnectionstatechange = showIceConnectionStateChange; 
 	
 	//bugbug try without ice candidates on this side as well...
-	//pc.onicecandidate = gotIceCandidateForReceiver;  //function(ev) { gotIceCandidate(ev,blah); } ;  
+	pc.onicecandidate = gotIceCandidateForReceiver;  //function(ev) { gotIceCandidate(ev,blah); } ;  
 	pc.onaddstream = function(event) { gotRemoteStream(event,createAnswer); } ;  //bugbug WHY did this make it go farther....why did I have to do this
+	//bugbug doesn't seem to work  pc.ongatheringchange = showGatheringStateChange;
 	
 	getUserMedia(
 			{video:true},
@@ -216,48 +217,31 @@ function acknowledgeConnection(localStream,currentOffer)
 	
 	
 	var description=new RTCSessionDescription(currentOffer);
-	alert("about to set description to:"+dumps(description));
+	alert("about to set description to:"+dumps(description)+dumps(pc));
 	pc.setRemoteDescription(description,createAnswer,errorHandler);
 }
 // THENTO
 function createAnswer()
 {
-	alert("creatingAsnwer");
+	alert("creatingAsnwer"+dumps(pc));
 	pc.createAnswer(useAnswer,errorHandler);
 }
 // THENTO
 function useAnswer(answer)
 {
-	alert("answer created:"+dumps(answer));
-	pc.setLocalDescription(new RTCSessionDescription(answer), function(){sendAnswer(answer)}, errorHandler);
+	//alert("answer created:"+dumps(answer));
+	alert("pc state="+dumps(pc));
+	pc.setLocalDescription(new RTCSessionDescription(answer), function(){/* sendAnswer(answer) */}, errorHandler);
 }
-// THENTO
-function sendAnswer(answer) 
+// THENTO  nope
+
+
+function handleIceCandidateMessage(iceCandidate)
 {
-	alert("setting global answer--state while postOfferSend from receiver: "+pc.iceConnectionState);
-	telecInfo.answer=answer;
-
-	if (typeof postOfferSend=='function')
-		postOfferSend(answer);
+	pc.addIceCandidate(new RTCIceCandidate(iceCandidate));
 }
 
 
-function gotIceCandidateForReceiver(event)  //skipped for now actually
-{
-	if (!event.candidate) 
-	{
-		alert("receiver trickle done????     localsdp"+pc.localDescription.sdp);
-	}
-	else
-	{
-		//pc.addIceCandidate(new RTCIceCandidate(event.candidate));
-		trace("got ICE candidate: \n" + dumps(event));
-	}
-}
-
-
-
- 
  
 
 // function streamAddedNowWhat(ev) 
@@ -273,20 +257,96 @@ function gotIceCandidateForReceiver(event)  //skipped for now actually
  
 
 /////////  ANSWER TO THE ANSWER  ////////////
-function finalizeConnection(otherParty)
+function finalizeOfferCycle(otherParty)
 {
-	alert("finalizeConn")
+	//alert("finalizeConn..."+dumps(pc))	
 	pc.setRemoteDescription(new RTCSessionDescription(otherParty.telecInfo.answer),successqqq,errorHandler);
+	inCall=2;
 }
 
 function successqqq(returnOffer)
 {
-	alert("success");
+	alert("offer cycle complete..."+dumps(pc));
 }
 
 
 
 
+//////  ice candidate handling  //////
+function gotIceCandidateForSender(event) //,outgoingStream)
+{
+	if (event.candidate == null) 
+	{
+		//alert("last of sender trickle: here is SDP"+pc.localDescription.sdp);
+		//sendCandidateSdpInfo();
+		sendMyOffer();
+	}
+	else
+	{
+		//pc.addIceCandidate(new RTCIceCandidate(event.candidate)); 
+		//alert("send got ICE candidate: " + dumps(event));
+	}
+}
+
+function gotIceCandidateForReceiver(event)  //skipped for now actually
+{
+	if (event.candidate == null)
+	{
+		//alert("last of receiver trickle done...      localsdp"+pc.localDescription.sdp);
+		sendAnswer();  //bugbug sendMyAnswer
+	}
+	else
+	{
+		//pc.addIceCandidate(new RTCIceCandidate(event.candidate));
+		//alert("recv got ICE candidate: \n" + dumps(event));
+		//alert("recv ice, pc.localDescription:"+dumps(pc.localDescription));
+	}
+}
+
+
+
+function sendMyOffer()
+{
+	//trace("sending the following offer from localPeerConnection: \n" + offer);
+	var offer=pc.localDescription;
+	telecInfo.currentOffer=offer;  
+	telecInfo.callee=getSelectedItem().key;  //bugbug we should have done this sooner--almost right after "v" is pushed!!!
+	
+	trace("pc state while postOfferSend:"+dumps(pc));
+
+	//extra hooks for tests
+	if (typeof postOfferSend=='function')
+		postOfferSend(dumps(offer));
+}
+
+//bugbug consolidate with the above
+function sendAnswer() 
+{
+	//alert("setting global answer--state while postOfferSend from receiver: "+pc.iceConnectionState);
+	//alert("bugbugCHECK: localDescription --pc state in sendAnswer="+dumps(pc));
+	var answer = pc.localDescription;
+	telecInfo.answer=answer;
+
+	if (typeof postOfferSend=='function')
+		postOfferSend(dumps(answer));
+	
+	
+}
+
+
+// function sendCandidateSdpInfo()
+// {
+	// telecInfo.iceCandidate={
+			// targetUser: 'target-user-id-bugbug needed??',
+			// sdp       :  pc.localDescription   //claimed to be in localDescription "by now"
+		// };
+	
+	// //alert("sending sdp"+dumps(telecInfo.iceInfo));
+ 
+	// //extra hooks for tests
+	// if (typeof postIceSend=='function')
+		// postIceSend(dumps(telecInfo.iceCandidate));
+// }
 
 
 //////  EVERYBODY //////
@@ -297,7 +357,7 @@ function gotRemoteStream(ev,then)  //note similar function elsewhere in this fil
 	//trace(remoteStream);
 	
 	var remoteStreamUrl = window.URL.createObjectURL(remoteStream);  //bugbug release all of these on hangup
-	alert("remote stream url="+remoteStreamUrl);
+	//alert("remote stream url="+remoteStreamUrl);
 	
 	$remoteVideo.prop('src',remoteStreamUrl).change();  
 	//$remoteVideo.get().play();  //bugbug needed???
@@ -310,14 +370,25 @@ function gotRemoteStream(ev,then)  //note similar function elsewhere in this fil
 
 function showIceConnectionStateChange(ev)
 {
-	alert( "iceChange:"+	iceConnectionState + dumps(ev) );
+	alert( "bugbugSOON if this doesn't show remove the event handler showIceConnectionStateChange:"+	iceConnectionState + dumps(ev) );
 }
+
+//bugbug think they removed this event???
+// function showGatheringStateChange(ev) 
+// {
+	// alert("gathering state change:"+dumps(ev));
+    // // if (e.currentTarget &&
+        // // e.currentTarget.iceGatheringState === 'complete') {
+        // // send_SDP();
+    // // }
+// }
 
 function errorHandler(err)  //bugbug consolidate with other similars.  3 functions!
 {
 	trace(err);
 	alert("err"+getStackTrace()+"  "+dumps(err));  //bugbug separate for separate cases????
 }
+
 
 
 function getStackTrace() 
