@@ -1,21 +1,38 @@
 //conference.js
 
+//old e.g.....
+// var configuration = { iceServers: [{ url: "stun:stun.services.mozilla.com",
+                                     // username: "louis@mozilla.com", 
+                                     // credential: "webrtcdemo" }]
 
+//old single-server way
+// var STUN = {
+    // url: 'stun:stun.l.google.com:19302'   //bugbug need more complete list
 
-var STUN = {
-    url: 'stun:stun.l.google.com:19302'   //bugbug need more complete list
-};
+	// };
 
 // var TURN = {    //bugbug don't want to "relay" so don't want to use TURN
     // url: 'turn:homeo@turn.bistri.com:80',
     // credential: 'homeo'
 // };
 
+
+
 var servers = {
-   iceServers: [STUN
-				//, TURN  //bugbug probably don't want to use this since it's leakier
-				]
+	   iceServers: [
+				{url:"stun:stun.l.google.com:19302"},
+				{url:"stun:stun1.l.google.com:19302"},
+				{url:"stun:stun2.l.google.com:19302"},
+				{url:"stun:stun3.l.google.com:19302"},
+				{url:"stun:stun4.l.google.com:19302"}
+					//was...
+					// [STUN
+					// //, TURN  //bugbug probably don't want to use this since it's leakier
+					// ]
+		]
 };
+   
+
 
 
 
@@ -45,7 +62,7 @@ function conferenceJsHook()  //don't change this name
 
 function maybeDoTeleconf(localCopyOfItem,itemFromServer)  
 {
-	maybeDoTeleconf2(localCopyOfItem,itemFromServer);
+	maybeDoTeleconfInternal(localCopyOfItem,itemFromServer);
 }
 
 function hangup() 
@@ -60,12 +77,6 @@ function hangup()
 
 
 
-//note this should be a lambda from the caller bugbug
-function theyAreWhoWeCalled(otherParty)
-{
-	return true; //bugbug for now
-}
-
 
 
 ///////////   END PUBLIC INTERFACE  /////////////
@@ -79,7 +90,7 @@ function theyAreWhoWeCalled(otherParty)
 function initiateTheCall() 
 {	
 	pc=new RTCPeerConnection(servers);
-	pc.onconnection = function() { alert("bugbugNOW you are here onConnection fired"); };
+	//bugbug  doesn't fire...why?pc.onconnection = function() { alert("you are here onConnection fired"); };
 	pc.oniceconnectionstatechange = showIceConnectionStateChange;
 	//bugbug doesn't seem to work   pc.ongatheringchange = showGatheringStateChange;
 	
@@ -132,7 +143,7 @@ function useLocalOffer(offer)
 ////////  RECEIVER AND RECEIVE-ANSWER CODE  //////////
 
 //hook to maybe receive a call...
-function maybeDoTeleconf2(localCopyOfItem,itemFromServer)  
+function maybeDoTeleconfInternal(localCopyOfItem,itemFromServer)  
 {
 	if (!localCopyOfItem) //bugbugSoon do we even need this here?  maybe to mark who is calling us, e.g. to paint larger or something.
 		return;	
@@ -154,21 +165,14 @@ function maybeDoTeleconf2(localCopyOfItem,itemFromServer)
 			finalizeOfferCycle(otherParty);  //sets inCall to 2
 		}
 	}
-	else if (otherParty.telecInfo.iceCandidate)  //bugbug this should be a FSM  (inCall has more than true/false states)
-	{  // && if inCall==2  //don't know if this is still valid logic even!
-	
-		handleIceCandidateMessage(otherParty.telecInfo.iceCandidate);
-		inCall=3;
-		
-		alert("bugbug115w: unanswer"+dumps(otherParty));
-		
-		return; //already answered
-	}
 	else
 	{
-		//passthru: telecInfo, but not for us
-		//if (debug)  bugbugSOON still needed?
-		//	alert("bugbug115p: unknown state:")+inCall+" "+dumps(pc);
+		//passthru: got a telecInfo, but it's not for us
+		if (typeof debug != 'undefined' && debug)  
+		{
+			alert("bugbug115p: unknown state:"+inCall+" "+dumps(pc));
+			alert("otherParty="+dumps(otherParty));
+		}
 		return;  //for good measure
 	}
 	
@@ -217,20 +221,20 @@ function acknowledgeConnection(localStream,currentOffer)
 	
 	
 	var description=new RTCSessionDescription(currentOffer);
-	alert("about to set description to:"+dumps(description)+dumps(pc));
+	//alert("about to set description to:"+dumps(description)+dumps(pc));
 	pc.setRemoteDescription(description,createAnswer,errorHandler);
 }
 // THENTO
 function createAnswer()
 {
-	alert("creatingAsnwer"+dumps(pc));
+	//alert("creatingAsnwer"+dumps(pc));
 	pc.createAnswer(useAnswer,errorHandler);
 }
 // THENTO
 function useAnswer(answer)
 {
 	//alert("answer created:"+dumps(answer));
-	alert("pc state="+dumps(pc));
+	//alert("pc state="+dumps(pc));
 	pc.setLocalDescription(new RTCSessionDescription(answer), function(){/* sendAnswer(answer) */}, errorHandler);
 }
 // THENTO  nope
@@ -266,7 +270,7 @@ function finalizeOfferCycle(otherParty)
 
 function successqqq(returnOffer)
 {
-	alert("offer cycle complete..."+dumps(pc));
+	alert("conference started");
 }
 
 
@@ -334,20 +338,6 @@ function sendAnswer()
 }
 
 
-// function sendCandidateSdpInfo()
-// {
-	// telecInfo.iceCandidate={
-			// targetUser: 'target-user-id-bugbug needed??',
-			// sdp       :  pc.localDescription   //claimed to be in localDescription "by now"
-		// };
-	
-	// //alert("sending sdp"+dumps(telecInfo.iceInfo));
- 
-	// //extra hooks for tests
-	// if (typeof postIceSend=='function')
-		// postIceSend(dumps(telecInfo.iceCandidate));
-// }
-
 
 //////  EVERYBODY //////
 function gotRemoteStream(ev,then)  //note similar function elsewhere in this file  _mine
@@ -370,26 +360,14 @@ function gotRemoteStream(ev,then)  //note similar function elsewhere in this fil
 
 function showIceConnectionStateChange(ev)
 {
-	alert( "bugbugSOON if this doesn't show remove the event handler showIceConnectionStateChange:"+	iceConnectionState + dumps(ev) );
+	trace( "in showIceConnectionStateChange:"+	pc.iceConnectionState );
 }
-
-//bugbug think they removed this event???
-// function showGatheringStateChange(ev) 
-// {
-	// alert("gathering state change:"+dumps(ev));
-    // // if (e.currentTarget &&
-        // // e.currentTarget.iceGatheringState === 'complete') {
-        // // send_SDP();
-    // // }
-// }
 
 function errorHandler(err)  //bugbug consolidate with other similars.  3 functions!
 {
 	trace(err);
 	alert("err"+getStackTrace()+"  "+dumps(err));  //bugbug separate for separate cases????
 }
-
-
 
 function getStackTrace() 
 {
@@ -431,51 +409,9 @@ function trace(text)
 			// "v=0\r\no=- 6749225876606550730 2 IN IP4 127.0.0.1\r\ns=-\r\nt=0 0\r\na=group:BUNDLE audio video\r\na=msid-semantic: WMS ojXoWJIee0JVKmKIHXI1KdVKbabfoLswQNK6\r\nm=audio 1 RTP/SAVPF 111 103 104 0 8 106 105 13 126\r\nc=IN IP4 0.0.0.0\r\na=rtcp:1 IN IP4 0.0.0.0\r\na=ice-ufrag:VzXufVwblH4om8MD\r\na=ice-pwd:LPzHqYW7Qx+w0BjouFcBQMYg\r\na=ice-options:google-ice\r\na=fingerprint:sha-256 3F:F6:C6:E7:3E:26:17:89:83:34:FA:F1:97:0A:3A:A9:71:B8:73:A5:C0:E3:48:7E:36:17:12:D4:3B:E8:A5:F8\r\na=setup:actpass\r\na=mid:audio\r\na=extmap:1 urn:ietf:params:rtp-hdrext:ssrc-audio-level\r\na=extmap:3 http://www.webrtc.org/experiments/rtp-hdrext/abs-send-time\r\na=sendrecv\r\na=rtcp-mux\r\na=rtpmap:111 opus/48000/2\r\na=fmtp:111 minptime=10\r\na=rtpmap:103 ISAC/16000\r\na=rtpmap:104 ISAC/32000\r\na=rtpmap:0 PCMU/8000\r\na=rtpmap:8 PCMA/8000\r\na=rtpmap:106 CN/32000\r\na=rtpmap:105 CN/16000\r\na=rtpmap:13 CN/8000\r\na=rtpmap:126 telephone-event/8000\r\na=maxptime:60\r\na=ssrc:687274967 cname:/FpdTECaV19PSyat\r\na=ssrc:687274967 msid:ojXoWJIee0JVKmKIHXI1KdVKbabfoLswQNK6 aadb8e3a-82a5-482d-9bdc-d14633956928\r\na=ssrc:687274967 mslabel:ojXoWJIee0JVKmKIHXI1KdVKbabfoLswQNK6\r\na=ssrc:687274967 label:aadb8e3a-82a5-482d-9bdc-d14633956928\r\nm=video 1 RTP/SAVPF 100 116 117 96\r\nc=IN IP4 0.0.0.0\r\na=rtcp:1 IN IP4 0.0.0.0\r\na=ice-ufrag:VzXufVwblH4om8MD\r\na=ice-pwd:LPzHqYW7Qx+w0BjouFcBQMYg\r\na=ice-options:google-ice\r\na=fingerprint:sha-256 3F:F6:C6:E7:3E:26:17:89:83:34:FA:F1:97:0A:3A:A9:71:B8:73:A5:C0:E3:48:7E:36:17:12:D4:3B:E8:A5:F8\r\na=setup:actpass\r\na=mid:video\r\na=extmap:2 urn:ietf:params:rtp-hdrext:toffset\r\na=extmap:3 http://www.webrtc.org/experiments/rtp-hdrext/abs-send-time\r\na=sendrecv\r\na=rtcp-mux\r\na=rtpmap:100 VP8/90000\r\na=rtcp-fb:100 ccm fir\r\na=rtcp-fb:100 nack\r\na=rtcp-fb:100 nack pli\r\na=rtcp-fb:100 goog-remb\r\na=rtpmap:116 red/90000\r\na=rtpmap:117 ulpfec/90000\r\na=rtpmap:96 rtx/90000\r\na=fmtp:96 apt=100\r\na=ssrc-group:FID 1998620391 2674792308\r\na=ssrc:1998620391 cname:/FpdTECaV19PSyat\r\na=ssrc:1998620391 msid:ojXoWJIee0JVKmKIHXI1KdVKbabfoLswQNK6 eeec1b92-9c61-49dc-8eb3-ef13da685833\r\na=ssrc:1998620391 mslabel:ojXoWJIee0JVKmKIHXI1KdVKbabfoLswQNK6\r\na=ssrc:1998620391 label:eeec1b92-9c61-49dc-8eb3-ef13da685833\r\na=ssrc:2674792308 cname:/FpdTECaV19PSyat\r\na=ssrc:2674792308 msid:ojXoWJIee0JVKmKIHXI1KdVKbabfoLswQNK6 eeec1b92-9c61-49dc-8eb3-ef13da685833\r\na=ssrc:2674792308 mslabel:ojXoWJIee0JVKmKIHXI1KdVKbabfoLswQNK6\r\na=ssrc:2674792308 label:eeec1b92-9c61-49dc-8eb3-ef13da685833\r\n"
 				// , type: "offer"}, callee: "user_HarryPotter030"}, 
 	// saveTime: 1413840756775};
-	
-	
-	
+
 // function fakeRingBugbug()
 // {
 	// processAsIncomingCall(testConfRecepJson);
 // }
 
-	
-
-
-// function gotRemoteDescription(description)
-// {
-	// pc.setLocalDescription(new RTCSessionDescription(answer), function() {
-        // // send the answer to a server to be forwarded back to the caller (you)
-
-
-
-  // remotePeerConnection.setLocalDescription(description);
-  // trace("Answer from remotePeerConnection: \n" + description.sdp);
-  // localPeerConnection.setRemoteDescription(description);
-// }
-
-//bugbug old probably
-// function gotStream(stream)
-// {
-  // trace("Received local stream");
-  // localVideo.prop('src', URL.createObjectURL(stream));
-  // localStream = stream;
-  // //enable($callButton);
-  // trace("called");
-// }
-
-// setTimeout(function(){
-				// enable($startButton)
-				// $startButton.on('click',start); //bugbug??on('click',start );  
-								
-				// disable($callButton);
-				// $callButton.on('click',call );
-				// disable($hangupButton)
-				// $hangupButton.on('click',hangup);
-			// },500);
-
-
-// function gotRemoteStream_his(event) {  // _his  keep for testing...
-    // var mediaStreamSource = context.createMediaStreamSource(event.stream);
-    // mediaStreamSource.connect(context.destination);
-// }			

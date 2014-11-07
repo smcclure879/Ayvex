@@ -1,3 +1,5 @@
+var getSelectedItem = null;
+
   
 // (c) Dean McNamee <dean@gmail.com>.  All rights reserved.
 function start3d(theDrawings,opts) 
@@ -107,32 +109,75 @@ function start3d(theDrawings,opts)
 				//pass the best thru, and insist it hand the old or new best back out  (end up with path#, point #, point serialNum, distance between click and selectPoint
 				best = renderer.getNearest(drawing,x,y,best,ii);  
 			}
-
 		}
-		if (selectIt) select(best);
+
+		
+		for(var key in theDrawings.dynamic)
+		{
+			var drawing = theDrawings.dynamic[key];
+			ii++; //bugbug should we???
+			best=drawing.getNearest(x,y,renderer,best,ii);
+			best.key=key;
+		}
+	
+		
+		if (selectIt) 
+			select(best);
+			
 		return best;
 	}
   
 
 	var selectedItem=null;
 	//best == newly selected item (best match to mouseclick)
-	function select(bestItem)  
+	function select(bestItem)  //bugbug get rid of "two kinds of stuff to iterate thru"
 	{
-		if (bestItem==null || bestItem.closestPointIndex<0) return;
+		if (bestItem==null || bestItem.closestPointIndex<0) 
+			return;
 		
 		//debugSet(bestItem.closestDrawingIndex+","+bestItem.closestPointIndex);
 		
-		//clear out the old selection
-		if (selectedItem!=null && selectedItem.closestDrawingIndex>=0) 
+		if (selectedItem!=null)
 		{
-			theDrawings[selectedItem.closestDrawingIndex].isSelected=false;
+			//clear out the old selection
+			if (selectedItem!=null && selectedItem.closestDrawingIndex>=0 && selectedItem.closestDrawingIndex<theDrawings.length) 
+			{
+				theDrawings[selectedItem.closestDrawingIndex].isSelected=false;
+			}
+			else if (selectedItem.key)
+			{
+				theDrawings.dynamic[selectedItem.key].isSelected=false;
+			}
+			else 
+			{
+				alert("wtfbugbug");
+			}
 		}
 		
 		//actually perform new selection
 		selectedItem=bestItem;
-		theDrawings[bestItem.closestDrawingIndex].isSelected=true;
-		theDrawings[bestItem.closestDrawingIndex].closestPointIndex=bestItem.closestPointIndex;
-	};
+		var actualItem=bestItem.actualItem;
+		
+		//bugbug consolidate this handling of two lists of drawings...
+		if (selectedItem.key)
+		{
+			actualItem.isSelected=true;
+			actualItem.closestPointIndex=-177777;
+		}
+		else
+		{
+			actualItem.isSelected=true;
+			actualItem.closestPointIndex=bestItem.closestPointIndex;
+			//theDrawings[bestItem.closestDrawingIndex].closestPointIndex=bestItem.closestPointIndex;
+		}
+	}
+	
+	//changing the global function to look inside me. bugbug revisit this
+	getSelectedItem = function()
+	{
+		return selectedItem;
+	}
+	
 	
 
 	renderer.camera.focal_length = 3;  //bugbug settings originally 1/2

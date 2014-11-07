@@ -192,13 +192,24 @@ Gamer.prototype.realDraw=function(renderer,log2size) //,gameTime)  //todo need t
 	}
 	//todo if any more points turn that into an array or something!
 	
-	//todo gamer can't be selected, can it?
-	// if (this.isSelected) ctx.strokeStyle = 'purple';  etc etc
+
 	
 	//ctx.drawTetrahedron()  TODO do this now with drawTriangleAbs()
 	
 	ctx.beginPath();
-	ctx.strokeStyle = this.color;
+
+	//todo gamer can't be selected, can it? --yes it can, as a target for whisper or voice conf!!!
+	if (this.isSelected) 
+	{
+		ctx.strokeStyle = 'purple';  //etc etc
+		ctx.fillStyle = 'purple';
+	}
+	else
+	{
+		ctx.strokeStyle = this.color;
+		ctx.fillStyle = this.color;
+	}
+	
 	drawLineAbsAbs(ctx,nosePoint2d,headPoint2d);  //nose
 	//drawLineAbsAbs(ctx,headPoint2d,footPoint2d);  //body
 	

@@ -374,7 +374,9 @@ var DemoUtils = (function() {
 	function panUpDown(u) { u/=timeStepU; camera_state.y += u; dirtyCam=true;}
 	function orbit1(u) { panLeftRight(u); pointAtSelected(); }
 	function orbit2(u) { panUpDown(u); pointAtSelected(); }
-	function talk() { talkJsHook(); };
+	function talk() { talkJsHook(); }  
+	function startConf() {  conferenceJsHook(); }
+	
 	
 	
 	function pointAtSelected()
@@ -400,6 +402,34 @@ var DemoUtils = (function() {
 		setYawAng(rotY);
 	}
 
+	
+	
+	
+	//bugbugNOW move to debounce.js
+	var deadKeys=[];
+	function debounce(keyNum,proc,args)
+	{
+		if (deadKeys[keyNum]) 
+			return;
+			
+		deadKeys[keyNum]=true;
+		setTimeout(	function(){   //bugbug convert to use a Stepper?
+							deadKeys[keyNum]=true;
+							proc(args);
+							setTimeout( function(){  
+												DemoUtils.KeyTracker.forceKeyUp(keyNum);
+												deadKeys[keyNum]=false;
+											},
+										500);
+								
+							},
+					20 
+				);		
+	}
+	
+	
+	
+	
 	function myTick(frameNum)
 	{
 		//debugSet("k=" + DemoUtils.KeyTracker.AsString())
@@ -419,7 +449,8 @@ var DemoUtils = (function() {
 		if (isDown(68))  orbit1(-1);  //d
 		if (isDown(89))  orbit2(-1);  //y
 		if (isDown(72))  orbit2( 1);  //h
-		if (isDown(84))  talk();  //t
+		if (isDown(84))  debounce(84,talk);  //t
+		if (isDown(86))  debounce(86,startConf); //v (videoconf)
 
 		if (animate) animateIt(frameNum);
 		
