@@ -251,10 +251,37 @@ Gamer.prototype.realDraw=function(renderer,log2size) //,gameTime)  //todo need t
 	
 	if (this.isCallee() && $remoteVideo)
 	{
-		$remoteVideo.css('left',""+(footPoint2d['x']-100)+"px")
-					.css('top' ,""+(footPoint2d['y']-100)+"px");
+		var vidScale = 200;  //bugbug find other uses of this constant and rationalize
+		var distScale = Math.abs(headPoint2d['y']-footPoint2d['y']);
+		  
+		
+		var remoteVideoHeight = vidScale/10 * distScale;  
+		var remoteVideoWidth = remoteVideoHeight;    //bugbug do something special if looking away!  or off at an angle
+		
+		remoteVideoWidth  = clip(remoteVideoWidth ,vidScale/10,vidScale);
+		remoteVideoHeight = clip(remoteVideoHeight,vidScale/10,vidScale);
+		
+		$remoteVideo.css('left'  ,pixel(footPoint2d['x']-vidScale/2))
+					.css('top'   ,pixel(footPoint2d['y']-vidScale/2))
+					.css('width' ,pixel(remoteVideoWidth ))
+					.css('height',pixel(remoteVideoHeight))
+				;
 					//bugbugSOON also change size if they are far away, and default to a corner for behind???
 	}
+}
+
+function pixel(z)     // 58 --> 58px
+{
+	return ""+parseInt(z)+"px";
+}
+
+function clip(x,a,b)    //
+{
+	if (x<a)
+		return a;
+	if (x>b) 
+		return b;
+	return x;
 }
 
 Gamer.prototype.isCallee=function()
