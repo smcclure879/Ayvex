@@ -1,4 +1,5 @@
-//conference.js
+//conference.js:   smcclure879
+
 
 //old e.g.....
 // var configuration = { iceServers: [{ url: "stun:stun.services.mozilla.com",
@@ -47,9 +48,6 @@ var dumps = JSON.stringify;
 
 
 
-
-
-//smcclure
 var telecInfo={};  //global for now bugbug
 
 
@@ -63,6 +61,12 @@ function conferenceJsHook()  //don't change this name
 function maybeDoTeleconf(localCopyOfItem,itemFromServer)  
 {
 	maybeDoTeleconfInternal(localCopyOfItem,itemFromServer);
+}
+
+
+function getCallee()
+{
+	return telecInfo._otherParty;
 }
 
 function hangup() 
@@ -108,7 +112,7 @@ function initiateConnection(localStream)
 	//bugbug still needed??? 
 	//window.stream = localStream; // stream available to console
 	
-	$localVideo.prop('muted',true).change();
+	//$localVideo.prop('muted',true).change();
 	$localVideo.prop('src', window.URL.createObjectURL(localStream)).change();
 		
 	if (localStream.getVideoTracks().length > 0) 
@@ -151,7 +155,7 @@ function maybeDoTeleconfInternal(localCopyOfItem,itemFromServer)
 	var otherParty=itemFromServer.value;
 	if (!otherParty || !otherParty.telecInfo)
 		return;
-	
+		
 	//explicitly already tested to make sure this is not us, but maybe do it again???
 	var calleeKey = otherParty.telecInfo.callee;
 	if (!inCall && calleeKey && isMe(calleeKey) )  
@@ -165,7 +169,7 @@ function maybeDoTeleconfInternal(localCopyOfItem,itemFromServer)
 			finalizeOfferCycle(otherParty);  //sets inCall to 2
 		}
 	}
-	else
+	else	
 	{
 		//passthru: got a telecInfo, but it's not for us
 		if (typeof debug != 'undefined' && debug)  
@@ -173,7 +177,6 @@ function maybeDoTeleconfInternal(localCopyOfItem,itemFromServer)
 			alert("bugbug115p: unknown state:"+inCall+" "+dumps(pc));
 			alert("otherParty="+dumps(otherParty));
 		}
-		return;  //for good measure
 	}
 	
 }
@@ -188,9 +191,11 @@ function processAsIncomingCall(callee)
 	if (!currentOffer)
 		return;
 	
-	if (!confirm("accept call from "+dumps(callee)+"?"))  //bugbug just the key??
+	if (!confirm("accept call from "+callee.userId+"?"))  //bugbug just the key??
 		return; //ignoring it  //prolly need to record this somehow?bugbug
 
+	telecInfo._otherParty=callee.userId;
+			
 	if (inCall) 
 		return; //busy
 	inCall=true;
@@ -264,16 +269,14 @@ function handleIceCandidateMessage(iceCandidate)
 function finalizeOfferCycle(otherParty)
 {
 	//alert("finalizeConn..."+dumps(pc))	
-	pc.setRemoteDescription(new RTCSessionDescription(otherParty.telecInfo.answer),successqqq,errorHandler);
+	pc.setRemoteDescription(new RTCSessionDescription(otherParty.telecInfo.answer),endOfFinalize,errorHandler);
 	inCall=2;
 }
 
-function successqqq(returnOffer)
+function endOfFinalize()
 {
-	alert("conference started");
+	//nothing
 }
-
-
 
 
 //////  ice candidate handling  //////
@@ -315,7 +318,7 @@ function sendMyOffer()
 	var offer=pc.localDescription;
 	telecInfo.currentOffer=offer;  
 	telecInfo.callee=getSelectedItem().key;  //bugbug we should have done this sooner--almost right after "v" is pushed!!!
-	
+	telecInfo._otherParty=telecInfo.callee;
 	trace("pc state while postOfferSend:"+dumps(pc));
 
 	//extra hooks for tests

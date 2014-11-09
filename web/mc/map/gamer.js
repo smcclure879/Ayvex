@@ -139,7 +139,7 @@ Gamer.prototype.realDraw=function(renderer,log2size) //,gameTime)  //todo need t
 			});  //todo boundingBox3d, etc etc here?  vs. how much of this already in "this"  (cache "age"?)
 		
 	
-	//else...crappy default code...can we call the superclass instead???
+	//else...crappy default code...todo can we call the superclass instead???
 	if (this.pointh==null) 
 		return null;  
 	
@@ -198,7 +198,7 @@ Gamer.prototype.realDraw=function(renderer,log2size) //,gameTime)  //todo need t
 	
 	ctx.beginPath();
 
-	//todo gamer can't be selected, can it? --yes it can, as a target for whisper or voice conf!!!
+	//gamer can be selected, e.g. as a target for whisper or voice conf!!!
 	if (this.isSelected) 
 	{
 		ctx.strokeStyle = 'purple';  //etc etc
@@ -248,6 +248,23 @@ Gamer.prototype.realDraw=function(renderer,log2size) //,gameTime)  //todo need t
 	
 	ctx.stroke();
 	ctx.strokeStyle="red";
+	
+	if (this.isCallee() && $remoteVideo)
+	{
+		$remoteVideo.css('left',""+(footPoint2d['x']-100)+"px")
+					.css('top' ,""+(footPoint2d['y']-100)+"px");
+					//bugbugSOON also change size if they are far away, and default to a corner for behind???
+	}
+}
+
+Gamer.prototype.isCallee=function()
+{
+	var otherParty=getCallee();
+	if (!otherParty) 
+		return false;
+	if (otherParty!="user_"+this.text)
+		return false;
+	return true;
 }
 
 function fixQuote(str)
