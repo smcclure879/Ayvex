@@ -233,10 +233,11 @@ def purifyLine(s):
 	return s
 	
 	
-	
 #bugbug apply the __main__ pattern here...
 userAndPass = b64encode(userPass).decode("ascii")
 authString = u'Basic %s' %  userAndPass
+
+
 items=allRelevantFilesUnder(".."+sep+"web",pattern)
 for file,url,name in items:	
 	

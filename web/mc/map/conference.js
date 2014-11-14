@@ -194,7 +194,7 @@ function processAsIncomingCall(callee)
 	if (!confirm("accept call from "+callee.userId+"?"))  //bugbug just the key??
 		return; //ignoring it  //prolly need to record this somehow?bugbug
 
-	telecInfo._otherParty=callee.userId;
+	telecInfo._otherParty=callee.userId;    //this one already has user_ stripped
 			
 	if (inCall) 
 		return; //busy
@@ -219,7 +219,7 @@ function acknowledgeConnection(localStream,currentOffer)
 {
 	//pc.onaddstream({stream: localStream});  //calling gotRemoteStream with local???
 	//show it locally
-	$localVideo.prop( 'src', URL.createObjectURL(localStream) ).change();
+	$localVideo.prop( 'src', URL.createObjectURL(localStream) ).change(); 
 	
 	//send it to originator  (bugbug is this too early, move to createAnswer??)
 	pc.addStream(localStream);
@@ -232,15 +232,16 @@ function acknowledgeConnection(localStream,currentOffer)
 // THENTO
 function createAnswer()
 {
-	//alert("creatingAsnwer"+dumps(pc));
+	//alert("creatingAnswer"+dumps(pc));
 	pc.createAnswer(useAnswer,errorHandler);
 }
 // THENTO
 function useAnswer(answer)
 {
-	//alert("answer created:"+dumps(answer));
+	alert("connection going thru now");
 	//alert("pc state="+dumps(pc));
-	pc.setLocalDescription(new RTCSessionDescription(answer), function(){/* sendAnswer(answer) */}, errorHandler);
+	pc.setLocalDescription(new RTCSessionDescription(answer));
+			//, function(){/* sendAnswer(answer) */}, minorErrorHandler);
 }
 // THENTO  nope
 
@@ -310,6 +311,17 @@ function gotIceCandidateForReceiver(event)  //skipped for now actually
 	}
 }
 
+function stripUserPrefix(s)
+{
+	return stripPrefix("user_",s);
+}
+
+function stripPrefix(prefix,s)
+{
+	if (s.startsWith(prefix))
+		return s.substring(prefix.length);
+	return s;		
+}
 
 
 function sendMyOffer()
@@ -318,7 +330,7 @@ function sendMyOffer()
 	var offer=pc.localDescription;
 	telecInfo.currentOffer=offer;  
 	telecInfo.callee=getSelectedItem().key;  //bugbug we should have done this sooner--almost right after "v" is pushed!!!
-	telecInfo._otherParty=telecInfo.callee;
+	telecInfo._otherParty=stripUserPrefix(telecInfo.callee);  //bugbug better way than new function, maybe a fix to line before this one?
 	trace("pc state while postOfferSend:"+dumps(pc));
 
 	//extra hooks for tests
@@ -370,6 +382,12 @@ function errorHandler(err)  //bugbug consolidate with other similars.  3 functio
 {
 	trace(err);
 	alert("err"+getStackTrace()+"  "+dumps(err));  //bugbug separate for separate cases????
+}
+
+function minorErrorHandler(err)  //bugbug consolidate with other similars.  3 functions!
+{
+	trace(err);
+	trace("err"+getStackTrace()+"  "+dumps(err));  //bugbug separate for separate cases????
 }
 
 function getStackTrace() 

@@ -133,7 +133,7 @@ camRotZ<input type="text" id="camRotZ" value="x"/><br>
 
 <script>
 
-var debug=false;
+var debug=false; 
 
 var floor=62;  //minecraftWaterLevel todo setting or ???
 
@@ -141,16 +141,16 @@ var darkBrown='rgba(101,67,33,1.0)';
 
 //todo jquerify and consolidate...there are more of these...
 var toolbar = document.getElementById("toolbar");
-var $anim = $("#animate");
+var $anim = $("#animate"); 
 
 
 //This section is connection/init to conference.js  (bugbug make a better class/object) (needed to be here because wasn't working from inside conference.js!)
 var localStream, localPeerConnection, remotePeerConnection;
 var $localVideo = $('#localVideo');
 var $remoteVideo = $('#remoteVideo');
-//bugbugvar $startButton = $("#startButton");
-//var $callButton = $('#callButton');
-//var $hangupButton = $('#hangupButton');
+var $canvas = $('#c');
+var screenWidth;
+var screenHeight;
 
 
 //todo we need an OBJECT here that implements a local k-d tree  there is an opensource k-d tree we should use....	
@@ -779,6 +779,9 @@ $(document).ready(function()
 	setMap(oGetVars["dataset"]);  
 	updateBackground();
 
+	//bugbug move these somewhere we can work faster (do it once near init)
+	screenWidth =$canvas.prop("width" );
+	screenHeight=$canvas.prop("height");
 
 	var opts = {
 		updateServerCallback:getUpdateServerCallback()
