@@ -32,7 +32,7 @@ must be available: explicit non-rendering... see *where* you are not seeing. see
 
 sample-sample-sample (and presample) to keep framerate up.  trust random and trust consistent hashing.
 
-
+videoconferencing should just work, even if we have to drop resolution or frame rates.  for 1.0, probably only 1-1 conf.  
 
 
 
