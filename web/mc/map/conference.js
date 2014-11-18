@@ -25,7 +25,12 @@ var servers = {
 				{url:"stun:stun1.l.google.com:19302"},
 				{url:"stun:stun2.l.google.com:19302"},
 				{url:"stun:stun3.l.google.com:19302"},
-				{url:"stun:stun4.l.google.com:19302"}
+				{url:"stun:stun4.l.google.com:19302"},
+				{
+					url: 'turn:numb.viagenie.ca',
+					credential: 'muazkh',
+					username: 'webrtc@live.com'
+				}
 					//was...
 					// [STUN
 					// //, TURN  //bugbug probably don't want to use this since it's leakier
