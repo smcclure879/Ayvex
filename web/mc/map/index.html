@@ -42,7 +42,7 @@
 
 <body>
 
-
+<div id="userName">schmuck</div>
 <table border="0" height="90%">
 <tr>
 <td style="width:1000px" oncontextmenu=";return false"> <!-- disallowing context menu in the map surface only! -->
@@ -387,7 +387,7 @@ function setMap(dataSetName)  //no longer a callback from the cameraAndStuff.js
 	//defaulting a bunch
 	if (typeof dataSetName === 'undefined')
 	{
-		dataSetName=$("#dataset").value
+		dataSetName=$("#dataset").value;
 		if (typeof dataSetName === 'undefined')
 		{
 			dataSetName='mc2map';
@@ -460,8 +460,23 @@ function setFractalWorld()
 	addTreesAndWater(theDrawings,treePoleFrac);
 	pushAll(getWelcomeSign(),theDrawings);
 	
-	theUser.userId = prompt("Please enter your username", "HarryPotter029");  
 	
+	// bug57 & bug60
+	if (oGetVars["name"])
+	{
+		//bugbugSOON   LOAD the user here!
+		theUser.userId = oGetVars["name"];
+	}
+	else
+	{
+		theUser.userId = prompt("Please enter your username", "HarryPotter029");
+	}
+
+	if (!theUser.userId)
+		close();
+
+	$("#userName").text(theUser.userId);
+
 	
 	// "monsters" or "NPCs"
 	var ghost=[];
@@ -773,13 +788,12 @@ isDown = DemoUtils.KeyTracker.isDown;
 $(document).ready(function() 
 {
 	if (oGetVars["dataset"]) 
-		$("#dataset").val(oGetVars["dataset"]);  //not .change() ... infinite page loop???
+		$("#dataset").val(oGetVars["dataset"]); 
 		
 	
 	setMap(oGetVars["dataset"]);  
 	updateBackground();
 
-	//bugbug move these somewhere we can work faster (do it once near init)
 	screenWidth =$canvas.prop("width" );
 	screenHeight=$canvas.prop("height");
 
