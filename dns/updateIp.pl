@@ -8,14 +8,14 @@ use File::Basename;
 
 my $MINUTES = 60;
 
-my $dnsName="ayvex2.dnsalias.com";
+my $dnsName="ayvex.dnsalias.com";
 
 my $pazzword="20abd9bc512f11e4814ccd0e1d232429";
 #  updater client key = 20abd9bc512f11e4814ccd0e1d232429
 
 
 print "remember this sleeps 5 minutes in case internet is just down for a while after power out\n";
-sleep 5 * $MINUTES;   
+sleep 5 * $MINUTES; 
 print "sleep is done\n";
 
 
@@ -107,7 +107,6 @@ else
 
 
 close $fhw;
-die "for now";
 
 
 
@@ -141,7 +140,7 @@ print $fhw "\n\nThere is also a creative-mode server if you use 25566 instead\n"
 
 #work with dyn.org
 
-my $url="http://ayvex:$pazzword\@members.dyndns.org/nic/update?hostname=ayvex2.dnsalias.com&myip=$ipAddr&wildcard=NOCHG&mx=NOCHG&backmx=NOCHG";
+my $url="http://ayvex:$pazzword\@members.dyndns.org/nic/update?hostname=$dnsName&myip=$ipAddr&wildcard=NOCHG&mx=NOCHG&backmx=NOCHG";
 #       http://username:password@members.dyndns.org/nic/update?hostname=yourhostname&myip=ipaddress&wildcard=NOCHG&mx=NOCHG&backmx=NOCHG
 print $url;
 my $output=`curl \"$url\"`;
