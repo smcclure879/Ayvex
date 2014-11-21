@@ -1,6 +1,5 @@
 
 
-
 //is this duplicated elsewhere?  at any length should go into 
 function projection(start, length, orientation)
 {
@@ -139,7 +138,7 @@ Gamer.prototype.realDraw=function(renderer,log2size) //,gameTime)  //todo need t
 			});  //todo boundingBox3d, etc etc here?  vs. how much of this already in "this"  (cache "age"?)
 		
 	
-	//else...crappy default code...can we call the superclass instead???
+	//else...crappy default code...todo can we call the superclass instead???
 	if (this.pointh==null) 
 		return null;  
 	
@@ -192,13 +191,24 @@ Gamer.prototype.realDraw=function(renderer,log2size) //,gameTime)  //todo need t
 	}
 	//todo if any more points turn that into an array or something!
 	
-	//todo gamer can't be selected, can it?
-	// if (this.isSelected) ctx.strokeStyle = 'purple';  etc etc
+
 	
 	//ctx.drawTetrahedron()  TODO do this now with drawTriangleAbs()
 	
 	ctx.beginPath();
-	ctx.strokeStyle = this.color;
+
+	//gamer can be selected, e.g. as a target for whisper or voice conf!!!
+	if (this.isSelected) 
+	{
+		ctx.strokeStyle = 'purple';  //etc etc
+		ctx.fillStyle = 'purple';
+	}
+	else
+	{
+		ctx.strokeStyle = this.color;
+		ctx.fillStyle = this.color;
+	}
+	
 	drawLineAbsAbs(ctx,nosePoint2d,headPoint2d);  //nose
 	//drawLineAbsAbs(ctx,headPoint2d,footPoint2d);  //body
 	
@@ -237,6 +247,58 @@ Gamer.prototype.realDraw=function(renderer,log2size) //,gameTime)  //todo need t
 	
 	ctx.stroke();
 	ctx.strokeStyle="red";
+	
+	if (this.isCallee() && $remoteVideo)
+	{
+		var vidScale = 150;  //bugbug find other uses of this constant and rationalize
+		var distScale = Math.abs(headPoint2d['y']-footPoint2d['y']);
+		  
+		var ww = vidScale/8 * distScale;  
+		var hh = ww;    //bugbug do something special if looking away!  or off at an angle
+		
+		// var xx = footPoint2d['x']-vidScale/1.5;
+		// var yy = footPoint2d['y']-vidScale/1.5;
+		
+		ww = clip(ww,vidScale/5,vidScale*2);
+		hh = clip(hh,vidScale/5,vidScale*2);
+
+		var xx=headPoint2d.x-0 -20;
+		var yy=headPoint2d.y-hh-20;
+		
+		xx=clip(xx,0,screenWidth -vidScale/1.1);
+		yy=clip(yy,0,screenHeight-vidScale/1.1); 
+		
+		$remoteVideo.css('left'  ,pixel(xx))
+					.css('top'   ,pixel(yy))
+					.css('width' ,pixel(ww))
+					.css('height',pixel(hh))
+		;
+		//bugbugSOON also change size if they are far away, and default to a corner for behind???
+	}
+}
+
+function pixel(z)     // 58 --> 58px
+{
+	return ""+parseInt(z)+"px";
+}
+
+function clip(x,a,b)    //
+{
+	if (x<a)
+		return a;
+	if (x>b) 
+		return b;
+	return x;
+}
+
+Gamer.prototype.isCallee=function()
+{
+	var otherParty=getCallee();
+	if (!otherParty) 
+		return false;
+	if (otherParty==this.text || otherParty=="user_"+this.text)   //bugbugSOON resolve this issue at source
+		return true;
+	return false;
 }
 
 function fixQuote(str)

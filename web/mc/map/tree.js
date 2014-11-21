@@ -192,6 +192,7 @@ iDrawable.prototype.getNearest=function(x,y,renderer,best,thisDrawingIndex)
 	best.y=this.pointh.y;
 	best.z=this.pointh.z;
 	best.xd=this.pointh.xh;
+	best.actualItem=this;
 	debugSet("winner"+thisDrawingIndex);
 	return best;
 }

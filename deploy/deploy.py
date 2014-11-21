@@ -14,7 +14,7 @@ from base64 import b64encode
 
 
 usage= """
-	USAGE:python server:port name:pwd <pattern>
+	USAGE:   python deploy.py server:port name:pwd <pattern>
 		
 		<pattern> ::  one of:  recent, all,  *.jpg
 """
@@ -233,17 +233,20 @@ def purifyLine(s):
 	return s
 	
 	
-	
 #bugbug apply the __main__ pattern here...
 userAndPass = b64encode(userPass).decode("ascii")
 authString = u'Basic %s' %  userAndPass
+
+
 items=allRelevantFilesUnder(".."+sep+"web",pattern)
 for file,url,name in items:	
 	
 	while url.startswith("/"):
 		url=url[1:]
 	
-	if url.endswith("views.json"):  #there better only be one file called this!
+	if url.endswith(".no"):
+		result = "ignoring"
+	elif url.endswith("views.json"):  #there better only be one file called this!
 		result = putViewFile(file,name)
 	elif url.endswith("validations.json"):
 		result = putViewFile(file,name)  #bugbug note rename to design file???
@@ -252,6 +255,8 @@ for file,url,name in items:
 	else: #regular file
 		result = putAttachment(file,url)
 
-	print "finished---"+result
+	print "finished---"+result,"\a"
 	time.sleep(1)
 
+print "--------finished-----"
+print time.ctime(),"\a\a"

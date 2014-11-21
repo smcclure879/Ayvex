@@ -1,7 +1,7 @@
 //sign.js
 
-//bugbug rely on this one value from other files int he include chain...
-//var sealevel=62;   //bugbug consts
+// rely on this one value from other files int he include chain...
+//var sealevel=62;   //todo consts
 
 
 //// section DRAW HELPERS  is in bigShape.js but might move from there to drawHelpers.js or similar.

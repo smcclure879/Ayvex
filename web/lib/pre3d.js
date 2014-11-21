@@ -393,22 +393,33 @@ var Pre3d = (function() {
 		console.log("bugbug bad t in transformPoint");
 		return { x:-777, y:-777, z:777 };  
     }
-	if (typeof p=='undefined' || !p || typeof p.x == 'undefined' )
+	if (typeof p=='undefined' || !p || (typeof p.x == 'undefined' && typeof p.rotX=='undefined') )
 	{
 		//alert( "bugbug bad p case1" );
 		return null;
 	}
-	if (! ('x' in p))
+	
+	if ('rotX' in p)
+	{
+		return {
+			x: 45,
+			y: 45     //bugbug should be a simple matter of adding the angles (cam and obj)
+		
+		};
+	}
+	else if (! ('x' in p))
 	{
 		//alert("bugbug bad p case2" );
 		return null;
 	}
-	
-    return {
-      x: t.e0 * p.x + t.e1 * p.y + t.e2  * p.z + t.e3,
-      y: t.e4 * p.x + t.e5 * p.y + t.e6  * p.z + t.e7,
-      z: t.e8 * p.x + t.e9 * p.y + t.e10 * p.z + t.e11
-    };
+	else
+	{
+		return {
+			  x: t.e0 * p.x + t.e1 * p.y + t.e2  * p.z + t.e3,
+			  y: t.e4 * p.x + t.e5 * p.y + t.e6  * p.z + t.e7,
+			  z: t.e8 * p.x + t.e9 * p.y + t.e10 * p.z + t.e11
+			};
+	}
   }
   
 	// Transform the point |p| by the AffineMatrix |t|.  should be N==>3  dimensions
@@ -976,7 +987,37 @@ var Pre3d = (function() {
 				
   };
 
-  
+	Renderer.prototype.projectFarPointToCanvas = function (p3,skipOffscreenPoint) 
+	{
+		if (!p3) 
+			return null;
+	  
+		if (skipOffscreenPoint)
+			alert('far points cannot skip offscreen');
+			
+		var p2;
+		if ('rotX' in p3)  //pretend it's on the horizon far away bugbugNOW
+		{
+			var fakeZ = p3.z;
+			//bugbugNOW ignore rotX!
+			p3.x=Math.sin(p3.rotY)*fakeZ;
+			p3.y=Math.sin(p3.rotX)*fakeZ; //bugbugNOW
+			p3.z=-100; //Math.cos(p3.rotY)*fakeZ; bugbugSOON
+			p2=this.projectPointToCanvas(p3,skipOffscreenPoint);  //bugbugSOON should be plain
+			
+			// p2.x=(Math.cos(p3.rotX)*Math.sin(p3.rotY))/-p3.z;
+			// p2.y=(Math.sin(p3.rotX))/-p3.z;
+		}
+		else
+		{
+			alert('cannot call far point projection without rotX');
+		}
+
+		return p2;
+	};
+
+
+
   function atan3(y,x)
   {
 	return Math.atan(y,x);
@@ -1371,8 +1412,8 @@ var Pre3d = (function() {
   
 
   Renderer.prototype.setCurrentTransform=function()
-  {
-      this.currentTransform = multiplyAffine(this.camera.transform.m, this.transform.m);  //bugbug memoize--all paths being drawn share same transform!
+  {	
+    this.currentTransform = multiplyAffine(this.camera.transform.m, this.transform.m);  //bugbug memoize--all paths being drawn share same transform!
   }
   
   
@@ -1501,6 +1542,7 @@ var Pre3d = (function() {
 		best.x=path.points[ii].x;
 		best.y=path.points[ii].y;
 		best.z=path.points[ii].z;
+		best.actualItem=path;
 	}
 	return best;
   }

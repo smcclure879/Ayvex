@@ -31,6 +31,8 @@
 <script src="bigShape.js"></script>
 <script src="bigSign.js"></script>
 <script src="talk.js"></script>
+<script src="conference.js"></script>
+<script src="adapter.js"></script>
 
 
 <!-- s c r ipt src="http://localhost:5984/_utils/script/jquery.couch.js?0.11.0"></ s c r ipt  -->
@@ -40,7 +42,7 @@
 
 <body>
 
-
+<div id="userName"></div>
 <table border="0" height="90%">
 <tr>
 <td style="width:1000px" oncontextmenu=";return false"> <!-- disallowing context menu in the map surface only! -->
@@ -69,6 +71,16 @@ xMOD:<select id="xanimate">
 	<option value="sequence5">sequence5</option>
 	<option value="magic">magic</option>
 </select>
+
+
+	<video id="localVideo" width="50" height="50" style="" autoplay>localVid</video>
+	<video id="remoteVideo" width="100" height="100"  style="z-index:5; position:absolute; left:-20px; top: -20px" autoplay>remoteVid</video>
+
+<!-- 	<input type="button" id="startButton" value="Start" />
+	<input type="button" id="callButton" value="Call" />
+	<input type="button" id="hangupButton" value="Hang Up" /> -->
+
+
 <br>
 <input type="checkbox" value="lockon" id="lockon" >LCK</input>
 <input type="checkbox" value="black" id="black" checked>BLK</input>
@@ -97,6 +109,16 @@ camRotZ<input type="text" id="camRotZ" value="x"/><br>
 </tr>
 </table>
 <br>
+
+
+
+
+
+
+
+
+
+
 </div>
 <div><br><br><br><br><br><br><br><br><br>
 </div>
@@ -111,7 +133,7 @@ camRotZ<input type="text" id="camRotZ" value="x"/><br>
 
 <script>
 
-
+var debug=false; 
 
 var floor=62;  //minecraftWaterLevel todo setting or ???
 
@@ -119,7 +141,17 @@ var darkBrown='rgba(101,67,33,1.0)';
 
 //todo jquerify and consolidate...there are more of these...
 var toolbar = document.getElementById("toolbar");
-var $anim = $("#animate");
+var $anim = $("#animate"); 
+
+
+//This section is connection/init to conference.js  (bugbug make a better class/object) (needed to be here because wasn't working from inside conference.js!)
+var localStream, localPeerConnection, remotePeerConnection;
+var $localVideo = $('#localVideo');
+var $remoteVideo = $('#remoteVideo');
+var $canvas = $('#c');
+var screenWidth;
+var screenHeight;
+
 
 //todo we need an OBJECT here that implements a local k-d tree  there is an opensource k-d tree we should use....	
 var theDrawings=[];
@@ -355,7 +387,7 @@ function setMap(dataSetName)  //no longer a callback from the cameraAndStuff.js
 	//defaulting a bunch
 	if (typeof dataSetName === 'undefined')
 	{
-		dataSetName=$("#dataset").value
+		dataSetName=$("#dataset").value;
 		if (typeof dataSetName === 'undefined')
 		{
 			dataSetName='mc2map';
@@ -419,7 +451,7 @@ function setFractalWorld()
 	var treePoleFrac=0.5;
 	addCoordinateVectors(theDrawings);
 	//todo add perlin noise, etc etc etc
-	addPolarRays(theDrawings);
+	//bugbug this experiment didn't work...maybe work that stuff back out soon.   addPolarRays(theDrawings);
 	
 	
 	var theHorizonTexts = getHorizon();
@@ -428,12 +460,27 @@ function setFractalWorld()
 	addTreesAndWater(theDrawings,treePoleFrac);
 	pushAll(getWelcomeSign(),theDrawings);
 	
-	theUser.userId = prompt("Please enter your username", "HarryPotter029");  
 	
+	// bug57 & bug60
+	if (oGetVars["name"])
+	{
+		//bugbugSOON   LOAD the user here!
+		theUser.userId = oGetVars["name"];
+	}
+	else
+	{
+		theUser.userId = prompt("Please enter your username", "HarryPotter029");
+	}
+
+	if (!theUser.userId)
+		close();
+
+	$("#userName").text(theUser.userId);
+
 	
 	// "monsters" or "NPCs"
 	var ghost=[];
-	var numGhosts=10;
+	var numGhosts=7;
 	for(var ii=0; ii<numGhosts; ii++)
 	{
 		ghost[ii]=addGamer(theDrawings,"ghost",1162,62,62);
@@ -491,20 +538,22 @@ function getWelcomeSign(pointh,text)
 function addPolarRays(drawings)
 {
 	//bugbug consts
-	var M = 1000000;
+	var M = 100000;
 	var polarColor = "rgba(0,128,0,0.6)"; 
 	
 	var polarLine = MakeBigLine( {x: 0,y:sealevel,z:0}
-								,{x: M,y:sealevel,z:0});  
+								,{x: M,y:sealevel,z:0, rotX:rad(0), rotY:rad(90)});  
 	polarLine.color="red"; //polarColor; bugbugSOON
 	polarLine.isDebug=true;
 	drawings.push(polarLine);
+	
+	
 	polarLine=MakeBigLine( 	 {x:  0,y:sealevel,z:0}
-							,{x: -M,y:sealevel,z:0});  
-	polarLine.color=polarColor;  
+							,{x:  0,y:0       ,z:0, rotX:rad(0), rotY:rad(-90)});  
+	polarLine.color="white";  //polarColor; bugbugSOON  
 	polarLine.isDebug=false;  //not necc.
 	
-	drawings.push(polarLine);
+	//drawings.push(polarLine);  bugbugNOW
 }
 
 function getHorizon()
@@ -739,12 +788,14 @@ isDown = DemoUtils.KeyTracker.isDown;
 $(document).ready(function() 
 {
 	if (oGetVars["dataset"]) 
-		$("#dataset").val(oGetVars["dataset"]);  //not .change() ... infinite page loop???
+		$("#dataset").val(oGetVars["dataset"]); 
 		
 	
 	setMap(oGetVars["dataset"]);  
 	updateBackground();
 
+	screenWidth =$canvas.prop("width" );
+	screenHeight=$canvas.prop("height");
 
 	var opts = {
 		updateServerCallback:getUpdateServerCallback()
@@ -854,7 +905,9 @@ function updateServerCallback(camera_state)
 		theUser._id="user_"+theUser.userId;   //todo const
 	}	
 	theUser.mostRecentQuote=userQuote;
-	theUser.saveTime=getOfficialTime();
+	theUser.drawInstructions="bilateral up100 right100 down50 left200 down50";  //bugbugsoon
+	theUser.telecInfo=telecInfo;  //global local user's telecInfo goes into the local user being persisted
+	theUser.saveTime=getOfficialTime();  //ideally the protocol would save a serverSaveTime as well and other clients will see cheating.
 	if (theUser.saveTime<1400000000) //1B, roughly 2001
 	{
 		console.log('cannot get official time');  //can't do much yet  ...wait for next callback...continue anyway with bad time...
@@ -945,9 +998,25 @@ function updateDynamicObjectFromServerData(item)
 						item.value.saveTime, item.value.mostRecentQuote
 					);
 	
+	maybeDoTeleconf(dynObj,item);  //item is from server
 }
 
 
+function theyAreWhoWeCalled()
+{
+	return true; //bugbugNOW what should this be?  check callee or something
+}
+
+	
+
+	
+function isMe(someKey)
+{
+	return (someKey==theUser._id);
+}
+
+
+	
 function unquote(x)
 {
 	for(ii=0, il=x.length; ii<il && x.substring(ii,1)=="\""; ii++);
