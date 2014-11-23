@@ -1,4 +1,9 @@
 
+superceded by the script updateIp.pl which should be run automatically periodically (and especially 5 minutes after power restore)
+
+
+
+
 dynDns script...
 
 fix this line and use it...
