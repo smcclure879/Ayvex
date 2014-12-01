@@ -1,11 +1,12 @@
+**ask about**
 --play minecraft with us
 --Play aion with us
 
-We are developing a product that will have to exist 10 years from now, but is not seemingly on other company's radar.
+We are developing a product that will have to exist 10 years from now, but is not seemingly on other company's radar.  
 
---Try the product (super-secret-pre-alpha): send steve some email!  smcclure879  (atYeOlde)  yahoo.com
---you a developer?  want to be a developer?  We want to talk to you. 
+It's very rough right now, but you could...
 
-all that and more on the wiki:  https://github.com/smcclure879/Ayvex/wiki      <<---  NEW DEVS GO HERE
+--Try the product (super-secret-pre-alpha): send steve some email!  smcclure879  (at)  yahoo.com
+--you a developer?  want to be a developer?  Try the wiki:  https://github.com/smcclure879/Ayvex/wiki 
 
 
