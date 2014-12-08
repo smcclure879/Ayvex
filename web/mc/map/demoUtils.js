@@ -325,7 +325,7 @@ var DemoUtils = (function() {
  
 //these vars are used to communicate stateu changes into the rather closed demoUtil "class"
   var animate = false;
-  var flying = false;
+  var zipping = false;
   var mhi = null;  //for xanimation  
   var newCameraState=null;
  
@@ -376,7 +376,7 @@ var DemoUtils = (function() {
 	function orbit2(u) { panUpDown(u); pointAtSelected(); }
 	function talk() { talkJsHook(); }  
 	function startConf() {  conferenceJsHook(); }
-	
+	function doAZip() { zipping=true; zipTo(frameNum); }
 	
 	
 	function pointAtSelected()
@@ -449,16 +449,19 @@ var DemoUtils = (function() {
 		if (isDown(68))  orbit1(-1);  //d
 		if (isDown(89))  orbit2(-1);  //y
 		if (isDown(72))  orbit2( 1);  //h
-		if (isDown(84))  debounce(84,talk);  //t
+		if (isDown(84))  debounce(84,talk);  //t    //bugbug should EVERYTHING be debounced???
 		if (isDown(86))  debounce(86,startConf); //v (videoconf)
+		if (isDown(90))  debounce(90,doAZip);
 
 		if (animate) animateIt(frameNum);
 		
-		if (flying) flyTo(frameNum);
+		if (zipping) 
+			zipTo(frameNum);
 		if (newCameraState!=null) 
 			updateCameraState(frameNum,newCameraState);
 		if (setHiDimProj(mhi))   //bugbug every time???  only on change!
 			dirtyCam=true;
+		
 		redoTheCam(frameNum);
 	}
 
@@ -497,15 +500,17 @@ var DemoUtils = (function() {
 		dirtyCam=true;
 	}
 	
-	function flyTo(frameNum)
+	function zipTo(frameNum)
 	{
 		pointAtSelected();
 		 //a=camera_state.rotate_y; camera_state.x += u*cos(a); camera_state.z += u*sin(a); 
 		//renderer.getSelected();
 		//camera always works with negative coordinates?
-		if (mm.quadrancePts(camera_state,negate(selectedItem))<50000)  //lucky that camera_state works as a point!  //bugbug const related to "scale"?
+		if (mm.quadrancePts(camera_state,negate(selectedItem))<70000)  //lucky that camera_state works as a point!  //bugbug const related to "scale"?
 		{
-			flying=false;
+			var goodDistanceToJumpUp=70;
+			zipping=false;
+			jumpUp(goodDistanceToJumpUp);  //bugbug const
 			return;
 		}
 		var nextPosition = mm.linearInterpolatePoints3d(camera_state,negate(selectedItem),0.14);  //bugbug const 1/flightSpeed
@@ -513,6 +518,13 @@ var DemoUtils = (function() {
 		pointAtSelected();
 		dirtyCam=true;	
 	}
+	
+	
+	function jumpUp(increment)
+	{
+		camera_state.y -= increment;	
+	}	
+	
 	
 	function updateCameraState(frameNum)
 	{
@@ -733,7 +745,7 @@ var DemoUtils = (function() {
 		switch(item)
 		{
 			case "animate": animate=state; break;
-			case "flyToSelected": flying=true; break;
+			//case "zipToSelected": zipping=true; break;  //bugbug maybe not needed since caller is commented out
 			case "moveCamera": newCameraState=state; break;
 			case "pointAt": pointAt=state; break;  //bugbug make this work
 			case "updateBackground": black=state; break;

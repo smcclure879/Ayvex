@@ -34,7 +34,7 @@ function buildPointList(pointh, drawCode, closeLoop)
 	}
 	else
 	{
-		runInstructions(pointList,instructions);
+		runInstructions(pointList,instructions,1);
 	}
 	
 	if (closeLoop) 
@@ -46,6 +46,9 @@ function buildPointList(pointh, drawCode, closeLoop)
 //point list already contains exactly one item (pointh)!
 function runInstructions(pointList,instructions, parity)
 {	
+	if (!parity)
+		parity=1;
+
 	var p=lastItem(pointList);
 	for(var ii=0,il=instructions.length; ii<il; ii++)
 	{
@@ -55,19 +58,27 @@ function runInstructions(pointList,instructions, parity)
 		//parity bit shouldn't be used on horizontals
 		if (instruction.startsWith("right"))
 		{
-			newPoint.x+=1*getNum(instruction);
+			newPoint.x += 1*getNum(instruction);
 		}
 		else if (instruction.startsWith("left"))
 		{
-			newPoint.x-=1*getNum(instruction);
+			newPoint.x -= 1*getNum(instruction);
 		}
 		else if (instruction.startsWith("up"))
 		{
-			newPoint.y+=parity*getNum(instruction);
+			newPoint.y += parity*getNum(instruction);
 		}
 		else if (instruction.startsWith("down"))
 		{
-			newPoint.y-=parity*getNum(instruction);
+			newPoint.y -= parity*getNum(instruction);
+		}
+		else if (instruction.startsWith("forward"))
+		{
+			newPoint.z += parity*getNum(instruction);
+		}
+		else if (instruction.startsWith("back"))
+		{
+			newPoint.z -= parity*getNum(instruction);
 		}
 		
 		p=newPoint;

@@ -1,4 +1,4 @@
-
+ 
 
 //is this duplicated elsewhere?  at any length should go into 
 function projection(start, length, orientation)
@@ -35,8 +35,8 @@ function drawDot(ctx,ctrPoint2d,radiusPix)
 
 
 
-//Gamers are iDrawables that always take 1 (or 4 depending on "big" checkbox) pixels on the screen. 
-//They also support more than 3 dimensions 
+//Gamers are iDrawables 
+//todo: verify they also support more than 3 dimensions 
 
 function Gamer()
 {
@@ -47,11 +47,26 @@ function Gamer()
 	this.lastPublicPoint=null;
 	this.orientation={ rotx:0, roty:0, rotz:0 };
 	this.stepSize=5; 	
+	this.type="Gamer";  //bugbug wish I didn't have to do this
+	this.pointList=null;
 }
 
 
 Gamer.prototype=new iDrawable();  //todo should be "tree"??? else why sharing so much code?
 Gamer.prototype.constructor=Gamer;
+
+
+
+	//all object types AFAIK will be "repositionable"...
+	//todo again with the passing too much...change this to an object.  time should be in a pointh optionally, for instance
+Gamer.prototype.updateFromData=function (item)
+{
+	this.reposition( -item.value.cam.x, -item.value.cam.y, -item.value.cam.z,  //todo again why the negative
+					item.value.cam.rotate_x, item.value.cam.rotate_y, item.value.cam.rotate_z,
+					item.value.saveTime, item.value.mostRecentQuote
+					);
+}
+
 
 Gamer.prototype.reposition2 = function(newPos)
 {
@@ -106,31 +121,36 @@ Gamer.prototype.realDraw=function(renderer,log2size) //,gameTime)  //todo need t
 {
 	//todo this is second copy of this routine....move to some type of sharign ??
 	//and dynamically creating it each call here???
-	var tpt = function (pointh) {	
+	// var tpt = function (pointh) {	
 	
-		if (pointh==null) 
-			return null;
+		// if (pointh==null) 
+			// return null;
 	
-		var scaleDim = -1;
-		var phaseMax= 50000; //todo settings?
-		phase--;
-		phase %= phaseMax;	//todo base off the absolute frameNum or time or something???? unify time-handling
+		// var scaleDim = -1;
+		// var phaseMax= 50000; //todo settings?
+		// phase--;
+		// phase %= phaseMax;	//todo base off the absolute frameNum or time or something???? unify time-handling
 		
-		//todo
-		//knock it down to 3 dimensions based on hiDimProjection settings (controller should have told renderer, what is the control structure?)
-		var offsetForHiDim = computeOffsetFromHi(renderer,pointh);  //   projection N ==> 3,   code in/near iDrawable?
-		var plainPoint3 = vecMultAdd(pointh,offsetForHiDim,scaleDim*phase/phaseMax);
-		debugSet("phase="+phase);
-		//we will not consolidate this with the "tree.js"....this is where I insert higher-dimensional projection code
-		//but should this go straight into the renderer and less code here?
-		var point2d = transformPoint(renderer,plainPoint3);  //   projection 3 ==> 2
+		// //todo
+		// //knock it down to 3 dimensions based on hiDimProjection settings (controller should have told renderer, what is the control structure?)
+		// var offsetForHiDim = computeOffsetFromHi(renderer,pointh);  //   projection N ==> 3,   code in/near iDrawable?
+		// var plainPoint3 = vecMultAdd(pointh,offsetForHiDim,scaleDim*phase/phaseMax);
+		// debugSet("phase="+phase);
+		// //we will not consolidate this with the "tree.js"....this is where I insert higher-dimensional projection code
+		// //but should this go straight into the renderer and less code here?
+		// var point2d = transformPoint(renderer,plainPoint3);  //   projection 3 ==> 2
 
-		return point2d;
-	} ;  
-	
+		// return point2d;
+	// } ;  
+	var tpt=function(pointHH) 
+			{
+				return standardTransform(renderer,pointHH,false);  //true=skipOffscreenPoint
+			}
+
+			
 	//todo this is copy from DataPoint...should be completely revamped....
 
-	if (typeof this.selfDraw == 'function')
+	if (typeof this.selfDraw == 'function')  //bugbug is this needed still???
 		this.selfDraw({
 				renderer:renderer,
 				log2size:log2size,
@@ -141,6 +161,18 @@ Gamer.prototype.realDraw=function(renderer,log2size) //,gameTime)  //todo need t
 	//else...crappy default code...todo can we call the superclass instead???
 	if (this.pointh==null) 
 		return null;  
+	
+	
+	
+	//bug 79.  trying to find the difference in drawing we see with the user vs. ghost
+	if (this.type=="Gamer")  //bugbug
+	{
+		if (!this.drawInstructions)
+		{
+			this.drawInstructions="down100 right100 left200 right100 back100";
+		}
+	}
+	
 	
 	var ctx = renderer.ctx;
 	ctx.beginPath();
@@ -155,8 +187,7 @@ Gamer.prototype.realDraw=function(renderer,log2size) //,gameTime)  //todo need t
 		this.text == 'playerUNDEF?';  
 	}
 	
-
-
+	
 	if (footPoint2d==null) 
 		return null;
 	
@@ -222,13 +253,15 @@ Gamer.prototype.realDraw=function(renderer,log2size) //,gameTime)  //todo need t
 		//drawLineAbsAbs(ctx,footPoint2d,prevPoint2d);  //tail
 		drawTriangleAbs(ctx,headPoint2d,footPoint2d,prevPoint2d,this.color);  
 	}
-	else
+	else 
 	{
 		console.log("missing tail");  
 	}
 	
+	ctx.stroke();  //end of regular body
 	
-	ctx.stroke();
+	//optional extra draw
+	this.performInstructions(renderer);  //inherit from iDrawable 
 	
 	//drawDot(ctx,lastPublicPoint2d,4);
 	//ctx.stroke();
@@ -281,6 +314,7 @@ function pixel(z)     // 58 --> 58px
 {
 	return ""+parseInt(z)+"px";
 }
+
 
 function clip(x,a,b)    //
 {

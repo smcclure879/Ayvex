@@ -46,7 +46,7 @@ function standardTransform(renderer,pointh,skipOffscreenPoint)
 	
 	
 	if (pt2d==null)
-		alert("bugbug null@1237");
+		debugger;   //alert("bugbug null@1237");
 	
 	return pt2d;
 } ;  

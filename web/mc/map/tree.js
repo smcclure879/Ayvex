@@ -186,7 +186,7 @@ iDrawable.prototype.getNearest=function(x,y,renderer,best,thisDrawingIndex)
 		
 	//we found a new winner!
 	best.bestQuadranceSoFar = newQuadrance;
-	best.closestPointIndex = 0;  //this is the point index within the drawable...by convention the zeroeth point is selected as the center for rotations, flyTo, etc
+	best.closestPointIndex = 0;  //this is the point index within the drawable...by convention the zeroeth point is selected as the center for rotations, zipTo, etc
 	best.closestDrawingIndex = thisDrawingIndex;
 	best.x=this.pointh.x;
 	best.y=this.pointh.y;
@@ -228,6 +228,50 @@ iDrawable.prototype.getNearest=function(x,y,renderer,best,thisDrawingIndex)
 	// 'branch',0.41,-33,12]  etc
 	return 'nyi408 you will get here soon';
 } */
+
+
+
+//bugbug dup of code in bigShape....pull into its own library (or more into buildPointList)?
+//don't make it "this" because moving out of here probably
+//also refactor out draw code, since this doens't e.g.  know about colors.
+iDrawable.prototype.performInstructions=function(renderer)
+{
+	if (!this.drawInstructions)
+		return;
+	
+	var pointList=buildPointList(this.pointh,this.drawInstructions);
+		
+	var pts2 = $.map(	
+								pointList,
+								function(pt3d,seqNum,foo){ 
+									return standardTransform(renderer,pt3d,false);   //don't skip offscreen
+								},
+								this  // --> becomes "foo" above  ("that" didn't work!)
+							);
+	var ctx=renderer.ctx;	
+	var myLoc=pts2[0];
+	
+	if ( !myLoc )
+		return null;
+	if (myLoc.isBehind)
+		return null;
+
+	ctx.strokeStyle="rgba(0,44,144,0.3)";  //bugbug
+	ctx.fillStyle=null;  //"rgba(12,250,155,0.8)";
+	ctx.lineWidth=2;  //make dependent on dist ...bugbug
+	ctx.beginPath();
+	ctx.moveTo(pts2[0].x,pts2[0].y);
+	for(var ii=1, il=pts2.length; ii<il; ii++)
+	{
+		ctx.lineTo(pts2[ii].x,pts2[ii].y);
+	}
+	ctx.stroke();
+	//ctx.fill();
+
+}
+
+
+
 
 
 

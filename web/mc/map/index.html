@@ -28,6 +28,7 @@
 <script src="localSettings.js"></script>
 <script src="DataPoint.js"></script>
 <script src="gamer.js"></script>
+<script src="drawnObject.js"></script>
 <script src="standardTransform.js"></script>
 <script src="buildPointList.js"></script>
 <script src="bigShape.js"></script>
@@ -65,7 +66,7 @@
 <br>V start video conference
 <br>
 <br>only if person or object selected: 
-<br>Z zip to selected item  **bugbug NYI
+<br>Z zip to selected item
 <br>
 </div>
 
@@ -89,7 +90,7 @@ pick dataset:
 <br><br><br>
 <span  style="font-family:Arial;font-size:12">
 <div style="border:2px solid #000000;background-color:lightGray" id="controlPanel">
-<input type="button" id="flyTo" value="flyTo"/>
+<bugbug-not-input type="button" id="flyTo" value="flyTo"/>
 <input type="button" id="instructions" value="instructions" />
 
 <input type="checkbox" value="animate" id="animate" checked>ANM</input>
@@ -604,12 +605,13 @@ function getHorizon()
 
 
 
-
+//for ghosts
 function addGamer(theDrawings,name,x,y,z)
 {
 	var gamer= new Gamer();
 	gamer.reposition(x,y,z,0,0,0,getOfficialTime());
 	gamer.name(name);
+	gamer.type="ghost"; //avoid selfDraw for ghosts
 	theDrawings.push(gamer);
 	return gamer;
 }
@@ -876,10 +878,10 @@ function finishGettingReady()
 		});
 	
 
-	$("#flyTo").click( function(event)
-		{
-			DemoUtils.Notify("flyToSelected","thisArgNotNeeded");		
-		});
+	//$("#flyTo").click( function(event)
+	//	{
+	//		DemoUtils.Notify("zipToSelected","thisArgNotNeeded");		
+	//	});
 		
 	$("#instructions").click( function(event)
 		{
@@ -913,10 +915,11 @@ function getUpdateServerCallback()
 
 //should this be persistent todo??
 var theUser = {
-	userId:'',  //later set right value in a sub sub sub of doc.ready()
+	type: "Gamer",
+	userId:"",  //later set right value in a sub sub sub of doc.ready()
 	_rev:-1,
 	cam:null, //todo better sentinel value?
-	_id:''
+	_id:""
 };
 
 //two locks...one to not run more than once per 2s, one to keep 2 copies from running at same time
@@ -954,7 +957,6 @@ function updateServerCallback(camera_state)
 		theUser._id="user_"+theUser.userId;   //todo const
 	}	
 	theUser.mostRecentQuote=userQuote;
-	theUser.drawInstructions="bilateral up100 right100 down50 left200 down50";  //bugbugsoon
 	theUser.telecInfo=telecInfo;  //global local user's telecInfo goes into the local user being persisted
 	theUser.saveTime=getOfficialTime();  //ideally the protocol would save a serverSaveTime as well and other clients will see cheating.
 	if (theUser.saveTime<1400000000) //1B, roughly 2001
@@ -1026,28 +1028,43 @@ function updateDynamicObjects(data)
 }
 
 
-function updateDynamicObjectFromServerData(item)
+function updateDynamicObjectFromServerData(item)  //item is the data from server
 {
 	if (theUser._id==item.id) //todo revisit... for now disallow drawing self (strict first person for demo, can change later)
 		return; 
-		
-	//todo dynObj MUST for now be a gamer so we update it like a gamer...todo should do type check here on in this function...
-	//what other kinds of dynObjs do we have for now tho??
+
 	var dynObj=dynamicObjects[item.id];
-	if (!dynObj)
-	{
-		var dynObj=new Gamer();  
-		dynObj.name(item.value.userId || item.value._id);
-		dynamicObjects[item.id]=dynObj;
-	}
 		
-	//todo again with the passing too much...change this to an object.  time should be in a pointh optionally, for instance
-	dynObj.reposition( -item.value.cam.x, -item.value.cam.y, -item.value.cam.z,  //todo again why the negative
-						item.value.cam.rotate_x, item.value.cam.rotate_y, item.value.cam.rotate_z,
-						item.value.saveTime, item.value.mostRecentQuote
-					);
+	//todo: apply factory pattern here instead.
+	switch(item.value.type)
+	{
+		case "Gamer":	
+			if (!dynObj)
+			{
+				dynObj=new Gamer();  
+				dynObj.name(item.value.userId || item.value._id);
+				dynamicObjects[item.id]=dynObj;
+			}
+			dynObj.updateFromData(item);
+			maybeDoTeleconf(dynObj,item);  //item is from server  //users can do teleconf but probably no other types
+			break;
+		
+		case "DrawnObject":
+			if (!dynObj)
+			{
+				dynObj=new DrawnObject();
+				dynamicObjects[item.id]=dynObj; 
+			}
+			dynObj.updateFromData(item);  //todo consider not updating unless "changed" e.g. a timestamp?
+			break;
+			
+		default:	//todo what other kinds of dynObjs do we have for now tho??
+			trace("unknown type from db:"+dumps(item));
+			break;
+	}
 	
-	maybeDoTeleconf(dynObj,item);  //item is from server
+	
+
 }
 
 
