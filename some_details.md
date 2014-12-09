@@ -35,7 +35,11 @@ sample-sample-sample (and presample) to keep framerate up.  trust random and tru
 videoconferencing should just work, even if we have to drop resolution or frame rates.  for 1.0, probably only 1-1 conf.  
 
 
+What's with the name Ayvex Light Industries?
 
+1. we work with light itself, in the form of pixels
+2. we are industrious, but we do not intend anyone's industriousness to be heavy (makers or users) 
+3. according to Wikipedia, "Light industry" is usually less capital intensive than heavy industry, and is more consumer-oriented than business-oriented (i.e., most light industry products are produced for end users rather than as intermediates for use by other industries).
 
 
 
