@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<title>Frakture prototype 4</title>
+</head>
+<body onload="start()">
+<canvas id="webgl" width="400" height="400">
+Please use Chrome.  It's all I can support without more developers.
+</canvas>
+
+
+<script src="webgl-utils.js"></script> 
+<script src="webgl-debug.js"></script>
+<script src="cuon-utils.js"></script>
+<script src="cuon-matrix.js"></script>
+<script src="frak4.js"></script>
+
+
+<script language="x/vert" id="vert">
+//sample programs from the GLSL ES ref card...
+//with a lot commented out as "old" 
+//and a lot added as "new"
+
+	uniform mat4 uMvpMatrix; 			// model-view-projection matrix
+	//old  uniform mat3 normal_matrix; 		// normal matrix
+	//old  uniform vec3 ec_light_dir; 			// light direction in eye coords
+	attribute vec4 aVertex; 			// vertex position
+	//old  attribute vec3 a_normal; 			// vertex normal
+	//old  attribute vec2 a_texcoord; 			// texture coordinates
+	varying float vDiffuse;
+	//old  varying vec2 v_texcoord;
+	
+	void main(void)
+	{
+		// put vertex normal into eye coords
+		//old  vec3 ec_normal = normalize(normal_matrix * a_normal);
+		
+		// emit diffuse scale factor, texcoord, and position
+		// old   v_diffuse = max(dot(ec_light_dir, ec_normal), 0.0);
+				vDiffuse = 0.8;  // new
+		//old   v_texcoord = a_texcoord;
+		gl_Position = uMvpMatrix * aVertex;
+	}
+</script>
+
+<script language="x/frag" id="frag">
+	precision mediump float;
+	//  uniform sampler2D t_reflectance;
+	uniform vec4 iAmbient;
+	varying float vDiffuse;
+	//varying vec2 v_texcoord;
+	
+	void main (void)
+	{
+		//old  vec4 color = texture2D(t_reflectance, v_texcoord);
+		vec4 color = vec4(1.0, 0.0, 0.0, 0.0);
+		gl_FragColor = color * (vec4(vDiffuse) + iAmbient);
+	}
+</script>
+
+
+	
+</body>
+</html>
