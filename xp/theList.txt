@@ -70,9 +70,9 @@ The list of XP owners.
 51. steve: "
 52. steve: "
 53. steve: final use of pi for domain service.
-54. steve: final coding on domain service
+54. steve: improve zipping
 55. oris: instructions panel advice
-56. oris: advice on video
+56. oris: advice on video production
 57. steve: instructions panel coding
 
 
