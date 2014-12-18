@@ -6,14 +6,16 @@ function snag(idOfScript)
 	return document.getElementById(idOfScript).textContent;
 }
 
+var canvas,gl;
 
 function start()
 {
 	// Retrieve <canvas> element
-	var canvas = document.getElementById('webgl');
+	canvas = document.getElementById('webgl');
+	canvas.width=document.body.clientWidth;
+	canvas.height=document.body.clientHeight;
 
-	// Get the rendering context for WebGL
-	var gl = getWebGLContext(canvas);
+	gl = getWebGLContext(canvas);
 
 	var VSHADER_SOURCE = snag('vert');
 	var FSHADER_SOURCE = snag('frag');
@@ -84,9 +86,18 @@ function initVertexBuffers(gl)
 	// gl.vertexAttribPointer(a_Color, 3, gl.FLOAT, false, FSIZE * 5, FSIZE * 2);
 	// gl.enableVertexAttribArray(a_Color);  // Enable the assignment of the buffer object
 
+	
+	var uModelMatrix = new Matrix4();  // Model matrix
+		
+	// Calculate the model matrix
+	uModelMatrix.setTranslate(0, 0.9, 0); // Translate to the y-axis direction
+	uModelMatrix.rotate(90, 0, 0, 1);     // Rotate 90 degree around the z-axis
 
-	var uMvpMatrix = new Matrix4();  
-
+	var uMvpMatrix = new Matrix4();    // Model view projection matrix
+	uMvpMatrix.setPerspective(30, canvas.width/canvas.height, 1, 100);  //proj
+	uMvpMatrix.lookAt(3, 3, 7, 0, 0, 0, 0, 1, 0);  //view
+	uMvpMatrix.multiply(uModelMatrix);  //model
+	
 	var uMvpMatrixLoc = gl.getUniformLocation(gl.program, "uMvpMatrix");
 	//wrong:     g.mvpMatrix.setUniform(gl, g.u_modelViewProjMatrixLoc, false);
 	gl.uniformMatrix4fv(uMvpMatrixLoc,false,uMvpMatrix.elements);
