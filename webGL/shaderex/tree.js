@@ -16,7 +16,6 @@ function main() {
 
   var VSHADER_SOURCE=document.getElementById('treeVert').innerText;
   var FSHADER_SOURCE=document.getElementById('treeFrag').innerText;
-  //bugbug  alert(VSHADER_SOURCE);
 
   allType=document.getElementById('alltype');
   lButton=document.getElementById('lbutton');
@@ -32,10 +31,10 @@ function main() {
     return;
   }
 
-  // Set the vertex coordinates and color (the blue triangle is in the front)
+  // Set the vertex coordinates etc
   n = initVertexBuffers(gl);
-  if (n < 0) {
-    alert('Failed to specify the vertex information');
+  if (typeof n != "number" || n <= 0) {
+    alert('Failed to specify the vertex information'+n);
     return;
   }
   
@@ -108,9 +107,9 @@ function initVertexBuffers(gl)
 	return initVertexBuffers_trees(gl,
 									[
 										[-0.5,0.0,0.0,1.7834292],  //that's a pos+h,
-										[ -0.6,0.2,0.2,-8909.3424],
-										[-1,-0.4,0.1,-992267.83],
-										[-1.1,0.3,0.1,93485.002]
+										[ -0.6,0.02,-2.0,-8909.3424],
+										[-1,-0.04,-0.8,-992267.83],
+										[-1.1,0.03,-1.3,93485.002]
 									]
 		 
 								);
@@ -122,27 +121,24 @@ function initVertexBuffers(gl)
 												  // 2,9,  2,10, 2,11, 2,12,
 												  // 3,13, 3,14, 3,15, 3,16]);  //always a*4+n  where 1<=n<=4;  should continue indefinitely
 
-												  
+
 function addTree(lineModel,pointh)
 {
-	var indexOffset=lineModel.preVertices.length/3;
+	var indexOffset=lineModel.preVertices.length/3;  //in units of "points"
 	lineModel.preVertices=lineModel.preVertices.concat(  buildVertexTree(pointh,NNN)  );
 	lineModel.preVerticesIndices=lineModel.preVerticesIndices.concat(  buildBiSplitIndices(NNN,indexOffset)  );  //bugbug quad??
 }
 
 function initVertexBuffers_trees(gl,arrPointh)
 {
-	//bugbug make this into an object....new LineModel();
-	var lineModel = {};
-	lineModel.preVertices=[];
-	lineModel.preVerticesIndices=[];
-	
+	var lineModel = {  //cheap "object"
+						preVertices:[],
+						preVerticesIndices:[]
+					};	
+
 	arrPointh.forEach(function(pointh){
 		addTree(lineModel,pointh);
 	});
-	
-	//addTree(vertices,verticesIndices,pointh+);  bugbug
-	//addTree(vertices,verticesIndices,pointh+);
 	
 	//ugh hate this extra layer they make us go thru
 	var vertices = new Float32Array(lineModel.preVertices);
@@ -154,15 +150,14 @@ function initVertexBuffers_trees(gl,arrPointh)
   
 	//   initBuffer(gl, description,    typedArray,       bufferType,            hint)
 	if (!initBuffer(gl,"vertices",       vertices,       gl.ARRAY_BUFFER,        gl.STATIC_DRAW))
-		return;
+		return "vertices problem";
 	if (!initBuffer(gl,"verticesIndices",verticesIndices,gl.ELEMENT_ARRAY_BUFFER,gl.STATIC_DRAW))
-		return;
+		return "verticesIndices problem";
   
 	// Assign the buffer object to a_Position and enable the assignment
 	var a_Position = gl.getAttribLocation(gl.program, 'a_Position');
 	if(a_Position < 0) {
-		console.log('Failed to get the storage location of a_Position');
-		return -1;
+		return 'Failed to get the storage location of a_Position';
 	}
 	gl.vertexAttribPointer(a_Position, 3, gl.FLOAT, false, FSIZE * 3, 0);
 	gl.enableVertexAttribArray(a_Position);
@@ -173,11 +168,11 @@ function initVertexBuffers_trees(gl,arrPointh)
 
 var NNN=1 << 8;
 var sizeScale=0.3;
-var varyingScale=6.0/9.0;
+var varyingScale=7.0/9.0;
 var timeFactor = 1.0/10.0;
 function buildVertexTree(pointh,NNN)  //Or, OH HOW I WISH they'd let me write a geometry shader in javascript. 
 {
-	var arr = new Array(NNN*3);
+	var arr = new Array();  //bugbug needed? NNN*3);
 	
 	//fill in ID=1;
 	arr[0]=pointh[0];
@@ -185,7 +180,7 @@ function buildVertexTree(pointh,NNN)  //Or, OH HOW I WISH they'd let me write a 
 	arr[2]=pointh[2];
 	var hashBits=DoubleToIEEE(pointh[3])[0];
 	
-	for (var ii=2; ii<NNN; ii++)
+	for (var ii=2; ii<=NNN; ii++)
 	{
 		var hashBit=getHashBit(hashBits,ii);
 		var childBit=(ii%2 + hashBit*2) /2;

@@ -24,37 +24,16 @@
     <script src="cuon-utils.js"></script>
     <script src="cuon-matrix.js"></script>
 
-<script src="tree.js"></script>
 
+	<script src="tree.js"></script>
 
-<script language="vert" id="vertOld">
-  
-  attribute vec4 a_Position;
-  attribute vec4 a_Color;
-  uniform mat4 u_ViewMatrix;
-  uniform mat4 u_ProjMatrix;
-  varying vec4 v_Color;
-  void main() {
-    gl_Position = u_ProjMatrix * u_ViewMatrix * a_Position;
-    v_Color = a_Color;
-  }
-
-</script>
 
 <script language="vert" id="treeVert">
-
-  //attribute vec4 a_leafOffset;
-  //attribute vec4 a_Color;
-  
-  attribute float a_BranchCode;
-  
-  uniform vec4 a_Position; //bugbug 
+ 
+  attribute vec4 a_Position; 
   
   uniform mat4 u_ViewMatrix;
   uniform mat4 u_ProjMatrix;
-
-  //uniform float u_TNow;
-  //uniform vec4float u_SeedPosition;
 
   varying vec4 v_Color;
   varying float v_HideIt;
@@ -66,8 +45,6 @@
 	//glLineThickness(2.0);  this doesn't work in this version...should I just switch to triangle strips for all?
   }
 </script>
-
-
 
 
 <script language="frag" id="treeFrag">
