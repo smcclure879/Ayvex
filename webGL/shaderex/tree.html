@@ -45,7 +45,11 @@
 
   //attribute vec4 a_leafOffset;
   //attribute vec4 a_Color;
-  attribute vec4 a_Position; //bugbug 
+  
+  attribute float a_BranchCode;
+  
+  uniform vec4 a_Position; //bugbug 
+  
   uniform mat4 u_ViewMatrix;
   uniform mat4 u_ProjMatrix;
 

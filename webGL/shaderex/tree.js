@@ -15,8 +15,8 @@ function main() {
   }
 
   var VSHADER_SOURCE=document.getElementById('treeVert').innerText;
-  alert(VSHADER_SOURCE);
   var FSHADER_SOURCE=document.getElementById('treeFrag').innerText;
+  //bugbug  alert(VSHADER_SOURCE);
 
   allType=document.getElementById('alltype');
   lButton=document.getElementById('lbutton');
@@ -105,24 +105,51 @@ function initBuffer(gl,description,typedArray,bufferType,hint)
 function initVertexBuffers(gl)
 {
 	//return initVertexBuffers_threeTriangles(gl);
-	return initVertexBuffers_tree(gl,
-		[-0.5,0.0,0.0,1.7834292]  //that's a pos+h,
-		//[ 0.5,0.0,0.0]
-	);
+	return initVertexBuffers_trees(gl,
+									[
+										[-0.5,0.0,0.0,1.7834292],  //that's a pos+h,
+										[ -0.6,0.2,0.2,-8909.3424],
+										[-1,-0.4,0.1,-992267.83],
+										[-1.1,0.3,0.1,93485.002]
+									]
+		 
+								);
 }
 
 
-var verticesIndicesQuadSplit = new Uint16Array([0,1,  0,2,  0,3,  0,4,
-												  1,5,  1,6,  1,7,  1,8,
-												  2,9,  2,10, 2,11, 2,12,
-												  3,13, 3,14, 3,15, 3,16]);  //always a*4+n  where 1<=n<=4;  should continue indefinitely
+// var verticesIndicesQuadSplit = new Uint16Array([0,1,  0,2,  0,3,  0,4,
+												  // 1,5,  1,6,  1,7,  1,8,
+												  // 2,9,  2,10, 2,11, 2,12,
+												  // 3,13, 3,14, 3,15, 3,16]);  //always a*4+n  where 1<=n<=4;  should continue indefinitely
 
-function initVertexBuffers_tree(gl,pointh)
+												  
+function addTree(lineModel,pointh)
 {
-	var vertices = new Float32Array(buildVertexTree(pointh,NNN));
-	var verticesIndices = new Uint16Array(buildBiSplitIndices(NNN));  //bugbug verticesIndicesQuadSplit??
+	var indexOffset=lineModel.preVertices.length/3;
+	lineModel.preVertices=lineModel.preVertices.concat(  buildVertexTree(pointh,NNN)  );
+	lineModel.preVerticesIndices=lineModel.preVerticesIndices.concat(  buildBiSplitIndices(NNN,indexOffset)  );  //bugbug quad??
+}
+
+function initVertexBuffers_trees(gl,arrPointh)
+{
+	//bugbug make this into an object....new LineModel();
+	var lineModel = {};
+	lineModel.preVertices=[];
+	lineModel.preVerticesIndices=[];
 	
-	var n = vertices.length/3;
+	arrPointh.forEach(function(pointh){
+		addTree(lineModel,pointh);
+	});
+	
+	//addTree(vertices,verticesIndices,pointh+);  bugbug
+	//addTree(vertices,verticesIndices,pointh+);
+	
+	//ugh hate this extra layer they make us go thru
+	var vertices = new Float32Array(lineModel.preVertices);
+	var verticesIndices = new Uint16Array(lineModel.preVerticesIndices);
+	
+	var n = vertices.length/3 * 2;
+	//var n = verticesIndices.length;bugbug
 	var FSIZE = vertices.BYTES_PER_ELEMENT;
   
 	//   initBuffer(gl, description,    typedArray,       bufferType,            hint)
@@ -156,10 +183,12 @@ function buildVertexTree(pointh,NNN)  //Or, OH HOW I WISH they'd let me write a 
 	arr[0]=pointh[0];
 	arr[1]=pointh[1];
 	arr[2]=pointh[2];
+	var hashBits=DoubleToIEEE(pointh[3])[0];
 	
 	for (var ii=2; ii<NNN; ii++)
 	{
-		var childBit=ii%2;
+		var hashBit=getHashBit(hashBits,ii);
+		var childBit=(ii%2 + hashBit*2) /2;
 		var parentId=ii>>1;
 		var gen = Math.log2(ii);
 		
@@ -179,14 +208,14 @@ function buildVertexTree(pointh,NNN)  //Or, OH HOW I WISH they'd let me write a 
 											  // 3,6,  3,7,  4,8,  4,9,
 											  // 5,10, 5,11, 6,12, 7,13,
 											  // 3,13, 3,14, 3,15, 3,16]);  //always a*4+n  where 1<=n<=4;  should continue indefinitely
-function buildBiSplitIndices(NNN)
+function buildBiSplitIndices(NNN,indexOffset)
 {
 	var arr=new Array(2*NNN);  // 2 indices per line
 	
-	for (var ii=NNN; ii>0; --ii)
+	for (var ii=NNN-1; ii>=0; ii--)
 	{
-		arr[ii*2+1]=ii;
-		arr[ii*2+0]=(ii-0)>>1;
+		arr[ii*2+1]= ii+indexOffset;
+		arr[ii*2+0]=(ii>>1)+indexOffset;
 	}
 	return arr;
 }
@@ -310,3 +339,18 @@ function draw(gl, n, u_ViewMatrix, viewMatrix) {
   //gl.drawElements(gl.LINE_STRIP,n,gl.UNSIGNED_BYTE,0);
 }
 
+
+//from stackExchange  http://stackoverflow.com/questions/2003493/javascript-float-from-to-bits
+function DoubleToIEEE(f)
+{
+    var buf = new ArrayBuffer(8);
+    (new Float64Array(buf))[0] = f;
+    return [ (new Uint32Array(buf))[0] ,(new Uint32Array(buf))[1] ];
+}
+
+
+function getHashBit(hashBits,ii)
+{
+	return (hashBits>>(ii%31)) & 1;
+
+}
