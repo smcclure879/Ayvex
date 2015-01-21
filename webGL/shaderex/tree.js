@@ -166,7 +166,7 @@ function initVertexBuffers_trees(gl,arrPointh)
 }  
   
 
-var NNN=1 << 8;
+var NNN=1 << 9;
 var sizeScale=0.3;
 var varyingScale=7.0/9.0;
 var timeFactor = 1.0/10.0;
@@ -183,16 +183,16 @@ function buildVertexTree(pointh,NNN)  //Or, OH HOW I WISH they'd let me write a 
 	for (var ii=2; ii<=NNN; ii++)
 	{
 		var hashBit=getHashBit(hashBits,ii);
-		var childBit=(ii%2 + hashBit*2) /2;
+		var childBit=ii%2;
 		var parentId=ii>>1;
 		var gen = Math.log2(ii);
 		
 		var theta = ii*timeFactor;
 		
 		//ii-1 to make up for 1-based priorityQ-like ID's.  *3 to deal with xyz ordering.
-		arr[(ii-1)*3 + 0]=arr[(parentId-1)*3 + 0] - 0.6* childBit * sizeScale * Math.pow(varyingScale,7-gen) * (Math.cos(theta*2.5)+0.5)*(ii+20)/140;  //x
+		arr[(ii-1)*3 + 0]=arr[(parentId-1)*3 + 0] - 0.6* childBit * sizeScale * Math.pow(varyingScale,8-gen) * (Math.cos(theta*2.5)+0.5)*(ii+20)/340;  //x
 		arr[(ii-1)*3 + 1]=arr[(parentId-1)*3 + 1] + 1             * sizeScale * Math.pow(varyingScale,gen  );  //y
-		arr[(ii-1)*3 + 2]=arr[(parentId-1)*3 + 2] + 0.7           * sizeScale * Math.pow(varyingScale,gen  ) * (Math.sin(theta*2.5)+0.5)*(ii+20)/140;  //z
+		arr[(ii-1)*3 + 2]=arr[(parentId-1)*3 + 2] + 0.7*(hashBit-0.5)   * sizeScale * Math.pow(varyingScale,gen  ) * (Math.sin(theta*2.5)+0.5)*(ii+20)/240;  //z
 	}
 	
 	return arr;
