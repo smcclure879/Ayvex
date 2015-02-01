@@ -1,93 +1,87 @@
 
+
+//settings (some should not be global TODO)
+var g_EyeX = 0.20, g_EyeY = 0.95, g_EyeZ = 2.25; // initial Eye position
+var numTrees=500;
+var NNN=1 << 8;
+var sizeScale=0.3;
+var varyingScale=7.0/9.0;
+var timeFactor = 1.0/10.0;
+
+
+//consts
+var PI=Math.PI;
+
+
+
 var canvas,gl,n,update,viewMatrix,u_ViewMatrix,u_ProjMatrix;
+var lineModel,triModel;
 
 var projMatrix;
 var allType,lButton,rButton;
 
-function main() {
-  //alert('foo1');
-  canvas = document.getElementById('webgl');
+function main() 
+{
+	canvas = document.getElementById('webgl');
 
-  gl = getWebGLContext(canvas);
-  if (!gl) {
-    alert('Failed to get the rendering context for WebGL');
-    return;
-  }
+	gl = getWebGLContext(canvas);
+	if (!gl) 
+	{
+		alert('Failed to get the rendering context for WebGL');
+		return;
+	}
 
-  var VSHADER_SOURCE=document.getElementById('treeVert').innerText;
-  var FSHADER_SOURCE=document.getElementById('treeFrag').innerText;
+	var VSHADER_SOURCE=document.getElementById('treeVert').innerText;
+	var FSHADER_SOURCE=document.getElementById('treeFrag').innerText;
 
-  allType=document.getElementById('alltype');
-  lButton=document.getElementById('lbutton');
-  rButton=document.getElementById('rbutton');
-
-
-  //alert('start'+VSHADER_SOURCE+"_____\n"+FSHADER_SOURCE);
-  var resultFromShader = initShaders(gl, VSHADER_SOURCE, FSHADER_SOURCE); 
-  
-  if (!resultFromShader)
-  {
-    alert('Failed to intialize shaders.'+resultFromShader);
-    return;
-  }
-
-  // Set the vertex coordinates etc
-  n = initVertexBuffers(gl);
-  if (typeof n != "number" || n <= 0) {
-    alert('Failed to specify the vertex information'+n);
-    return;
-  }
-  
-  //alert('foo3');
-
-  gl.clearColor(0.0, 0.0, 0.0, 1.0);
-  
-  //enable transparency
-  gl.enable(gl.BLEND);
-  gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);
-
-  u_ViewMatrix = gl.getUniformLocation(gl.program, 'u_ViewMatrix');
-  u_ProjMatrix = gl.getUniformLocation(gl.program, 'u_ProjMatrix');
-  if (!u_ViewMatrix || !u_ProjMatrix) { 
-    alert('Failed to get u_ViewMatrix or u_ProjMatrix');
-    return;
-  }
-
-  viewMatrix = new Matrix4();
-  
-  document.onkeydown = allType.onkeydown  =  function(ev){ 
- 	keydown(ev, gl, n, u_ViewMatrix, viewMatrix); 
-    return false;
-  };
-    
-  lButton.onmousedown=function(ev) {
-    clickLeft(10);
-	ev.cancelBubble=true;
-  }
-
-  rButton.onmousedown=function(ev) {
-    clickRight(10);
-	ev.cancelBubble=true;
-  }
+	allType=document.getElementById('alltype');
+	lButton=document.getElementById('lbutton');
+	rButton=document.getElementById('rbutton');
 
 
-  projMatrix = new Matrix4();
-  //projMatrix.setOrtho(-1.0, 1.0, -1.0, 1.0, 0.0, 2.0);
-  projMatrix.setPerspective(30,canvas.width/canvas.height,1,100);
-  gl.uniformMatrix4fv(u_ProjMatrix, false, projMatrix.elements);
-  
+	//alert('start'+VSHADER_SOURCE+"_____\n"+FSHADER_SOURCE);
+	var resultFromShader = initShaders(gl, VSHADER_SOURCE, FSHADER_SOURCE); 
+	if (!resultFromShader){
+		alert('Failed to intialize shaders.'+resultFromShader);
+		return;
+	}
+
+	// Set the vertex coordinates etc
+	var randForLocations=new RNG("fifty-seven");
+	var arrPointh=generateRandomPointsNearby(randForLocations,numTrees);  
+		
+	//globals, later we'll need to update these based on "not repainting the whole world at 60fps"
+	lineModel = initVertexBuffers_trees(gl,arrPointh);
+	triModel = initVertexBuffers_land(gl,arrPointh);
 
 
-  update=function() {
-    draw(gl, n, u_ViewMatrix, viewMatrix);   // Draw the triangles
-  }
+	update=function() {
+		draw(gl);   // Draw the triangles
+	}
 
-  update();  //the first time
+	update();  //the first time
+
+
+	document.onkeydown = allType.onkeydown  =  function(ev){ 
+		keydown(ev, gl, n, u_ViewMatrix, viewMatrix); 
+		return false;
+	};
+
+	lButton.onmousedown=function(ev) {
+		clickLeft(10);
+		ev.cancelBubble=true;
+	}
+
+	rButton.onmousedown=function(ev) {
+		clickRight(10);
+		ev.cancelBubble=true;
+	}
+
+	//bugbug wanted??? setInterval(update,1000/50);
 }
 
 
 
-//bugbug you are here make this work to init elements buffers, not single array buffer as before/below
 function initBuffer(gl,description,typedArray,bufferType,hint)
 {
 	var buffer=gl.createBuffer();
@@ -101,19 +95,7 @@ function initBuffer(gl,description,typedArray,bufferType,hint)
 	return buffer;
 }
 
-function initVertexBuffers(gl)
-{
-	//return initVertexBuffers_threeTriangles(gl);
-	return initVertexBuffers_trees(gl,
-									[
-										[-0.5,0.0,0.0,1.7834292],  //that's a pos+h,
-										[ -0.6,0.02,-2.0,-8909.3424],
-										[-1,-0.04,-0.8,-992267.83],
-										[-1.1,0.03,-1.3,93485.002]
-									]
-		 
-								);
-}
+
 
 
 // var verticesIndicesQuadSplit = new Uint16Array([0,1,  0,2,  0,3,  0,4,
@@ -122,36 +104,112 @@ function initVertexBuffers(gl)
 												  // 3,13, 3,14, 3,15, 3,16]);  //always a*4+n  where 1<=n<=4;  should continue indefinitely
 
 
-function addTree(lineModel,pointh)
+function addTree(lineModel,pointh,vertexTreeCallback,numBranches)
 {
-	var indexOffset=lineModel.preVertices.length/3;  //in units of "points"
-	lineModel.preVertices=lineModel.preVertices.concat(  buildVertexTree(pointh,NNN)  );
-	lineModel.preVerticesIndices=lineModel.preVerticesIndices.concat(  buildBiSplitIndices(NNN,indexOffset)  );  //bugbug quad??
+	var indexOffset=lineModel.preVertices.length/lineModel.floatsPerVertex;  //in units of "points"
+	lineModel.preVertices=lineModel.preVertices.concat(  vertexTreeCallback(pointh,numBranches)  );  
+	lineModel.preVerticesIndices=lineModel.preVerticesIndices.concat(  buildBiSplitIndices(numBranches,indexOffset)  );  //bugbug quad??
 }
 
-function initVertexBuffers_trees(gl,arrPointh)
+//bugbug combine with the above when making more OO
+function addLandFan(triModel,pointh,triFanCallback,numTriangles)
 {
-	var lineModel = {  //cheap "object"
-						preVertices:[],
-						preVerticesIndices:[]
-					};	
+	var indexOffset=triModel.preVertices.length/triModel.floatsPerVertex;  //in units of "vertices"...length of perVertices is in floats, natively
+	triModel.preVertices=triModel.preVertices.concat( triFanCallback(pointh, numTriangles) );
+	triModel.preVerticesIndices=triModel.preVerticesIndices.concat( buildTriFanIndices(numTriangles,indexOffset) );
+}
+
+
+function buildTriFanIndices(numTriangles,indexOffset)
+{
+	//return [0,1,2,  0,2,3  0,3,4];
+	var arr=[];
+	for(var ii=0; ii<numTriangles; ii++)
+	{
+		arr[ii*3+0]=0 + indexOffset;
+		arr[ii*3+1]=ii+1 + indexOffset;
+		arr[ii*3+2]=ii+2 + indexOffset;
+	}
+	return arr;
+}
+function buildLandFan(pointh, numTriangles)
+{
+	var arr = [];
+	
+	//fill in ID=1;
+	var x0=arr[0]=pointh.x;
+	var y0=arr[1]=pointh.y;
+	var z0=arr[2]=pointh.z;
+	var h0=pointh.h;  //the hash
+	var t0=pointh.t;
+	var numVertices=2+numTriangles;  //general rule for fan
+	
+	var rnd=new RNG("foo"+(h0/47));  //so it's not like the tree, exactly (still entropically constrained tho)
+	var theta0=(rnd.normal()+1)*PI/90; //so it's in radians
+	
+	for(var ii=3; ii<numVertices*3; ii+=3)
+	{
+		var theta = theta0 + ii/numVertices/3*PI*2; //small number, only go around once.
+		var radius =rnd.gamma(2)/2;
+		arr[ii+0]=x0+Math.sin(theta)*radius;
+		arr[ii+1]=y0-ii/numVertices/10; //-rnd.uniform()*0.1-0.01;
+		arr[ii+2]=z0+Math.cos(theta)*radius;
+	}
+	return arr;
+}
+
+
+function newModel()
+{
+	return {
+				preVertices:[],
+				preVerticesIndices:[]
+			};	
+}
+
+
+function initVertexBuffers_land(gl,arrPointh)
+{
+	var triModel = newModel();
+	triModel.floatsPerVertex = 3;  //todo to lineModel constructor
+	triModel.verticesPerPrimitive = 3; 
 
 	arrPointh.forEach(function(pointh){
-		addTree(lineModel,pointh);
+		addLandFan(triModel,pointh,buildLandFan,4);  
 	});
-	
+	return triModel;
+}
+//bugbug dedup above and below in the OO pass
+function initVertexBuffers_trees(gl,arrPointh)
+{
+	var lineModel = newModel();	
+	lineModel.floatsPerVertex = 3;  //todo to lineModel constructor
+	lineModel.verticesPerPrimitive=2; 
+
+	arrPointh.forEach(function(pointh){
+		addTree(lineModel,pointh,buildVertexTree2,NNN);
+	});
+	return lineModel;
+}
+
+
+function sendElementsToGL(theModel)
+{
 	//ugh hate this extra layer they make us go thru
-	var vertices = new Float32Array(lineModel.preVertices);
-	var verticesIndices = new Uint16Array(lineModel.preVerticesIndices);
+	var vertices = new Float32Array(theModel.preVertices);
+	var verticesIndices = new Uint16Array(theModel.preVerticesIndices);
 	
-	var n = vertices.length/3 * 2;
-	//var n = verticesIndices.length;bugbug
-	var FSIZE = vertices.BYTES_PER_ELEMENT;
-  
+	var floatsPerVertex = theModel.floatsPerVertex;
+	var floatsPerPrimitive = floatsPerVertex * theModel.verticesPerPrimitive; 
+	var bytesPerFloat = vertices.BYTES_PER_ELEMENT;
+	var n = vertices.length/theModel.verticesPerPrimitive;
+	//var bytesPerVertex = bytesPerFloat * floatsPerVertex;
+	var bytesPerVertex = bytesPerFloat * floatsPerVertex;  //3 floats, 4 bytes each means 12 bytes per vertex
+	
 	//   initBuffer(gl, description,    typedArray,       bufferType,            hint)
-	if (!initBuffer(gl,"vertices",       vertices,       gl.ARRAY_BUFFER,        gl.STATIC_DRAW))
+	if (!initBuffer(gl,"vertices",       vertices,       gl.ARRAY_BUFFER,        gl.DYNAMIC_DRAW))
 		return "vertices problem";
-	if (!initBuffer(gl,"verticesIndices",verticesIndices,gl.ELEMENT_ARRAY_BUFFER,gl.STATIC_DRAW))
+	if (!initBuffer(gl,"verticesIndices",verticesIndices,gl.ELEMENT_ARRAY_BUFFER,gl.DYNAMIC_DRAW))
 		return "verticesIndices problem";
   
 	// Assign the buffer object to a_Position and enable the assignment
@@ -159,20 +217,58 @@ function initVertexBuffers_trees(gl,arrPointh)
 	if(a_Position < 0) {
 		return 'Failed to get the storage location of a_Position';
 	}
-	gl.vertexAttribPointer(a_Position, 3, gl.FLOAT, false, FSIZE * 3, 0);
+	gl.vertexAttribPointer(a_Position, floatsPerVertex, gl.FLOAT, gl.FALSE, 12, 0);   //false for "normalized"
 	gl.enableVertexAttribArray(a_Position);
 	
 	return n;
 }  
   
 
-var NNN=1 << 9;
-var sizeScale=0.3;
-var varyingScale=7.0/9.0;
-var timeFactor = 1.0/10.0;
-function buildVertexTree(pointh,NNN)  //Or, OH HOW I WISH they'd let me write a geometry shader in javascript. 
+function buildVertexTree2(pointh,numBranches)  //Or, OH HOW I WISH they'd let me write a geometry shader in webGL
 {
-	var arr = new Array();  //bugbug needed? NNN*3);
+	var arr = new Array();
+	
+	//fill in ID=1;
+	var x0=arr[0]=pointh.x;
+	var y0=arr[1]=pointh.y;
+	var z0=arr[2]=pointh.z;
+	var h0=pointh.h;  //the hash
+	var t0=pointh.t;
+	
+	
+	var rnd=new RNG(h0);
+	var theta0=(rnd.normal()+1)*90/PI; //so it's in radians
+	
+	for (var ii=numBranches; ii>=(numBranches>>1); ii--)
+	{
+		var wild = rnd.uniform()*0.08; //*0.05+0.08;  
+		var theta = theta0 + 4*PI/numBranches*ii + wild*PI*1.5;
+		var radius = (numBranches-ii)/numBranches*0.01 + 0.1*Math.sin(2*theta);  //or sqrt(theta)??
+		var height=y0+ ii/numBranches* ii * ii/numBranches/numBranches/3 + wild*1.5;
+		
+		arr[(ii-1)*3 + 0] = x0 + radius*Math.sin(theta); //x
+		arr[(ii-1)*3 + 1] = height ;//y 
+		arr[(ii-1)*3 + 2] = z0 + radius*Math.cos(theta); //z
+	}
+	
+	for (var ii=(numBranches>>1)-1 ; ii>=2; ii--)
+	{
+		var kid1=ii<<1;
+		var kid2=kid1+1;
+		
+		arr[(ii-1)*3 + 0] = avg3( arr[(kid1-1)*3 + 0] , arr[(kid2-1)*3 + 0] , arr[(kid2-1)*3 + 0]  );  //x
+		arr[(ii-1)*3 + 1] = avg3( arr[(kid1-1)*3 + 1] , arr[(kid2-1)*3 + 1] , y0  );  //x
+		arr[(ii-1)*3 + 2] = avg3( arr[(kid1-1)*3 + 2] , arr[(kid2-1)*3 + 2] , arr[(kid2-1)*3 + 2]  );               		//z
+	}
+		
+	return arr;
+}
+
+function avg3(a,b,c) { return (a+b+c)/3; }  
+
+function buildVertexTree(pointh,numBranches)  //todo make these into geometry shader if/when supported in webGL 
+{
+	var arr = new Array();
 	
 	//fill in ID=1;
 	arr[0]=pointh[0];
@@ -180,7 +276,7 @@ function buildVertexTree(pointh,NNN)  //Or, OH HOW I WISH they'd let me write a 
 	arr[2]=pointh[2];
 	var hashBits=DoubleToIEEE(pointh[3])[0];
 	
-	for (var ii=2; ii<=NNN; ii++)
+	for (var ii=2; ii<=numBranches; ii++)
 	{
 		var hashBit=getHashBit(hashBits,ii);
 		var childBit=ii%2;
@@ -203,11 +299,11 @@ function buildVertexTree(pointh,NNN)  //Or, OH HOW I WISH they'd let me write a 
 											  // 3,6,  3,7,  4,8,  4,9,
 											  // 5,10, 5,11, 6,12, 7,13,
 											  // 3,13, 3,14, 3,15, 3,16]);  //always a*4+n  where 1<=n<=4;  should continue indefinitely
-function buildBiSplitIndices(NNN,indexOffset)
+function buildBiSplitIndices(numBranches,indexOffset)
 {
-	var arr=new Array(2*NNN);  // 2 indices per line
+	var arr=new Array(2*numBranches);  // 2 indices per line
 	
-	for (var ii=NNN-1; ii>=0; ii--)
+	for (var ii=numBranches-1; ii>=0; ii--)
 	{
 		arr[ii*2+1]= ii+indexOffset;
 		arr[ii*2+0]=(ii>>1)+indexOffset;
@@ -221,78 +317,6 @@ function buildBiSplitIndices(NNN,indexOffset)
 
 
 
-function initVertexBuffers_threeTriangles(gl) {
-  var verticesColors = new Float32Array([
-    // Vertex coordinates and color
-     0.0,  0.5,  -0.4, // 0.4,  1.0,  0.4, // The back green one
-    -0.5, -0.5,  -0.4, // 0.4,  1.0,  0.4,
-     0.5, -0.5,  -0.4, // 1.0,  0.4,  0.4, 
-   
-     0.5,  0.4,  -0.2, // 1.0,  0.4,  0.4, // The middle yellow one
-    -0.5,  0.4,  -0.2, // 1.0,  1.0,  0.4,
-     0.0, -0.6,  -0.2, // 1.0,  1.0,  0.4, 
-
-     0.0,  0.5,   0.0, // 0.4,  0.4,  1.0,  // The front blue one 
-    -0.5, -0.5,   0.0, // 0.4,  0.4,  1.0,
-     0.5, -0.5,   0.0, // 1.0,  0.4,  0.4, 
-  ]);
-  
-  
-  var verticesIndices=new Uint8Array([
-    0,1,2,
-	0,3,4,
-	0,5,6,
-	0,7,8,0
-  ]);
-  
-  
-  // // Create a vertex buffer object
-  // var vertexColorbuffer = gl.createBuffer();  
-  // if (!vertexColorbuffer) {
-    // console.log('Failed to create the buffer object');
-    // return -1;
-  // }
-
-  // // Write vertex information to buffer object
-  // gl.bindBuffer(gl.ARRAY_BUFFER, vertexColorbuffer);
-  // gl.bufferData(gl.ARRAY_BUFFER, verticesColors, gl.STATIC_DRAW);
-
-  var n = 13;
-  var FSIZE = verticesColors.BYTES_PER_ELEMENT;
-  
-
-  //   initBuffer(gl, description,    typedArray,    bufferType,         hint)
-  if (!initBuffer(gl,"verticesColors",verticesColors,gl.ARRAY_BUFFER,gl.STATIC_DRAW))
-	return;
-  
-  if (!initBuffer(gl,"verticesIndices",verticesIndices,gl.ELEMENT_ARRAY_BUFFER,gl.STATIC_DRAW))
-	return;
-  
-  
-  
-  // Assign the buffer object to a_Position and enable the assignment
-  var a_Position = gl.getAttribLocation(gl.program, 'a_Position');
-  if(a_Position < 0) {
-    console.log('Failed to get the storage location of a_Position');
-    return -1;
-  }
-  gl.vertexAttribPointer(a_Position, 3, gl.FLOAT, false, FSIZE * 3, 0);
-  gl.enableVertexAttribArray(a_Position);
-  
-  
-  // Assign the buffer object to a_Color and enable the assignment
-  //var a_Color = gl.getAttribLocation(gl.program, 'a_Color');
-  //if(a_Color < 0) {
-  //  console.log('Failed to get the storage location of a_Color');
-  //  return -1;
-  //}
-  //gl.vertexAttribPointer(a_Color, 3, gl.FLOAT, false, FSIZE * 6, FSIZE * 3);
-  //gl.enableVertexAttribArray(a_Color);
-
-  return n;
-}
-
-var g_EyeX = 0.20, g_EyeY = 0.25, g_EyeZ = 2.25; // Eye position
 
 
 
@@ -317,35 +341,96 @@ function clickRight(size) { g_EyeX -= size*0.01;update(); }
 
 
 
-function draw(gl, n, u_ViewMatrix, viewMatrix) {
-  // Set the matrix to be used for to set the camera view
-  viewMatrix.setLookAt(g_EyeX, g_EyeY, g_EyeZ, -0.5, 0.5, 0, 0, 1, 0);
+function draw(gl) 
+{
+	
+	gl.clearColor(0.0, 0.0, 0.0, 1.0);
 
-  // Pass the view projection matrix
-  gl.uniformMatrix4fv(u_ViewMatrix, false, viewMatrix.elements);
+	//enable transparency
+	gl.enable(gl.DEPTH_TEST);
+	gl.depthFunc(gl.LESS);
+	gl.enable(gl.BLEND);
+	gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);
 
-  // Clear <canvas>
-  gl.clear(gl.COLOR_BUFFER_BIT);
+	u_ViewMatrix = gl.getUniformLocation(gl.program, 'u_ViewMatrix');
+	u_ProjMatrix = gl.getUniformLocation(gl.program, 'u_ProjMatrix');
+	if (!u_ViewMatrix || !u_ProjMatrix) { 
+		alert('Failed to get u_ViewMatrix or u_ProjMatrix');
+		return;
+	}
 
-  // Draw the rectangle
-  //gl.drawArrays(gl.TRIANGLES, 0, n);
-  //gl.drawArrays(gl.LINE_STRIP, 0, n);
-  gl.drawElements(gl.LINES,n,gl.UNSIGNED_SHORT,0);
-  //gl.drawElements(gl.LINE_STRIP,n,gl.UNSIGNED_BYTE,0);
+
+	projMatrix = new Matrix4();
+	//projMatrix.setOrtho(-1.0, 1.0, -1.0, 1.0, 0.0, 2.0);
+	projMatrix.setPerspective(30,canvas.width/canvas.height,1,100);
+	gl.uniformMatrix4fv(u_ProjMatrix, false, projMatrix.elements);
+
+	viewMatrix = new Matrix4();
+	viewMatrix.setLookAt(g_EyeX, g_EyeY, g_EyeZ, -0.5, 0.5, 0, 0, 1, 0);
+	gl.uniformMatrix4fv(u_ViewMatrix, false, viewMatrix.elements);
+
+
+	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+	var n=sendElementsToGL(lineModel);
+	if (typeof n != "number" || n <= 0) {
+		alert('Failed to specify the vertex information'+n);
+		return;
+	}
+	gl.drawElements(gl.LINES,n,gl.UNSIGNED_SHORT,0);
+	
+	//bugbug dedup above and below???
+	
+	var n=sendElementsToGL(triModel);
+	if (typeof n != "number" || n <= 0) {
+		alert('Failed to specify the vertex information'+n);
+		return;
+	}
+	gl.drawElements(gl.TRIANGLES,n,gl.UNSIGNED_SHORT,0);
+
+	//gl.drawElements(gl.LINE_STRIP,n,gl.UNSIGNED_BYTE,0);
 }
 
 
-//from stackExchange  http://stackoverflow.com/questions/2003493/javascript-float-from-to-bits
-function DoubleToIEEE(f)
-{
-    var buf = new ArrayBuffer(8);
-    (new Float64Array(buf))[0] = f;
-    return [ (new Uint32Array(buf))[0] ,(new Uint32Array(buf))[1] ];
+//this fn (only) from stackExchange  http://stackoverflow.com/questions/2003493/javascript-float-from-to-bits
+// function DoubleToIEEE(f)
+// {
+    // var buf = new ArrayBuffer(8);
+    // (new Float64Array(buf))[0] = f;
+    // return [ (new Uint32Array(buf))[0] ,(new Uint32Array(buf))[1] ];
+// }
+
+
+// function getHashBit(hashBits,ii)
+// {
+	// return (hashBits>>(ii%31)) & 1;
+// }
+
+
+function generateRandomPointsNearby(rand,count)
+{   // e.g.
+	// [
+		// [-0.5,0.0,0.0,1.7834292],  //that's a pos+h,
+		// [ -0.6,0.02,-2.0,-8909.3424],
+		// [-1,-0.04,-0.8,-992267.83],
+		// [-1.1,0.03,-1.3,93485.002]
+	// ];
+	var arr=[];
+	for(var ii=0; ii<count; ii++)
+	{
+		arr[ii]=randomPointh(rand);
+	}
+	return arr; 
 }
 
-
-function getHashBit(hashBits,ii)
+function randomPointh(rand)
 {
-	return (hashBits>>(ii%31)) & 1;
+	return {
+		x: rand.uniform()*20-15,
+		y: (rand.normal()+4)/16,
+		z: 3-rand.exponential()*20,
+		h: rand.uniform(),
+		t: rand.uniform()
+	};
 
 }
