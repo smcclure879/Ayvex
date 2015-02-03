@@ -136,23 +136,26 @@ function buildLandFan(pointh, numTriangles)
 {
 	var arr = [];
 	
-	//fill in ID=1;
-	var x0=arr[0]=pointh.x;
-	var y0=arr[1]=pointh.y;
-	var z0=arr[2]=pointh.z;
 	var h0=pointh.h;  //the hash
+	var rnd=new RNG("foo"+(h0/47));  //so it's not like the tree, exactly (still entropically constrained tho)
+	
+	
+	//fill in ID=1;
+	var x0=arr[0]=pointh.x+rnd.random(-3,3)/100;
+	var y0=arr[1]=pointh.y-rnd.random(-1,3)/1000;
+	var z0=arr[2]=pointh.z+rnd.random(-3,3)/100;
 	var t0=pointh.t;
 	var numVertices=2+numTriangles;  //general rule for fan
 	
-	var rnd=new RNG("foo"+(h0/47));  //so it's not like the tree, exactly (still entropically constrained tho)
+	
 	var theta0=(rnd.normal()+1)*PI/90; //so it's in radians
 	
 	for(var ii=3; ii<numVertices*3; ii+=3)
 	{
-		var theta = theta0 + ii/numVertices/3*PI*2; //small number, only go around once.
-		var radius =rnd.gamma(2)/2;
+		var theta = theta0 + ii/numVertices/2.84536785342*PI*2; //small number, only go around once.
+		var radius =rnd.gamma(3)/4+0.8;
 		arr[ii+0]=x0+Math.sin(theta)*radius;
-		arr[ii+1]=y0-ii/numVertices/10; //-rnd.uniform()*0.1-0.01;
+		arr[ii+1]=y0-ii/numVertices/3; //-rnd.uniform()*0.1-0.01;
 		arr[ii+2]=z0+Math.cos(theta)*radius;
 	}
 	return arr;
@@ -175,7 +178,7 @@ function initVertexBuffers_land(gl,arrPointh)
 	triModel.verticesPerPrimitive = 3; 
 
 	arrPointh.forEach(function(pointh){
-		addLandFan(triModel,pointh,buildLandFan,4);  
+		addLandFan(triModel,pointh,buildLandFan,50);  
 	});
 	return triModel;
 }
@@ -371,7 +374,13 @@ function draw(gl)
 
 
 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
+	var n=sendElementsToGL(triModel);
+	if (typeof n != "number" || n <= 0) {
+		alert('Failed to specify the vertex information'+n);
+		return;
+	}
+	gl.drawElements(gl.TRIANGLES,n,gl.UNSIGNED_SHORT,0);
+	//bugbug dedup above and below???
 	var n=sendElementsToGL(lineModel);
 	if (typeof n != "number" || n <= 0) {
 		alert('Failed to specify the vertex information'+n);
@@ -379,14 +388,8 @@ function draw(gl)
 	}
 	gl.drawElements(gl.LINES,n,gl.UNSIGNED_SHORT,0);
 	
-	//bugbug dedup above and below???
 	
-	var n=sendElementsToGL(triModel);
-	if (typeof n != "number" || n <= 0) {
-		alert('Failed to specify the vertex information'+n);
-		return;
-	}
-	gl.drawElements(gl.TRIANGLES,n,gl.UNSIGNED_SHORT,0);
+	
 
 	//gl.drawElements(gl.LINE_STRIP,n,gl.UNSIGNED_BYTE,0);
 }
