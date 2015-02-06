@@ -39,7 +39,7 @@
 
   void main() {
     gl_Position = u_ProjMatrix * u_ViewMatrix * a_Position;
-    v_Color = vec4(0.1, 0.8, 0.0, 0.7);
+    v_Color = vec4(0.2, 0.3, 0.0, 0.9);
 	v_HideIt = 0.0;
 	//glLineThickness(2.0);  this doesn't work in this version...should I just switch to triangle strips for all?
   }

@@ -341,7 +341,7 @@ function keydown(ev, gl, n, u_ViewMatrix, viewMatrix) {
 	} else 
     if (ev.keyCode == 37) { // The left arrow key was pressed
         clickRight(1);
-    } else { return; } // Prevent the unnecessary drawing
+    } else 	{ return; } // Prevent the unnecessary drawing
 	//update();
 	ev.cancelBubble=true;
 }
@@ -468,15 +468,14 @@ var noisefn = fn === 'simplex' ? noise.simplex3 : noise.perlin3;
 
 function initVertexBuffers_land(arrPointh)  //arg ignored for now
 {
-
-	var granularity=100;
+	var granularity=8;
 	var baseCube={
-			x:0.0,
-			y:0.0,
-			z:0.0,
-			dx:1.0,
-			dy:1.0,
-			dz:1.0
+			x:  0.0,
+			y: 4.7,
+			z:-100.0,
+			dx:200.0,
+			dy:200.0,
+			dz:200.0
 		};
 	
 
@@ -494,11 +493,11 @@ function getMeshForLand(baseCube,granularity)
 	triModel.start=Date.now();
 	
 	var arrWidth=granularity;
-	var arrHeight = granularity; //bugbug for now
-
 	
 	
-	var step = 1.0/granularity;
+	
+	var stepX = baseCube.dx/granularity;
+	var stepZ = baseCube.dz/granularity;
 	var nextIndex=0;
 
 	var xl = baseCube.x + baseCube.dx;
@@ -509,11 +508,12 @@ function getMeshForLand(baseCube,granularity)
 
 	//part of loop
 	var vertNum=0;
-	for(var xx=baseCube.x; xx<xl; xx+=step)  //combined with...
-	for(var zz=baseCube.y; zz<zl; zz+=step)
+	var primNum=0;
+	for(var xx=baseCube.x; xx<xl; xx+=stepX)  //combined with...
+	for(var zz=baseCube.z; zz<zl; zz+=stepZ)
 	{
 		var ii = vertNum * triModel.floatsPerVertex;
-		var jj = vertNum * triModel.verticesPerPrimitive * 2;  //2 triangles per square
+		//bugbugvar primNum = vertNum * triModel.verticesPerPrimitive * 2;  //2 triangles per square
 		
 		//these constants get the entropy from somewhere far away in the hash
 		var floatNoise = severalOctaveNoise(8787+xx, 4998.997, 8787+zz);
@@ -524,19 +524,25 @@ function getMeshForLand(baseCube,granularity)
 		
 		//actual positions
 		triModel.preVertices[ii+fieldX] = xx;
-		triModel.preVertices[ii+fieldY] = floatNoise;   //should really be the d/dz  deriv of floatNoise  bugbug
+		triModel.preVertices[ii+fieldY] = floatNoise*30;   //should really be the d/dz  deriv of floatNoise  bugbug
 		triModel.preVertices[ii+fieldZ] = zz;
 		
-		//tri1 indices
-		triModel.preVerticesIndices[jj+0] = vertNum;
-		triModel.preVerticesIndices[jj+1] = vertNum+arrWidth+1;
-		triModel.preVerticesIndices[jj+2] = vertNum+1;
-		
-		//tri2 indices
-		triModel.preVerticesIndices[jj+0] = vertNum;
-		triModel.preVerticesIndices[jj+1] = vertNum+arrWidth;
-		triModel.preVerticesIndices[jj+2] = vertNum+arrWidth+1;
-
+		if ((-vertNum)%arrWidth!=1 && zz+stepZ < zl)  //not on last column AND not on last row
+		{	
+			//tri1 indices
+			jj=primNum*triModel.verticesPerPrimitive;
+			triModel.preVerticesIndices[jj+0] = vertNum;
+			triModel.preVerticesIndices[jj+1] = vertNum+arrWidth+1;
+			triModel.preVerticesIndices[jj+2] = vertNum+1;
+			primNum++;
+			
+			//tri2 indices
+			jj=primNum*triModel.verticesPerPrimitive;
+			triModel.preVerticesIndices[jj+0] = vertNum;
+			triModel.preVerticesIndices[jj+1] = vertNum+arrWidth;
+			triModel.preVerticesIndices[jj+2] = vertNum+arrWidth+1;
+			primNum++;
+		}
 		vertNum++;
 	}
 	
