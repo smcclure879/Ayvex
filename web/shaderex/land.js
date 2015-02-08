@@ -468,11 +468,11 @@ var noisefn = fn === 'simplex' ? noise.simplex3 : noise.perlin3;
 
 function initVertexBuffers_land(arrPointh)  //arg ignored for now
 {
-	var granularity=8;
+	var granularity=25;
 	var baseCube={
-			x:  0.0,
+			x: -50.0,
 			y: 4.7,
-			z:-100.0,
+			z:-80.0,
 			dx:200.0,
 			dy:200.0,
 			dz:200.0
@@ -524,7 +524,7 @@ function getMeshForLand(baseCube,granularity)
 		
 		//actual positions
 		triModel.preVertices[ii+fieldX] = xx;
-		triModel.preVertices[ii+fieldY] = floatNoise*30;   //should really be the d/dz  deriv of floatNoise  bugbug
+		triModel.preVertices[ii+fieldY] = floatNoise*5;   //should really be the d/dz  deriv of floatNoise  bugbug
 		triModel.preVertices[ii+fieldZ] = zz;
 		
 		if ((-vertNum)%arrWidth!=1 && zz+stepZ < zl)  //not on last column AND not on last row
