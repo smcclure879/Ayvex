@@ -1,12 +1,52 @@
 
+var cos = Math.cos;
+var sin = Math.sin;
+
+
 
 //settings (some should not be global TODO)
-var g_EyeX = 0.20, g_EyeY = 0.95, g_EyeZ = 2.25; // initial Eye position
+
+var user = {
+	eye:{		x:2.20,y:0.95,z:20.25
+				,theta:0,phi:180
+		}   // initial Eye position
+};
+
+
+var baseCube={
+		x: -40.0,
+		y: -4.7,
+		z:-80.0,
+		dx:200.0,
+		dy:200.0,
+		dz:200.0,
+		granularity:50
+	};
+	
+
+
+//tree consts
 var numTrees=500;
 var NNN=1 << 8;
 var sizeScale=0.3;
 var varyingScale=7.0/9.0;
 var timeFactor = 1.0/10.0;
+
+//this in some ways "defines the world"  -- consolidate these! bugbug
+var randForLocations=new RNG("fifty-seven");
+var heightFunction = function(xx,zz){return severalOctaveNoise(8787+xx, 4998.997, 8787+zz);}  ;
+function severalOctaveNoise(x,y,z)
+{
+	return    1/2 * noisefn(x / 13, y / 10, z)  
+			- 2/3 * Math.abs(noisefn((x+1000)/391,(y+1000)/290,z/10)) 
+			- 1/12 * noisefn(x,y,z*10) 
+	;
+}
+
+
+
+
+
 
 
 //consts
@@ -24,11 +64,11 @@ var allType,lButton,rButton;
 
 function main() 
 {
+	initUserMethods();
 	canvas = document.getElementById('canvas');
 
 	gl = getWebGLContext(canvas);
-	if (!gl) 
-	{
+	if (!gl) {
 		alert('Failed to get the rendering context for WebGL');
 		return;
 	}
@@ -49,12 +89,11 @@ function main()
 	}
 
 	// Set the vertex coordinates etc
-	var randForLocations=new RNG("fifty-seven");
-	var arrPointh=generateRandomPointsNearby(randForLocations,numTrees);  
 		
 	//globals, later we'll need to update these based on "not repainting the whole world at 60fps"
-	lineModel = initVertexBuffers_trees(arrPointh);
-	triModel = initVertexBuffers_land(arrPointh);
+	triModel = initVertexBuffers_land(baseCube);
+	lineModel = initVertexBuffers_trees(baseCube);
+	
 
 
 	update=function() {
@@ -65,23 +104,68 @@ function main()
 
 
 	document.onkeydown = allType.onkeydown  =  function(ev){ 
-		keydown(ev, gl, n, u_ViewMatrix, viewMatrix); 
-		return false;
+		// if (key.shouldSkip(ev)) 
+		// {
+			// ev.returnValue = true;
+			// return true;
+		// }
+		
+		ev.returnValue = keydown(ev, gl, n, u_ViewMatrix, viewMatrix); 
+		return ev.returnValue;
 	};
 
 	lButton.onmousedown=function(ev) {
 		clickLeft(10);
-		ev.cancelBubble=true;
 	}
 
 	rButton.onmousedown=function(ev) {
 		clickRight(10);
-		ev.cancelBubble=true;
 	}
 
 	//bugbug wanted??? setInterval(update,1000/50);
 }
 
+//bugbug just make this a class already
+function initUserMethods()
+{
+	user.getPosOrient=function(){
+			var e=user.eye;
+			var s=1;  //bugbug needed??
+			return 	{
+						x:e.x,
+						y:e.y,
+						z:e.z,
+						lx:e.x + s*cos(e.phi)*cos(e.theta),
+						ly:e.y + s*sin(e.theta),
+						lz:e.z + s*sin(e.phi)*cos(e.theta),
+			};
+		};
+	
+	
+	user.spin=function(rotation) {
+		user.eye.phi += rotation;	
+	};
+	
+	user.tilt=function(rotation){
+		user.eye.theta += rotation;
+	};
+	user.rise=function(move){
+		user.eye.y += move;
+	};
+	user.advance=function(move){
+		var e=user.eye;
+		e.x += move*cos(e.phi)*cos(e.theta);
+		e.y += move*sin(e.theta);
+		e.z += move*sin(e.phi)*cos(e.theta);
+	};
+	user.pan=function(move){
+		var e=user.eye;
+		e.x += move*sin(e.phi)*cos(e.theta);
+		e.z += move*cos(e.phi)*cos(e.theta);  //bugbug I think there's a minus sign in there somewhere
+		//e.y += move*0; //panning is altitude-locked
+	};
+	
+}
 
 
 function initBuffer(gl,description,typedArray,bufferType,hint)
@@ -134,34 +218,6 @@ function buildTriFanIndices(numTriangles,indexOffset)
 	}
 	return arr;
 }
-function buildLandFan(pointh, numTriangles)
-{
-	var arr = [];
-	
-	var h0=pointh.h;  //the hash
-	var rnd=new RNG("foo"+(h0/47));  //so it's not like the tree, exactly (still entropically constrained tho)
-	
-	
-	//fill in ID=1;
-	var x0=arr[0]=pointh.x+rnd.random(-3,3)/100;
-	var y0=arr[1]=pointh.y-rnd.random(-1,3)/1000;
-	var z0=arr[2]=pointh.z+rnd.random(-3,3)/100;
-	var t0=pointh.t;
-	var numVertices=2+numTriangles;  //general rule for fan
-	
-	
-	var theta0=(rnd.normal()+1)*PI/90; //so it's in radians
-	
-	for(var ii=3; ii<numVertices*3; ii+=3)
-	{
-		var theta = theta0 + ii/numVertices/2.84536785342*PI*2; //small number, only go around once.
-		var radius =rnd.gamma(3)/4+0.8;
-		arr[ii+0]=x0+Math.sin(theta)*radius;
-		arr[ii+1]=y0-ii/numVertices/3; //-rnd.uniform()*0.1-0.01;
-		arr[ii+2]=z0+Math.cos(theta)*radius;
-	}
-	return arr;
-}
 
 
 function newModel()
@@ -173,26 +229,14 @@ function newModel()
 }
 
 
-// function initVertexBuffers_land(arrPointh)
-// {
-	// var triModel = newModel();
-	// triModel.floatsPerVertex = 3;  //todo to lineModel constructor
-	// triModel.verticesPerPrimitive = 3; 
-
-	
-	// see drawFrameOld
-	
-	// // arrPointh.forEach(function(pointh){
-		// // addLandFan(triModel,pointh,buildLandFan,50);  
-	// // });
-	// return triModel;
-// }
 
 
 
-//bugbug dedup above and below in the OO pass
-function initVertexBuffers_trees(arrPointh)
+//bugbug dedup vs. same for land --- in the OO pass
+function initVertexBuffers_trees(baseCube)  
 {
+	var arrPointh=generateRandomGroundPointsNearby(baseCube,randForLocations,numTrees);  
+	
 	var lineModel = newModel();	
 	lineModel.floatsPerVertex = 3;  //todo to lineModel constructor
 	lineModel.verticesPerPrimitive=2; 
@@ -328,40 +372,50 @@ function buildBiSplitIndices(numBranches,indexOffset)
 
 
 
+var rotateSize = 0.05;
+var moveSize = 0.5;
 
-
-
-function keyfix(ev) {
-    keydown(ev,gl,n,u_ViewMatrix, viewMatrix);
+function keydown(ev, gl, n, u_ViewMatrix, viewMatrix)   //bugbug all these args needed???
+{	
+	switch(ev.keyCode)
+	{
+		case key.right: user.spin( rotateSize); break;
+		case key.left: 	user.spin(-rotateSize); break;
+		case key.up: 	user.tilt( rotateSize); break; 
+		case key.down: 	user.tilt(-rotateSize); break;
+		
+		
+		case key.r: 	user.rise( moveSize); break;
+		case key.f: 	user.rise(-moveSize); break;
+		case key.w: 	user.advance( moveSize); break; 
+		case key.s: 	user.advance(-moveSize); break;
+		case key.a: 	user.pan(-moveSize); break;
+		case key.d: 	user.pan( moveSize); break;
+		
+		default: 		return true;        break;    //"not handled"
+	}
+	
+	update();
+	return false;  //"handled"
 }
 
-function keydown(ev, gl, n, u_ViewMatrix, viewMatrix) {
-    if(ev.keyCode == 39) { // The right arrow key was pressed
-        clickLeft(1); 
-	} else 
-    if (ev.keyCode == 37) { // The left arrow key was pressed
-        clickRight(1);
-    } else 	{ return; } // Prevent the unnecessary drawing
-	//update();
-	ev.cancelBubble=true;
-}
+//bugbugNOW replace these!
+//bugbug consolidate with actionsForKeys...and these should not just go on cardinal directions.  
+// function clickLeft(size)    { user.eye.x += size*0.01; user.lookVec.x += size*0.01; update(); }
+// function clickRight(size)   { user.eye.x -= size*0.01; user.lookVec.y += size*0.01; update(); }
+// function clickForward(size) { user.eye.z -= size*0.01; user.lookVec.z += size*0.01; update(); }
+// function clickBack(size)    { user.eye.z += size*0.01; user.lookVec.x += size*0.01; update(); }
+// function clickRise(size)    { user.eye.y += size*0.01; user.lookVec.y += size*0.01; update(); }
+// function clickFall(size)    { user.eye.y -= size*0.01; user.lookVec.z += size*0.01; update(); }
 
-
-function clickLeft(size)  { g_EyeX += size*0.01;update(); }
-function clickRight(size) { g_EyeX -= size*0.01;update(); }
-
-
-
-
-
-
+// function clickLeft(size)      {  user.rotatePhi(size); update(); }
+// function clickRight(size)     {  user.rotatePhi(-size); update(); }
 
 
 function draw(gl) 
 {
 	gl.clearColor(0.0, 0.0, 0.0, 1.0);
 
-	//enable transparency
 	gl.enable(gl.BLEND);
 	gl.enable(gl.DEPTH_TEST);
 	gl.depthFunc(gl.LESS);
@@ -381,28 +435,32 @@ function draw(gl)
 	gl.uniformMatrix4fv(u_ProjMatrix, false, projMatrix.elements);
 
 	viewMatrix = new Matrix4();
-	viewMatrix.setLookAt(g_EyeX, g_EyeY, g_EyeZ, -0.5, 0.5, 0, 0, 1, 0);
+	var po = user.getPosOrient();
+	viewMatrix.setLookAt(po.x, po.y, po.z, 
+						po.lx, po.ly, po.lz,   
+						//-0.5, 0.5, 0,   //old, other look
+						0, 1, 0);  //up direction vector
 	gl.uniformMatrix4fv(u_ViewMatrix, false, viewMatrix.elements);
 
 
 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+	
+	
 	var n=sendElementsToGL(triModel);
 	if (typeof n != "number" || n <= 0) {
 		alert('Failed to specify the vertex information'+n);
 		return;
 	}
 	gl.drawElements(gl.TRIANGLES,n,gl.UNSIGNED_SHORT,0);
+	
 	//bugbug dedup above and below???
+	
 	var n=sendElementsToGL(lineModel);
 	if (typeof n != "number" || n <= 0) {
 		alert('Failed to specify the vertex information'+n);
 		return;
 	}
 	gl.drawElements(gl.LINES,n,gl.UNSIGNED_SHORT,0);
-	
-	// ctx = canvas.getContext('2d');
-	// canvas.ctx.fillStyle = 'pink';
-	// canvas.ctx.fillRect(10, 10, 20, 20);
  
 }
 
@@ -422,7 +480,7 @@ function draw(gl)
 // }
 
 
-function generateRandomPointsNearby(rand,count)
+function generateRandomGroundPointsNearby(baseCube,rand,count)
 {   // e.g.
 	// [
 		// [-0.5,0.0,0.0,1.7834292],  //that's a pos+h,
@@ -433,17 +491,23 @@ function generateRandomPointsNearby(rand,count)
 	var arr=[];
 	for(var ii=0; ii<count; ii++)
 	{
-		arr[ii]=randomPointh(rand);
+		arr[ii]=randomPointh(baseCube,rand);
 	}
 	return arr; 
 }
 
-function randomPointh(rand)
+function randomPointh(baseCube,rand)
 {
+	//bugbug these need to be near the user!
+
+	var x = rand.uniform()*baseCube.dx+baseCube.x;
+	var z = rand.uniform()*baseCube.dz+baseCube.z;  //3-rand.exponential()*20;
+	
+	
 	return {
-		x: rand.uniform()*20-15,
-		y: (rand.normal()+4)/16,
-		z: 3-rand.exponential()*20,
+		x: x,
+		y: heightFunction(x,z),  //(rand.normal()+4)/16,
+		z: z,
 		h: rand.uniform(),
 		t: rand.uniform()
 	};
@@ -466,38 +530,27 @@ var fn = 'simplex';
 var noisefn = fn === 'simplex' ? noise.simplex3 : noise.perlin3;
 
 
-function initVertexBuffers_land(arrPointh)  //arg ignored for now
+function initVertexBuffers_land(baseCube)
 {
-	var granularity=25;
-	var baseCube={
-			x: -50.0,
-			y: 4.7,
-			z:-80.0,
-			dx:200.0,
-			dy:200.0,
-			dz:200.0
-		};
-	
-
-	var meshModel=getMeshForLand(baseCube,granularity);
-	//drawing the mesh comes later
+	var meshModel=getMeshForLand(baseCube);
+	meshModel.baseCube=baseCube;  //send it along for good measure?  land owns trees by this decision!
 	return meshModel;
 }
 
 
-function getMeshForLand(baseCube,granularity)
+function getMeshForLand(baseCube)
 {  
+
+
 	var triModel = newModel();
 	triModel.floatsPerVertex = 3;  //todo to lineModel constructor
 	triModel.verticesPerPrimitive = 3; 
 	triModel.start=Date.now();
 	
-	var arrWidth=granularity;
+	var arrWidth=baseCube.granularity;
 	
-	
-	
-	var stepX = baseCube.dx/granularity;
-	var stepZ = baseCube.dz/granularity;
+	var stepX = baseCube.dx/baseCube.granularity;
+	var stepZ = baseCube.dz/baseCube.granularity;
 	var nextIndex=0;
 
 	var xl = baseCube.x + baseCube.dx;
@@ -516,15 +569,15 @@ function getMeshForLand(baseCube,granularity)
 		//bugbugvar primNum = vertNum * triModel.verticesPerPrimitive * 2;  //2 triangles per square
 		
 		//these constants get the entropy from somewhere far away in the hash
-		var floatNoise = severalOctaveNoise(8787+xx, 4998.997, 8787+zz);
+		var height = heightFunction(xx,zz);  //severalOctaveNoise(8787+xx, 4998.997, 8787+zz);
 
 		//tracking
-		if (max < floatNoise) max = floatNoise;
-		if (min > floatNoise) min = floatNoise;
+		if (max < height) max = height;
+		if (min > height) min = height;
 		
 		//actual positions
 		triModel.preVertices[ii+fieldX] = xx;
-		triModel.preVertices[ii+fieldY] = floatNoise*5;   //should really be the d/dz  deriv of floatNoise  bugbug
+		triModel.preVertices[ii+fieldY] = height*5;   //should really be the d/dz  deriv of height  bugbug
 		triModel.preVertices[ii+fieldZ] = zz;
 		
 		if ((-vertNum)%arrWidth!=1 && zz+stepZ < zl)  //not on last column AND not on last row
@@ -550,40 +603,8 @@ function getMeshForLand(baseCube,granularity)
 	
 	return triModel;
 }
-	  
-	  
-      //var byteNoise = clamp( (floatNoise+1)*1.1*128, 0, 255 );
 
-	  
-	  //got "value" (which should be (bugbug) "entropyValue"?)
-	  //intermediate variables
-	  //var altitude=Math.abs(byteNoise)-128*Math.sin(byteNoise%70)/byteNoise*6;
-	  //var vegitude=byteNoise;
 
-	  
-	  //bugbug instead of building a color vs. x&y, build a mesh and display with webGL
-	  // var cell = (x + y * arrWidth) * 4;
-      // data[cell] = altitude*1/4 + vegitude*3/4 ; 
-	  // data[cell + 1] = altitude/2 + vegitude/2;
-	  // data[cell + 2] = 0;
-      // //data[cell] += Math.max(0, (25 - value) * 8);
-      // data[cell + 3] = 255; // alpha.
-
-  
-  
-  // how to map to triangles-to-draw-in-3d space?  voxelsystems like minecraft know the granularity to look at. 
-  //we need to be clever here based on distance or something.  need to find local maxima and stuff, decompose into joined_tetrahedra or ____?
-  // (the simplexes in simplex optimization could be these??)
-  // 
-  
-  
-  //bugbug and this won't work to display the mesh
-  //ctx.putImageData(image, 0, 0);
-// function someKindaDrawBugbug()  bugbug you are here
-// {
-  // //height += 0.05;
-  // //requestAnimationFrame(drawFrameOld);
-// }
 
 function clamp(x,min,max)
 {
@@ -595,15 +616,10 @@ function clamp(x,min,max)
 	return x;
 }
 
-function severalOctaveNoise(x,y,z)
+function sqr(x)
 {
-	return    1/2 * noisefn(x / 13, y / 10, z)  
-			- 2/3 * Math.abs(noisefn((x+1000)/391,(y+1000)/290,z/10)) 
-			- 1/12 * noisefn(x,y,z*10) 
-			- 0.4
-	;
+	return x*x;
 }
-
 
 // document.onclick = function() {
   // // Swap noise function on click.
