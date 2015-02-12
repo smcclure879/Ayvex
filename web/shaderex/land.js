@@ -389,8 +389,8 @@ function keydown(ev, gl, n, u_ViewMatrix, viewMatrix)   //bugbug all these args 
 		case key.f: 	user.rise(-moveSize); break;
 		case key.w: 	user.advance( moveSize); break; 
 		case key.s: 	user.advance(-moveSize); break;
-		case key.a: 	user.pan(-moveSize); break;
-		case key.d: 	user.pan( moveSize); break;
+		case key.a: 	user.pan( moveSize); break;
+		case key.d: 	user.pan(-moveSize); break;
 		
 		default: 		return true;        break;    //"not handled"
 	}
@@ -431,7 +431,7 @@ function draw(gl)
 
 	projMatrix = new Matrix4();
 	//projMatrix.setOrtho(-1.0, 1.0, -1.0, 1.0, 0.0, 2.0);
-	projMatrix.setPerspective(30,canvas.width/canvas.height,1,100);
+	projMatrix.setPerspective(30,canvas.width/canvas.height,1,1000);
 	gl.uniformMatrix4fv(u_ProjMatrix, false, projMatrix.elements);
 
 	viewMatrix = new Matrix4();
