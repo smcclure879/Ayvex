@@ -1,7 +1,7 @@
 
 var cos = Math.cos;
 var sin = Math.sin;
-
+var pihalf=Math.PI/2;
 
 
 //settings (some should not be global TODO)
@@ -31,10 +31,11 @@ var NNN=1 << 8;
 var sizeScale=0.3;
 var varyingScale=7.0/9.0;
 var timeFactor = 1.0/10.0;
+var dramaRatio=0.5;
 
 //this in some ways "defines the world"  -- consolidate these! bugbug
 var randForLocations=new RNG("fifty-seven");
-var heightFunction = function(xx,zz){return severalOctaveNoise(8787+xx, 4998.997, 8787+zz);}  ;
+var heightFunction = function(xx,zz){return severalOctaveNoise(8787+xx, 4998.997, 8787+zz)*dramaRatio;}  ;
 function severalOctaveNoise(x,y,z)
 {
 	return    1/2 * noisefn(x / 13, y / 10, z)  
@@ -160,8 +161,8 @@ function initUserMethods()
 	};
 	user.pan=function(move){
 		var e=user.eye;
-		e.x += move*sin(e.phi)*cos(e.theta);
-		e.z += move*cos(e.phi)*cos(e.theta);  //bugbug I think there's a minus sign in there somewhere
+		e.x += move*cos(e.phi+pihalf)*cos(e.theta);
+		e.z += move*sin(e.phi+pihalf)*cos(e.theta);  //bugbug I think there's a minus sign in there somewhere
 		//e.y += move*0; //panning is altitude-locked
 	};
 	
@@ -389,8 +390,8 @@ function keydown(ev, gl, n, u_ViewMatrix, viewMatrix)   //bugbug all these args 
 		case key.f: 	user.rise(-moveSize); break;
 		case key.w: 	user.advance( moveSize); break; 
 		case key.s: 	user.advance(-moveSize); break;
-		case key.a: 	user.pan( moveSize); break;
-		case key.d: 	user.pan(-moveSize); break;
+		case key.a: 	user.pan(-moveSize); break;
+		case key.d: 	user.pan( moveSize); break;
 		
 		default: 		return true;        break;    //"not handled"
 	}
@@ -442,26 +443,10 @@ function draw(gl)
 						0, 1, 0);  //up direction vector
 	gl.uniformMatrix4fv(u_ViewMatrix, false, viewMatrix.elements);
 
-
 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 	
-	
-	var n=sendElementsToGL(triModel);
-	if (typeof n != "number" || n <= 0) {
-		alert('Failed to specify the vertex information'+n);
-		return;
-	}
-	gl.drawElements(gl.TRIANGLES,n,gl.UNSIGNED_SHORT,0);
-	
-	//bugbug dedup above and below???
-	
-	var n=sendElementsToGL(lineModel);
-	if (typeof n != "number" || n <= 0) {
-		alert('Failed to specify the vertex information'+n);
-		return;
-	}
-	gl.drawElements(gl.LINES,n,gl.UNSIGNED_SHORT,0);
- 
+	sendAndDrawIfPossible(triModel,gl.TRIANGLES);
+	sendAndDrawIfPossible(lineModel,gl.LINES);
 }
 
 
@@ -479,6 +464,16 @@ function draw(gl)
 	// return (hashBits>>(ii%31)) & 1;
 // }
 
+
+function sendAndDrawIfPossible(triModel,glElementType)
+{	
+	var n=sendElementsToGL(triModel);
+	if (typeof n != "number" || n <= 0) {
+		alert('Failed to specify the vertex information'+n);
+	}
+	gl.drawElements(glElementType,n,gl.UNSIGNED_SHORT,0);  //assuming the unsigned short and start at index 0, for now.
+	return n;
+}
 
 function generateRandomGroundPointsNearby(baseCube,rand,count)
 {   // e.g.
