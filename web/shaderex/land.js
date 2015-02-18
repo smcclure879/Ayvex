@@ -1,8 +1,4 @@
 
-var cos = Math.cos;
-var sin = Math.sin;
-var pihalf=Math.PI/2;
-
 
 //settings (some should not be global TODO)
 
@@ -20,48 +16,62 @@ var baseCube={
 		dx:200.0,
 		dy:200.0,
 		dz:200.0,
-		granularity:50
+		granularity:100
 	};
 	
 
 
 //tree consts
+var randForLocations=new RNG("fifty-seven"); //seeding for tree locations
 var numTrees=500;
 var NNN=1 << 8;
 var sizeScale=0.3;
 var varyingScale=7.0/9.0;
 var timeFactor = 1.0/10.0;
-var dramaRatio=0.5;
+var dramaRatio=2.5;
 
-//this in some ways "defines the world"  -- consolidate these! bugbug
-var randForLocations=new RNG("fifty-seven");
-var heightFunction = function(xx,zz){return severalOctaveNoise(8787+xx, 4998.997, 8787+zz)*dramaRatio;}  ;
+//movement consts
+var rotateSize = 0.05;
+var moveSize = 0.5;
+
+//land consts...the part you'd want to tweak on
+var heightFunction = function(xx,zz){return dramaRatio*severalOctaveNoise(8787+xx, 4998.997, 8787+zz);}  ; //these constants get the entropy from somewhere far away in the hash
 function severalOctaveNoise(x,y,z)
 {
-	return    1/2 * noisefn(x / 13, y / 10, z)  
-			- 2/3 * Math.abs(noisefn((x+1000)/391,(y+1000)/290,z/10)) 
-			- 1/12 * noisefn(x,y,z*10) 
+	return  (
+				1/2 * noisefn(x / 13, y / 10, z)  
+				- 2/3 * Math.abs(noisefn((x+1000)/391,(y+1000)/290,z/10)) 
+				- 1/12 * noisefn(x,y,z*10) 
+			);
 	;
 }
 
 
 
 
-
-
-
-//consts
-var PI=Math.PI;
+//convenience
+var cos = Math.cos;
+var sin = Math.sin;
+var pi=Math.PI;
+var pihalf=pi/2;
 var fieldX=0;
 var fieldY=1;
 var fieldZ=2;
 
 
 var canvas,gl,n,update,viewMatrix,u_ViewMatrix,u_ProjMatrix;
-var lineModel,triModel;
-
 var projMatrix;
+var lineModel,triModel;
 var allType,lButton,rButton;
+
+
+
+
+
+
+
+
+
 
 function main() 
 {
@@ -191,7 +201,8 @@ function initBuffer(gl,description,typedArray,bufferType,hint)
 												  // 3,13, 3,14, 3,15, 3,16]);  //always a*4+n  where 1<=n<=4;  should continue indefinitely
 
 
-function addTree(lineModel,pointh,vertexTreeCallback,numBranches)
+
+function addItem(lineModel,pointh,vertexTreeCallback,numBranches)
 {
 	var indexOffset=lineModel.preVertices.length/lineModel.floatsPerVertex;  //in units of "points"
 	lineModel.preVertices=lineModel.preVertices.concat(  vertexTreeCallback(pointh,numBranches)  );  
@@ -199,12 +210,12 @@ function addTree(lineModel,pointh,vertexTreeCallback,numBranches)
 }
 
 //bugbug combine with the above when making more OO
-function addLandFan(triModel,pointh,triFanCallback,numTriangles)
-{
-	var indexOffset=triModel.preVertices.length/triModel.floatsPerVertex;  //in units of "vertices"...length of perVertices is in floats, natively
-	triModel.preVertices=triModel.preVertices.concat( triFanCallback(pointh, numTriangles) );
-	triModel.preVerticesIndices=triModel.preVerticesIndices.concat( buildTriFanIndices(numTriangles,indexOffset) );
-}
+// function addLandFan(triModel,pointh,triFanCallback,numTriangles)
+// {
+	// var indexOffset=triModel.preVertices.length/triModel.floatsPerVertex;  //in units of "vertices"...length of perVertices is in floats, natively
+	// triModel.preVertices=triModel.preVertices.concat( triFanCallback(pointh, numTriangles) );
+	// triModel.preVerticesIndices=triModel.preVerticesIndices.concat( buildTriFanIndices(numTriangles,indexOffset) );
+// }
 
 
 function buildTriFanIndices(numTriangles,indexOffset)
@@ -243,11 +254,21 @@ function initVertexBuffers_trees(baseCube)
 	lineModel.verticesPerPrimitive=2; 
 
 	arrPointh.forEach(function(pointh){
-		addTree(lineModel,pointh,buildVertexTree2,NNN);
+		addItem(lineModel,pointh,buildVertexTree2,NNN);
 	});
 	return lineModel;
 }
 
+
+function sendAndDrawIfPossible(triModel,glElementType)
+{	
+	var n=sendElementsToGL(triModel);
+	if (typeof n != "number" || n <= 0) {
+		alert('Failed to specify the vertex information'+n);
+	}
+	gl.drawElements(glElementType,n,gl.UNSIGNED_SHORT,0);  //assuming the unsigned short and start at index 0, for now.
+	return n;
+}
 
 function sendElementsToGL(theModel)
 {
@@ -293,12 +314,12 @@ function buildVertexTree2(pointh,numBranches)  //Or, OH HOW I WISH they'd let me
 	
 	
 	var rnd=new RNG(h0);
-	var theta0=(rnd.normal()+1)*90/PI; //so it's in radians
+	var theta0=(rnd.normal()+1)*90/pi; //so it's in radians
 	
 	for (var ii=numBranches; ii>=(numBranches>>1); ii--)
 	{
 		var wild = rnd.uniform()*0.08; //*0.05+0.08;  
-		var theta = theta0 + 4*PI/numBranches*ii + wild*PI*1.5;
+		var theta = theta0 + 4*pi/numBranches*ii + wild*pi*1.5;
 		var radius = (numBranches-ii)/numBranches*0.01 + 0.1*Math.sin(2*theta);  //or sqrt(theta)??
 		var height=y0+ ii/numBranches* ii * ii/numBranches/numBranches/3 + wild*1.5;
 		
@@ -372,10 +393,6 @@ function buildBiSplitIndices(numBranches,indexOffset)
 
 
 
-
-var rotateSize = 0.05;
-var moveSize = 0.5;
-
 function keydown(ev, gl, n, u_ViewMatrix, viewMatrix)   //bugbug all these args needed???
 {	
 	switch(ev.keyCode)
@@ -399,18 +416,6 @@ function keydown(ev, gl, n, u_ViewMatrix, viewMatrix)   //bugbug all these args 
 	update();
 	return false;  //"handled"
 }
-
-//bugbugNOW replace these!
-//bugbug consolidate with actionsForKeys...and these should not just go on cardinal directions.  
-// function clickLeft(size)    { user.eye.x += size*0.01; user.lookVec.x += size*0.01; update(); }
-// function clickRight(size)   { user.eye.x -= size*0.01; user.lookVec.y += size*0.01; update(); }
-// function clickForward(size) { user.eye.z -= size*0.01; user.lookVec.z += size*0.01; update(); }
-// function clickBack(size)    { user.eye.z += size*0.01; user.lookVec.x += size*0.01; update(); }
-// function clickRise(size)    { user.eye.y += size*0.01; user.lookVec.y += size*0.01; update(); }
-// function clickFall(size)    { user.eye.y -= size*0.01; user.lookVec.z += size*0.01; update(); }
-
-// function clickLeft(size)      {  user.rotatePhi(size); update(); }
-// function clickRight(size)     {  user.rotatePhi(-size); update(); }
 
 
 function draw(gl) 
@@ -465,15 +470,6 @@ function draw(gl)
 // }
 
 
-function sendAndDrawIfPossible(triModel,glElementType)
-{	
-	var n=sendElementsToGL(triModel);
-	if (typeof n != "number" || n <= 0) {
-		alert('Failed to specify the vertex information'+n);
-	}
-	gl.drawElements(glElementType,n,gl.UNSIGNED_SHORT,0);  //assuming the unsigned short and start at index 0, for now.
-	return n;
-}
 
 function generateRandomGroundPointsNearby(baseCube,rand,count)
 {   // e.g.
@@ -527,10 +523,124 @@ var noisefn = fn === 'simplex' ? noise.simplex3 : noise.perlin3;
 
 function initVertexBuffers_land(baseCube)
 {
-	var meshModel=getMeshForLand(baseCube);
+	var meshModel=getMeshForLand(baseCube);  //bugbug
+	//var meshModel=getMeshAroundMe(user); //bugbug is the below still true if we've skipped notion of baseCube entirely
 	meshModel.baseCube=baseCube;  //send it along for good measure?  land owns trees by this decision!
 	return meshModel;
 }
+
+// function getMeshAroundMe(user)
+// {
+	// var triModel = newModel();
+	// triModel.floatsPerVertex = 3;  //todo to lineModel constructor
+	// triModel.verticesPerPrimitive = 3; 
+	// triModel.start=Date.now();
+	
+	
+	// //cast some rays around user.  user has lookAt (and later a lookAtObject, selectedObject, etc) that can serve as base points to render from
+	// var density=noisefn;
+	
+	// var po = user.getPosOrient();
+	
+	// while(not done yet)
+	// {
+		// //pick random offset theta phi from lookAt direction (so need user.getThetaPhi??)
+		// var phi0 = user.eye.phi;
+		// var theta0 = user.eye.theta; 
+
+		// var theta=randCtrOffExponential(theta0,-deltaTheta,deltaTheta); //those are the one-sigma values from offset theta  
+		// var phi=randCtrOffExponential(phi0,-deltaPhi,deltaPhi);
+		
+		// var delta = pi*2;
+		// var startDist=0.001;  //note can't be zero or less!
+		// for(dist = startDist; dist< 1e+32 && dist>=startDist; dist*=delta) //ha ha nothing to do with trig
+		// {
+			// var type:vec3 offset = polar to xyz (dist,theta,phi);
+			// var examinedPoint = user.xyz+offset;
+			// var testDensity=density(examinedPoint);
+			// if (testDensity>groundDensity)
+			// {
+				// delta /= delta;
+			// }
+			
+			
+		
+		// }
+		
+			// if air, could go with haze or sky color
+			// if water,
+			// if dirt
+			// etc.
+		// try to find a place 
+	// }
+	
+	
+	
+		////////////////////comb
+	
+	
+	
+	
+	
+	
+	// var arrWidth=baseCube.granularity;
+	
+	// var stepX = baseCube.dx/baseCube.granularity;
+	// var stepZ = baseCube.dz/baseCube.granularity;
+	// var nextIndex=0;
+
+	// var xl = baseCube.x + baseCube.dx;
+	// var zl = baseCube.z + baseCube.dz;
+	
+	// //for tracking max and min values seen
+	// var max = -Infinity, min = Infinity;
+
+	// //part of loop
+	// var vertNum=0;
+	// var primNum=0;
+	// for(var xx=baseCube.x; xx<xl; xx+=stepX)  //combined with...
+	// for(var zz=baseCube.z; zz<zl; zz+=stepZ)
+	// {
+		// var ii = vertNum * triModel.floatsPerVertex;
+		// //bugbugvar primNum = vertNum * triModel.verticesPerPrimitive * 2;  //2 triangles per square
+		
+		// var height = heightFunction(xx,zz); 
+
+		// //tracking
+		// if (max < height) max = height;
+		// if (min > height) min = height;
+		
+		// //actual positions
+		// triModel.preVertices[ii+fieldX] = xx;
+		// triModel.preVertices[ii+fieldY] = height;   //should really be the d/dz  deriv of height  bugbug
+		// triModel.preVertices[ii+fieldZ] = zz;
+		
+		// if ((-vertNum)%arrWidth!=1 && zz+stepZ < zl)  //not on last column AND not on last row
+		// {	
+			// //tri1 indices
+			// jj=primNum*triModel.verticesPerPrimitive;
+			// triModel.preVerticesIndices[jj+0] = vertNum;
+			// triModel.preVerticesIndices[jj+1] = vertNum+arrWidth+1;
+			// triModel.preVerticesIndices[jj+2] = vertNum+1;
+			// primNum++;
+			
+			// //tri2 indices
+			// jj=primNum*triModel.verticesPerPrimitive;
+			// triModel.preVerticesIndices[jj+0] = vertNum;
+			// triModel.preVerticesIndices[jj+1] = vertNum+arrWidth;
+			// triModel.preVerticesIndices[jj+2] = vertNum+arrWidth+1;
+			// primNum++;
+		// }
+		// vertNum++;
+	// }
+	
+	// triModel.end=Date.now();
+	
+	// return triModel;
+// }
+
+
+
 
 
 function getMeshForLand(baseCube)
@@ -563,8 +673,7 @@ function getMeshForLand(baseCube)
 		var ii = vertNum * triModel.floatsPerVertex;
 		//bugbugvar primNum = vertNum * triModel.verticesPerPrimitive * 2;  //2 triangles per square
 		
-		//these constants get the entropy from somewhere far away in the hash
-		var height = heightFunction(xx,zz);  //severalOctaveNoise(8787+xx, 4998.997, 8787+zz);
+		var height = heightFunction(xx,zz); 
 
 		//tracking
 		if (max < height) max = height;
@@ -572,7 +681,7 @@ function getMeshForLand(baseCube)
 		
 		//actual positions
 		triModel.preVertices[ii+fieldX] = xx;
-		triModel.preVertices[ii+fieldY] = height*5;   //should really be the d/dz  deriv of height  bugbug
+		triModel.preVertices[ii+fieldY] = height;   //should really be the d/dz  deriv of height  bugbug
 		triModel.preVertices[ii+fieldZ] = zz;
 		
 		if ((-vertNum)%arrWidth!=1 && zz+stepZ < zl)  //not on last column AND not on last row
