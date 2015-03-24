@@ -20,11 +20,15 @@ var baseCube={
 	};
 	
 
-
+var myColors={ 
+	blueSky:'87CEEB',  //	135,206,235
+	dirt:'836539',
+	red: "FF0000",
+};
 //tree consts
 var randForLocations=new RNG("fifty-seven"); //seeding for tree locations
-var numTrees=500;
-var NNN=1 << 8;
+var numTrees=500;  //bugbugSOON 500
+var NNN=1 << 6;  //bugbugSOON  << 8
 var sizeScale=0.3;
 var varyingScale=7.0/9.0;
 var timeFactor = 1.0/10.0;
@@ -34,13 +38,17 @@ var dramaRatio=2.5;
 var rotateSize = 0.05;
 var moveSize = 0.5;
 
-//land consts...the part you'd want to tweak on
+
+//new land consts
+var groundDensity=0.2;  //bugbug need to determine the allowed density spectrum...maybe adjust noise to fit that?
+
+//old land consts...the part you'd want to tweak on
 var heightFunction = function(xx,zz){return dramaRatio*severalOctaveNoise(8787+xx, 4998.997, 8787+zz);}  ; //these constants get the entropy from somewhere far away in the hash
 function severalOctaveNoise(x,y,z)
 {
 	return  (
 				1/2 * noisefn(x / 13, y / 10, z)  
-				- 2/3 * Math.abs(noisefn((x+1000)/391,(y+1000)/290,z/10)) 
+				- 2/3 * abs(noisefn((x+1000)/391,(y+1000)/290,z/10)) 
 				- 1/12 * noisefn(x,y,z*10) 
 			);
 	;
@@ -50,10 +58,19 @@ function severalOctaveNoise(x,y,z)
 
 
 //convenience
-var cos = Math.cos;
-var sin = Math.sin;
 var pi=Math.PI;
 var pihalf=pi/2;
+var cos = Math.cos;
+var sin = Math.sin;
+var abs = Math.abs;
+var pow = Math.pow;
+var sqrt = Math.sqrt;
+function sqr(x) {	return x*x;  }
+function rad(degrees) { return degrees*pi/180; }
+function deg(radians) { return radians/pi*180; }
+
+
+//for clarity in indexing packed values
 var fieldX=0;
 var fieldY=1;
 var fieldZ=2;
@@ -152,6 +169,14 @@ function initUserMethods()
 			};
 		};
 	
+	user.getViewMatrix=function(){
+		var viewMatrix = new Matrix4();
+		var po = user.getPosOrient();
+		viewMatrix.setLookAt(po.x, po.y, po.z, 
+							po.lx, po.ly, po.lz,   
+							0, 1, 0);  //up direction vector
+		return viewMatrix;
+	}
 	
 	user.spin=function(rotation) {
 		user.eye.phi += rotation;	
@@ -252,19 +277,40 @@ function initVertexBuffers_trees(baseCube)
 	var lineModel = newModel();	
 	lineModel.floatsPerVertex = 3;  //todo to lineModel constructor
 	lineModel.verticesPerPrimitive=2; 
+	lineModel.colors=[];
 
 	arrPointh.forEach(function(pointh){
-		addItem(lineModel,pointh,buildVertexTree2,NNN);
+		addItem(lineModel,pointh,buildVertexTree2,NNN);  //add item buildVertexTree2(count=NNN) @pointh  into lineModel
 	});
+	
+	
+	var red=0.7;
+	var green=0.8;
+	var blue=0.1;
+	var alpha=0.5;
+		
+	
+	//patch up colors since we don't have perVertex coloring yet for lines...should we?
+	for( var ii=0,il=lineModel.preVertices.length/3*4 ; ii<il ; )  //4 colorFloats / 3 positionFloats
+	{
+		var uu=decimalPart(ii/192)
+		lineModel.colors[ii++]=uu;
+		lineModel.colors[ii++]=1-uu;
+		lineModel.colors[ii++]=blue;
+		lineModel.colors[ii++]=alpha;
+	}
+	
+	
 	return lineModel;
 }
 
 
-function sendAndDrawIfPossible(triModel,glElementType)
+function sendAndDrawIfPossible(model,glElementType)  //bugbug elementType should be a property of the model, and this should be a method of the model
 {	
-	var n=sendElementsToGL(triModel);
+	var n=sendElementsToGL(model);
+	
 	if (typeof n != "number" || n <= 0) {
-		alert('Failed to specify the vertex information'+n);
+		throw ('Failed to specify the vertex information'+n);
 	}
 	gl.drawElements(glElementType,n,gl.UNSIGNED_SHORT,0);  //assuming the unsigned short and start at index 0, for now.
 	return n;
@@ -275,27 +321,48 @@ function sendElementsToGL(theModel)
 	//ugh hate this extra layer they make us go thru
 	var vertices = new Float32Array(theModel.preVertices);
 	var verticesIndices = new Uint16Array(theModel.preVerticesIndices);
+	var colors = new Float32Array(theModel.colors);  //bugbug need to insure this is always created!
 	
 	var floatsPerVertex = theModel.floatsPerVertex;
 	var floatsPerPrimitive = floatsPerVertex * theModel.verticesPerPrimitive; 
 	var bytesPerFloat = vertices.BYTES_PER_ELEMENT;
 	var n = vertices.length/theModel.verticesPerPrimitive;
 	//var bytesPerVertex = bytesPerFloat * floatsPerVertex;
-	var bytesPerVertex = bytesPerFloat * floatsPerVertex;  //3 floats, 4 bytes each means 12 bytes per vertex
+	var bytesPerVertex = bytesPerFloat * floatsPerVertex;  
+	var bytesPerPrimitive = bytesPerVertex * theModel.verticesPerPrimitive;  //bugbug needed???
 	
 	//   initBuffer(gl, description,    typedArray,       bufferType,            hint)
 	if (!initBuffer(gl,"vertices",       vertices,       gl.ARRAY_BUFFER,        gl.DYNAMIC_DRAW))
-		return "vertices problem";
+		return "vertices buffer problem";
 	if (!initBuffer(gl,"verticesIndices",verticesIndices,gl.ELEMENT_ARRAY_BUFFER,gl.DYNAMIC_DRAW))
-		return "verticesIndices problem";
-  
+		return "verticesIndices buffer problem";	
+	
+	//maybe the above bound the buffer so do the vars here
 	// Assign the buffer object to a_Position and enable the assignment
 	var a_Position = gl.getAttribLocation(gl.program, 'a_Position');
-	if(a_Position < 0) {
+	if(a_Position < 0)
 		return 'Failed to get the storage location of a_Position';
-	}
-	gl.vertexAttribPointer(a_Position, floatsPerVertex, gl.FLOAT, gl.FALSE, 12, 0);   //false for "normalized"
+	
+	gl.vertexAttribPointer(a_Position, floatsPerVertex, gl.FLOAT, gl.FALSE, stride, 0);   //false for "normalized"
 	gl.enableVertexAttribArray(a_Position);
+			
+		
+		
+	if (!initBuffer(gl,"colors",          colors,        gl.ARRAY_BUFFER,     	gl.DYNAMIC_DRAW))
+		return "colors buffer problem";
+	
+	var a_Color= gl.getAttribLocation(gl.program, 'a_Color');
+	if(a_Color < 0)
+		return 'Failed to get the storage lcoation of a_Color';
+	//bugbug if handColoring...
+	gl.vertexAttribPointer(a_Color, 4, gl.FLOAT, gl.FALSE, 16, 0);  //16=stride 4 floats, 4 bytes each.  bugbug??
+	gl.enableVertexAttribArray(a_Color);
+	
+	
+	
+	
+	var stride = bytesPerVertex;
+	
 	
 	return n;
 }  
@@ -312,18 +379,20 @@ function buildVertexTree2(pointh,numBranches)  //Or, OH HOW I WISH they'd let me
 	var h0=pointh.h;  //the hash
 	var t0=pointh.t;
 	
-	
+	//bugbug probably this should be outside the callback, so can be shared across 1 whole tree
 	var rnd=new RNG(h0);
-	var theta0=(rnd.normal()+1)*90/pi; //so it's in radians
+	//var theta0=rad(rnd.normal()+1)/2; //bugbug why the /2  .....  'twas only obvious when switched to standard rad() fn !
+	var theta0=rad(rnd.normal()+1)/pi;
 	
 	for (var ii=numBranches; ii>=(numBranches>>1); ii--)
 	{
 		var wild = rnd.uniform()*0.08; //*0.05+0.08;  
 		var theta = theta0 + 4*pi/numBranches*ii + wild*pi*1.5;
-		var radius = (numBranches-ii)/numBranches*0.01 + 0.1*Math.sin(2*theta);  //or sqrt(theta)??
+		var radius = (numBranches-ii)/numBranches*0.01 + 0.1*sin(2*theta);  //or sqrt(theta)??
+		//radius *= 100;  //bugbugSOON should not be here
 		var height=y0+ ii/numBranches* ii * ii/numBranches/numBranches/3 + wild*1.5;
 		
-		arr[(ii-1)*3 + 0] = x0 + radius*Math.sin(theta); //x
+		arr[(ii-1)*3 + 0] = x0 + radius*sin(theta); //x
 		arr[(ii-1)*3 + 1] = height ;//y 
 		arr[(ii-1)*3 + 2] = z0 + radius*Math.cos(theta); //z
 	}
@@ -363,9 +432,9 @@ function buildVertexTree(pointh,numBranches)  //todo make these into geometry sh
 		var theta = ii*timeFactor;
 		
 		//ii-1 to make up for 1-based priorityQ-like ID's.  *3 to deal with xyz ordering.
-		arr[(ii-1)*3 + 0]=arr[(parentId-1)*3 + 0] - 0.6* childBit * sizeScale * Math.pow(varyingScale,8-gen) * (Math.cos(theta*2.5)+0.5)*(ii+20)/340;  //x
-		arr[(ii-1)*3 + 1]=arr[(parentId-1)*3 + 1] + 1             * sizeScale * Math.pow(varyingScale,gen  );  //y
-		arr[(ii-1)*3 + 2]=arr[(parentId-1)*3 + 2] + 0.7*(hashBit-0.5)   * sizeScale * Math.pow(varyingScale,gen  ) * (Math.sin(theta*2.5)+0.5)*(ii+20)/240;  //z
+		arr[(ii-1)*3 + 0]=arr[(parentId-1)*3 + 0] - 0.6* childBit * sizeScale * pow(varyingScale,8-gen) * (cos(theta*2.5)+0.5)*(ii+20)/340;  //x
+		arr[(ii-1)*3 + 1]=arr[(parentId-1)*3 + 1] + 1             * sizeScale * pow(varyingScale,gen  );  //y
+		arr[(ii-1)*3 + 2]=arr[(parentId-1)*3 + 2] + 0.7*(hashBit-0.5)   * sizeScale * pow(varyingScale,gen  ) * (sin(theta*2.5)+0.5)*(ii+20)/240;  //z
 	}
 	
 	return arr;
@@ -440,17 +509,13 @@ function draw(gl)
 	projMatrix.setPerspective(30,canvas.width/canvas.height,1,1000);
 	gl.uniformMatrix4fv(u_ProjMatrix, false, projMatrix.elements);
 
-	viewMatrix = new Matrix4();
-	var po = user.getPosOrient();
-	viewMatrix.setLookAt(po.x, po.y, po.z, 
-						po.lx, po.ly, po.lz,   
-						//-0.5, 0.5, 0,   //old, other look
-						0, 1, 0);  //up direction vector
+	var viewMatrix=user.getViewMatrix();	
+						
 	gl.uniformMatrix4fv(u_ViewMatrix, false, viewMatrix.elements);
 
 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 	
-	sendAndDrawIfPossible(triModel,gl.TRIANGLES);
+	sendAndDrawIfPossible(triModel,gl.TRIANGLES);  //bugbugSOON add the triangles back
 	sendAndDrawIfPossible(lineModel,gl.LINES);
 }
 
@@ -523,190 +588,171 @@ var noisefn = fn === 'simplex' ? noise.simplex3 : noise.perlin3;
 
 function initVertexBuffers_land(baseCube)
 {
-	var meshModel=getMeshForLand(baseCube);  //bugbug
-	//var meshModel=getMeshAroundMe(user); //bugbug is the below still true if we've skipped notion of baseCube entirely
+	//var meshModel=getMeshForLand(baseCube);  //bugbug
+	var meshModel=getMeshAroundMe(user); //bugbug is the below still true if we've skipped notion of baseCube entirely
 	meshModel.baseCube=baseCube;  //send it along for good measure?  land owns trees by this decision!
 	return meshModel;
 }
 
-// function getMeshAroundMe(user)
-// {
-	// var triModel = newModel();
-	// triModel.floatsPerVertex = 3;  //todo to lineModel constructor
-	// triModel.verticesPerPrimitive = 3; 
-	// triModel.start=Date.now();
-	
-	
-	// //cast some rays around user.  user has lookAt (and later a lookAtObject, selectedObject, etc) that can serve as base points to render from
-	// var density=noisefn;
-	
-	// var po = user.getPosOrient();
-	
-	// while(not done yet)
-	// {
-		// //pick random offset theta phi from lookAt direction (so need user.getThetaPhi??)
-		// var phi0 = user.eye.phi;
-		// var theta0 = user.eye.theta; 
 
-		// var theta=randCtrOffExponential(theta0,-deltaTheta,deltaTheta); //those are the one-sigma values from offset theta  
-		// var phi=randCtrOffExponential(phi0,-deltaPhi,deltaPhi);
-		
-		// var delta = pi*2;
-		// var startDist=0.001;  //note can't be zero or less!
-		// for(dist = startDist; dist< 1e+32 && dist>=startDist; dist*=delta) //ha ha nothing to do with trig
-		// {
-			// var type:vec3 offset = polar to xyz (dist,theta,phi);
-			// var examinedPoint = user.xyz+offset;
-			// var testDensity=density(examinedPoint);
-			// if (testDensity>groundDensity)
-			// {
-				// delta /= delta;
-			// }
-			
-			
-		
-		// }
-		
-			// if air, could go with haze or sky color
-			// if water,
-			// if dirt
-			// etc.
-		// try to find a place 
-	// }
-	
-	
-	
-		////////////////////comb
-	
-	
-	
-	
-	
-	
-	// var arrWidth=baseCube.granularity;
-	
-	// var stepX = baseCube.dx/baseCube.granularity;
-	// var stepZ = baseCube.dz/baseCube.granularity;
-	// var nextIndex=0;
+function getOffsetsRotated(user)
+{
+	var retval = [];
+	var ii = 0;
+	var viewMatrix = user.getViewMatrix();
+	for (var ii=0; ii<3; ii++)
+	{
+		var offsetAngle=rad(120*ii + 90);
+		var vec=facePlanePolar(1,offsetAngle);  //bugbug vec could be array of consts set before now.  this could just be a map operation.
+		retval[ii] = viewMatrix.multiplyVector3(vec);
+	}
+	return retval;
+}
 
-	// var xl = baseCube.x + baseCube.dx;
-	// var zl = baseCube.z + baseCube.dz;
+var distanceMetric=function(a,b){
+	return sqrt(sqr(a.x)+sqr(a.y)+sqr(a.z));
+};
+var recentPoints = new kdTree([],distanceMetric,['x','y','z']);  //bugbug add fourth dimension here soon!
+
+function getMeshAroundMe(user)
+{
+	if (!recentPoints) 
+		throw 'no recentPoints';
 	
-	// //for tracking max and min values seen
-	// var max = -Infinity, min = Infinity;
-
-	// //part of loop
-	// var vertNum=0;
-	// var primNum=0;
-	// for(var xx=baseCube.x; xx<xl; xx+=stepX)  //combined with...
-	// for(var zz=baseCube.z; zz<zl; zz+=stepZ)
-	// {
-		// var ii = vertNum * triModel.floatsPerVertex;
-		// //bugbugvar primNum = vertNum * triModel.verticesPerPrimitive * 2;  //2 triangles per square
-		
-		// var height = heightFunction(xx,zz); 
-
-		// //tracking
-		// if (max < height) max = height;
-		// if (min > height) min = height;
-		
-		// //actual positions
-		// triModel.preVertices[ii+fieldX] = xx;
-		// triModel.preVertices[ii+fieldY] = height;   //should really be the d/dz  deriv of height  bugbug
-		// triModel.preVertices[ii+fieldZ] = zz;
-		
-		// if ((-vertNum)%arrWidth!=1 && zz+stepZ < zl)  //not on last column AND not on last row
-		// {	
-			// //tri1 indices
-			// jj=primNum*triModel.verticesPerPrimitive;
-			// triModel.preVerticesIndices[jj+0] = vertNum;
-			// triModel.preVerticesIndices[jj+1] = vertNum+arrWidth+1;
-			// triModel.preVerticesIndices[jj+2] = vertNum+1;
-			// primNum++;
-			
-			// //tri2 indices
-			// jj=primNum*triModel.verticesPerPrimitive;
-			// triModel.preVerticesIndices[jj+0] = vertNum;
-			// triModel.preVerticesIndices[jj+1] = vertNum+arrWidth;
-			// triModel.preVerticesIndices[jj+2] = vertNum+arrWidth+1;
-			// primNum++;
-		// }
-		// vertNum++;
-	// }
-	
-	// triModel.end=Date.now();
-	
-	// return triModel;
-// }
-
-
-
-
-
-function getMeshForLand(baseCube)
-{  
-
-
 	var triModel = newModel();
 	triModel.floatsPerVertex = 3;  //todo to lineModel constructor
 	triModel.verticesPerPrimitive = 3; 
+	triModel.colors=[];  //add colors to it
 	triModel.start=Date.now();
 	
-	var arrWidth=baseCube.granularity;
-	
-	var stepX = baseCube.dx/baseCube.granularity;
-	var stepZ = baseCube.dz/baseCube.granularity;
-	var nextIndex=0;
+	var offsets = getOffsetsRotated(user);
 
-	var xl = baseCube.x + baseCube.dx;
-	var zl = baseCube.z + baseCube.dz;
 	
-	//for tracking max and min values seen
-	var max = -Infinity, min = Infinity;
-
-	//part of loop
-	var vertNum=0;
-	var primNum=0;
-	for(var xx=baseCube.x; xx<xl; xx+=stepX)  //combined with...
-	for(var zz=baseCube.z; zz<zl; zz+=stepZ)
+	//cast some rays around user.  user has lookAt (and later a lookAtObject, selectedObject, etc) that can serve as base points to render from
+	var density=noisefn;
+	
+	var po = user.getPosOrient();
+	var phi0 = user.eye.phi;
+	var theta0 = user.eye.theta; 
+	
+	for(var ii=0; ii<1000; ii++)
 	{
-		var ii = vertNum * triModel.floatsPerVertex;
-		//bugbugvar primNum = vertNum * triModel.verticesPerPrimitive * 2;  //2 triangles per square
+		//pick random offset theta phi from lookAt direction (so need user.getThetaPhi??)
+		var deltaTheta=rad(15);
+		var deltaPhi=rad(15);
+		var theta=randCtrOffExponential(theta0,deltaTheta); //those are the one-sigma values from offset theta  
+		var phi=randCtrOffExponential(phi0,deltaPhi);
 		
-		var height = heightFunction(xx,zz); 
-
-		//tracking
-		if (max < height) max = height;
-		if (min > height) min = height;
-		
-		//actual positions
-		triModel.preVertices[ii+fieldX] = xx;
-		triModel.preVertices[ii+fieldY] = height;   //should really be the d/dz  deriv of height  bugbug
-		triModel.preVertices[ii+fieldZ] = zz;
-		
-		if ((-vertNum)%arrWidth!=1 && zz+stepZ < zl)  //not on last column AND not on last row
-		{	
-			//tri1 indices
-			jj=primNum*triModel.verticesPerPrimitive;
-			triModel.preVerticesIndices[jj+0] = vertNum;
-			triModel.preVerticesIndices[jj+1] = vertNum+arrWidth+1;
-			triModel.preVerticesIndices[jj+2] = vertNum+1;
-			primNum++;
-			
-			//tri2 indices
-			jj=primNum*triModel.verticesPerPrimitive;
-			triModel.preVerticesIndices[jj+0] = vertNum;
-			triModel.preVerticesIndices[jj+1] = vertNum+arrWidth;
-			triModel.preVerticesIndices[jj+2] = vertNum+arrWidth+1;
-			primNum++;
+		var loopDelta = pi*2; //ha ha nothing to do with trig  but don't want an "even" number or even a rational!
+		var startDist=0.001;  //note can't be zero or less!
+		var testDensity=null;  //used in the loop
+		var vx=cos(phi)*cos(theta);
+		var vy=sin(theta);
+		var vz=sin(phi)*cos(theta);
+		for(var dist = startDist; dist< 1e+32 && dist>=startDist && loopDelta>startDist; dist*=loopDelta) 
+		{
+			//var offset = polar to xyz (dist,theta,phi);
+			var testX = po.x + dist*vx; 
+			var testY = po.y + dist*vy;
+			var testZ = po.z + dist*vz; 
+			testDensity=density(testX,testY,testZ);
+			if (testDensity>=groundDensity)
+			{
+				dist /= loopDelta;
+				loopDelta = sqrt(loopDelta);
+			}
 		}
-		vertNum++;
+		
+		var color=colorForDensity(testDensity);
+		//drop Vertex with color into an octree (for now a tiny triangle normal to user -- 60,60,60) 
+		var normalX=0;  //bugbug should actually compute one, treat distance in normals like distance in pos!!!  todo
+		var normalY=1;
+		var normalZ=0;
+		
+		//bugbug why can't I see the points???
+		var q=1.0;
+		testX /= q;
+		testY -= 9.0;
+		testZ /= q;
+		
+		
+		recentPoints.insert({x:testX,y:testY,z:testZ,color:color,normalX:normalX,normalY:normalY,normalZ:normalZ});
+	}
+	
+	
+	//TODO this is the algo for later.  don't use marching cubes. something like relaxation?
+	//now that octree is filled, build a triangulation by finding closest points to each other 
+	//where the vertices are different in some aspect (color, normVec), we would mark that for candidate to split on subsequent rounds.
+	//note we can keep filling the octree with points if we keep pruning it to size.  these are absolute xyz points!  with color&normVec?  
+	
+	//for now to demo the octree and spot estimation working....
+	
+	//bugbug todo
+	//recentPoints.simplify();
+	//recentPoints.triangleIfy();
+	
+	//fill the triangles into the buffers....
+	//recentPoints.beginRead();
+	//alert("recentPoitns"+recentPoints.toJSON(""));
+	
+	var maxNodes = 10;  //bugbug
+	var maxDistance = null;      //Number.MAX_VALUE;
+	var pointsToMakeIntoTriangles = recentPoints.nearest(po, maxNodes, maxDistance);
+	
+	var ii=0; //index into model.preVertices
+	var jj=0; //index into model.preVerticesIndices
+	var mm=0; //index into model.colors
+	for( var originalPointCount=0, size=pointsToMakeIntoTriangles.length  ;  originalPointCount<size  ;  originalPointCount++ )
+	{
+		var pointObject = pointsToMakeIntoTriangles[originalPointCount++][0];
+		var point = Vector3.CreateFromXyz(pointObject);
+		
+		//copy a tiny triangle around that point into the vertices and verticesIndices buffer!
+		for(var kk=0; kk<3; kk++)
+		{
+			var p = Vector3.Add( point , offsets[kk] ).elements;
+			
+			//one point-of-a-triangle (not original points)
+			triModel.preVertices[ii++] = p[0];
+			triModel.preVertices[ii++] = p[1];
+			triModel.preVertices[ii++] = p[2];
+			if (triModel.colors) 
+				triModel.colors[mm++] = pointObject.color;
+
+			//one index to that point
+			triModel.preVerticesIndices[jj] = jj;
+			jj++;
+		}
+		
 	}
 	
 	triModel.end=Date.now();
 	
+	//alert("got trimodel");
 	return triModel;
+	
 }
+
+
+function colorForDensity(dens)
+{
+	return myColors.red;  //bugbug
+
+
+	if (dens<groundDensity) //we ran out of stuff so 
+		return myColors.blueSky;
+		
+	return myColors.dirt;  //bugbug
+	
+	
+	
+	var h=dens-groundDensity/groundDensity;
+	var s=0.8;
+	var l=0.5;
+	return hslToRgb(h,s,l);		
+}
+
+
 
 
 
@@ -720,11 +766,42 @@ function clamp(x,min,max)
 	return x;
 }
 
-function sqr(x)
-{
-	return x*x;
-}
 
+/**
+ * Converts an HSL color value to RGB. Conversion formula
+ * adapted from http://en.wikipedia.org/wiki/HSL_color_space.
+ * Assumes h, s, and l are contained in the set [0, 1] and
+ * returns r, g, and b in the set [0, 255].
+ *
+ * @param   Number  h       The hue
+ * @param   Number  s       The saturation
+ * @param   Number  l       The lightness
+ * @return  Array           The RGB representation
+ */
+function hslToRgb(h, s, l){
+    var r, g, b;
+
+    if(s == 0){
+        r = g = b = l; // achromatic
+    }else{
+        var hue2rgb = function hue2rgb(p, q, t){
+            if(t < 0) t += 1;
+            if(t > 1) t -= 1;
+            if(t < 1/6) return p + (q - p) * 6 * t;
+            if(t < 1/2) return q;
+            if(t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+            return p;
+        }
+
+        var q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+        var p = 2 * l - q;
+        r = hue2rgb(p, q, h + 1/3);
+        g = hue2rgb(p, q, h);
+        b = hue2rgb(p, q, h - 1/3);
+    }
+
+    return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
+}
 // document.onclick = function() {
   // // Swap noise function on click.
   // fn = fn === 'simplex' ? 'perlin' : 'simplex';
@@ -739,7 +816,23 @@ function sqr(x)
 // requestAnimationFrame(animationFrameDraw);
 
 
+//given a center and one sided sigma, generate a bell curve point randomly
+function randCtrOffExponential(ctr,sigma)
+{
+	return ctr+randForLocations.normal(sigma);
 
+}
 
+function facePlanePolar(radius,offsetAngle)
+{
+	return new Vector3([
+				radius*cos(offsetAngle),  
+				radius*sin(offsetAngle),   
+				0 
+			]);
+}
 
-
+function decimalPart(x)
+{
+	return x-Math.floor(x);
+}

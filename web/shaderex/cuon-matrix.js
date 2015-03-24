@@ -739,3 +739,32 @@ var Vector4 = function(opt_src) {
   } 
   this.elements = v;
 }
+
+
+
+// added by smcclure additional Vector3 methods....
+
+Vector3.Add=function(x,y) {
+	var retval = new Vector3();
+	for(var ii=0; ii<3; ii++)	{
+		retval.elements[ii]=x.elements[ii]+y.elements[ii];
+	}
+	return retval;
+}
+
+Vector3.CreateFromXyz=function(obj)
+{
+	var retval = new Vector3();
+	retval.elements[0]=obj.x;
+	retval.elements[1]=obj.y;
+	retval.elements[2]=obj.z;
+	return retval;
+}
+
+
+
+
+
+
+
+
