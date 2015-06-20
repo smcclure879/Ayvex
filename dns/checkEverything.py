@@ -15,31 +15,66 @@ import subprocess
 
 
 
+#early settings
 echoLog = True
 speaking = True
 
 
 
 class Site:
-    def __init__(self,nick,host,port,yada,expectCode):
+    def __init__(self,nick,host,port,expectCode):
         self.nick = nick
         self.host = host
         self.port = port
-        self.yada = yada
         self.expectCode = expectCode
+        self.strict = True
+        self.timeout = 10
+
 
     def verify(self,interface):
-        conn = httplib.HTTPConnection("www.google.com")
-        conn.request("HEAD", "/index.html")
-        res = conn.getresponse()
-        return res.status==self.expectCode
+        print self.nick
+        try:
+            conn = httplib.HTTPConnection(self.host, self.port, self.strict, self.timeout, interface.getAddressTuple())
+        except HTTPException as ex:
+            log("exception "+ex)
+            return False
+            
+        res = ''
+        try:
+            conn.request("HEAD", "/")
+            res = conn.getresponse()
+        except:
+            log("failed response:"+self.nick)
+            return False
 
+
+        try:
+            conn.close()
+        except:
+            pass
+
+        if res.status==self.expectCode:
+            return True
+
+        print res.status, res.reason
+        return False
+
+
+
+def portGiver():
+    nextPort = int(8899)
+    while True:
+        yield nextPort
+        nextPort += 1
+openPorts = portGiver()
 
 class NetInterface:
     def __init__(self,nick,name,ipAddr):
         self.nick = nick
         self.name = name
         self.ipAddr = ipAddr
+    def getAddressTuple(self):
+        return (self.ipAddr,openPorts.next())
     
 
 def makeInterface(name,section):
@@ -117,15 +152,14 @@ MINUTES = 60
 
 #settings are here
 
-yada = 0
 testSites = [
-    Site("google","www.google.com",80,yada,200),
-    Site("comcast","www.xfinity.com",80,yada,301),  #they keep moving their site too!
-    Site("ayvex","ayvex.dnsalias.com",8081,yada,200),
-    Site("bogus1","notAyvex.dnsalias.com",80,yada,200),
-    Site("bogus2","yapulousity.envalponer.com",80,yada,200),
-    Site("locaz","192.168.1.1",80,yada,200)
-
+    Site("google","www.google.com",80,200),
+    Site("comcast","www.comcast.com",80,301),  #they keep moving their site too!
+    Site("ayvex","ayvex.dnsalias.com",8081,200),
+    Site("bogus1","notAyvex.dnsalias.com",80,200),
+    Site("bogus2","yapulousity.envalponer.com",80,200),
+    Site("locaz1","192.168.1.1",80,200),
+    Site("locaz2","10.1.1.1",80,200)
 ]
 
 
@@ -186,7 +220,7 @@ for section in sections:  #each is an interface
     print "interface="+name
     ipAddr=seek(section,"inet addr")
     if not ipAddr:
-        quip("bad interface: "+name)
+        quip("bad interface: "+getNick(name))
     else:
         interface = makeInterface(name,section)
         sitesOk = 0
