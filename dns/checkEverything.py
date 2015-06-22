@@ -17,7 +17,7 @@ import subprocess
 
 #early settings
 echoLog = True
-speaking = True
+speaking = False
 
 
 
@@ -134,7 +134,7 @@ def closeAll():
 def quip(x):
     log(x)
     if speaking:
-        runhide("espeak",x)  #it's noisy
+        runhide("espeak",x) 
 
 
 def seek(corpus,soughtName):  #look for soughtName:  value  and return value
@@ -164,7 +164,7 @@ testSites = [
 
 
 #chdir into own dir
-os.chdir(os.path.dirname(sys.argv[0]))
+os.chdir(os.path.dirname(sys.argv[0]))    #this is failing bugbug
 
 # #figure the time for log file etc.
 theTime = time.gmtime()
@@ -182,10 +182,12 @@ log("----starting log----time="+humanTime)
 
 
 # #if less than 5 minutes since startup then hold off (exit)
-uptime = int(float(run("cat","/proc/uptime").split(" ")[0]))
+uptimeText = run("cat","/proc/uptime")
+log("uptime="+uptimeText)
+uptime = int(float(uptimeText.split(" ")[0]))
 print uptime/3600,"hrs up"
 if uptime<5*MINUTES:
-    print "waiting 5 minutes "
+    log("waiting 5 minutes")
     sleep(5*MINUTES)
 
 
