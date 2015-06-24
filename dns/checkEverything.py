@@ -10,7 +10,6 @@
 """
 
 import os,sys,httplib,time
-#import functools
 import subprocess
 
 
@@ -58,7 +57,8 @@ class Site:
 
         print res.status, res.reason
         return False
-
+    def diagnose(self,interface):
+        return "bugbug nyi tracert"
 
 
 def portGiver():
@@ -100,8 +100,18 @@ def run(prog,arg1):
     return runall([prog,arg1])
 
 def runall(argsArray):
-    return subprocess.check_output(argsArray)
+    #return subprocess.check_output(argsArray)
+    #bugbug you are here
+    sp = subprocess.Popen(argsArray, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    out, err = sp.communicate()
+    
+    if err:
+        raise err
 
+    if sp.returncode <> 0:
+        raise "wierd code="+sp.returncode
+
+    return out
 
 
 
@@ -135,7 +145,8 @@ def quip(x):
     log(x)
     if speaking:
         runhide("espeak",x) 
-
+def announceIp(x):
+    runhide("espeak", "at "+x)  
 
 def seek(corpus,soughtName):  #look for soughtName:  value  and return value
     chunks = corpus.split("  ")
@@ -171,6 +182,7 @@ theTime = time.gmtime()
 humanTime = time.strftime("%c")
 timeForLogFile = time.strftime("%y%m%d%H",theTime)
 
+#bugbug need to exit if df returns high% utilization
 
 
 # open the log
@@ -181,49 +193,58 @@ fh1=open(logFile,"ab+")
 log("----starting log----time="+humanTime)
 
 
-# #if less than 5 minutes since startup then hold off (exit)
+# #if less than 1 minute since startup then hold off (exit)
+delay = 1 * MINUTES
 uptimeText = run("cat","/proc/uptime")
 log("uptime="+uptimeText)
 uptime = int(float(uptimeText.split(" ")[0]))
 print uptime/3600,"hrs up"
-if uptime<5*MINUTES:
-    log("waiting 5 minutes")
-    sleep(5*MINUTES)
-
+if uptime<delay:
+    log("waiting because we just started up")
+    time.sleep(delay)
+else:
+    log("proceeding")
 
 
 
 
 # #if there's another of me then die
 # run ps grep for checkEverything
-procs = run("ps", "-A").split()
+try:
+    procs = run("ps", "-A").split()
+except ex as Exception:
+    log(str(ex))
+
 procsLikeMe =filter( lambda x: "checkEverything" in x,  procs )
 if len(procsLikeMe)>1:
     quip("duplicate check running")
     exit(1)
+else:
+    log ("no dup procs")
 
 
-
-
-
-
-
-
-sections = runall(["ifconfig"]).split("\n\n")
+log("about to run ifconfig")
+try:
+    sections = runall(["ifconfig"]).split("\n\n")
+except ex as Exception:
+    log("ifconf prob"+ex)
 interfacesUp = 0
-
 for section in sections:  #each is an interface
+    #log(section)
     lines=section.split("\n")
     name = lines[0].split("  ")[0]
+    log( "interface="+name )
     if not name:
         continue
     if name=='lo':
         continue
-    print "interface="+name
+
     ipAddr=seek(section,"inet addr")
+
     if not ipAddr:
         quip("bad interface: "+getNick(name))
     else:
+        announceIp(ipAddr)
         interface = makeInterface(name,section)
         sitesOk = 0
         for site in testSites:
@@ -231,7 +252,7 @@ for section in sections:  #each is an interface
                 sitesOk += 1
             else:
                 quip(site.nick + " is down")
-
+                site.diagnose(interface);
 
 
         if sitesOk>0: #some are at least
