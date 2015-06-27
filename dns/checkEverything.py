@@ -11,7 +11,7 @@
 
 import os,sys,httplib,time
 import subprocess
-
+import ipgetter
 
 
 #early settings
@@ -59,6 +59,13 @@ class Site:
         return False
     def diagnose(self,interface):
         return "bugbug nyi tracert"
+
+
+def post(interfaceName,address,xml):
+    pass
+
+def tellMeshTemp(interfaceName,meshkite,allAboutMe):
+    post(interfaceName,meshkite.address,allAboutMe)
 
 
 def portGiver():
@@ -146,6 +153,8 @@ def quip(x):
     if speaking:
         runhide("espeak",x) 
 def announceIp(x):
+    if os.path.isfile("no-ip-announce.txt"):
+        return
     runhide("espeak", "at "+x)  
 
 def seek(corpus,soughtName):  #look for soughtName:  value  and return value
@@ -156,6 +165,9 @@ def seek(corpus,soughtName):  #look for soughtName:  value  and return value
         if chunk[0:theLen]==sought:
             return chunk[len(sought):]
     return ''
+
+
+    
 
 
 MINUTES = 60
@@ -172,6 +184,12 @@ testSites = [
     Site("locaz1","192.168.1.1",80,200),
     Site("locaz2","10.1.1.1",80,200)
 ]
+
+meshites = [
+    "ayvex.dnsalias.com"
+]
+
+
 
 
 #chdir into own dir
@@ -246,6 +264,7 @@ for section in sections:  #each is an interface
     else:
         announceIp(ipAddr)
         interface = makeInterface(name,section)
+
         sitesOk = 0
         for site in testSites:
             if site.verify(interface):
@@ -257,13 +276,21 @@ for section in sections:  #each is an interface
 
         if sitesOk>0: #some are at least
             log("interface ok:" + interface.nick)
+            interface.isGood=True
             interfacesUp += 1
         else:
             quip(interface.nick + "is down")
+            interface.isGood=False
             #start pinging the router etc            
+
+        interfaces.append(interface)
 
 if interfacesUp<1:
     quip("comcast is down")
+else:
+    allAboutMe = dict( interfaces=interfaces, externalIP=ipgetter.myip() )
+    for meshite in meshites:
+        tellMeshTemp(meshite,allAboutMe)
 
         
 quip("c")
