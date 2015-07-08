@@ -1,0 +1,4 @@
+note regarding iso extraction paper.
+
+sec 3.3: they think the problem is hard because e.g. knotting.  but in reality, we don't have to solve the whole problem
+sampling will fix.
