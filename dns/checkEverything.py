@@ -11,12 +11,24 @@
 
 import os,sys,httplib,time
 import subprocess
+import ipgetter
+import urllib2
+import json,uuid
 
 
 
 #early settings
 echoLog = True
 speaking = False
+
+
+
+
+def dictToJson(dddict):
+    retval = json.dumps( dddict, default=lambda o: o.__dict__ , sort_keys=True, indent=4)
+    return retval
+
+
 
 
 
@@ -33,7 +45,9 @@ class Site:
     def verify(self,interface):
         print self.nick
         try:
-            conn = httplib.HTTPConnection(self.host, self.port, self.strict, self.timeout, interface.getAddressTuple())
+            addressTuple = interface.getAddressTuple()
+            # print addressTuple
+            conn = httplib.HTTPConnection(self.host, self.port, self.strict, self.timeout, addressTuple)
         except HTTPException as ex:
             log("exception "+ex)
             return False
@@ -61,8 +75,44 @@ class Site:
         return "bugbug nyi tracert"
 
 
+def post_bugbug_old(interfaceName,url,data):  #bugbug can't specify interface with this code
+    jsondata = dictToJson(data)
+    log("x"+url+"x")
+    log(jsondata) #bugbug
+
+    postreq = urllib2.Request(url, jsondata)
+    postreq.add_header('Content-Type', 'application/json')
+    postreq.get_method = lambda: 'POST'
+    resp = urllib2.urlopen(postreq)
+    responseText = resp.read()
+    print "resp:"+responseText
+
+
+
+def post(interfaceName,url,data):  #bugbug can't specify interface with this code
+    print "new post, url="+url
+    jsondata = dictToJson(data)
+    print jsondata
+    clen = len(jsondata)
+    req = urllib2.Request(url, jsondata, {'Content-Type': 'application/json', 'Content-Length': clen})
+    req.get_method = lambda: "POST"
+    f = urllib2.urlopen(req)
+    response = f.read()
+    f.close()
+
+
+
+def newguid():
+    return str(uuid.uuid1())
+
+
+def tellMeshTemp(interfaceName,meshite,allAboutMe):
+    post(interfaceName,meshite+"/ENTRY/"+newguid()+"/",allAboutMe)
+
+
 def portGiver():
-    nextPort = int(8899)
+    hashval = int(time.time()) % 19479 
+    nextPort = int(8899)+hashval
     while True:
         yield nextPort
         nextPort += 1
@@ -75,6 +125,7 @@ class NetInterface:
         self.ipAddr = ipAddr
     def getAddressTuple(self):
         return (self.ipAddr,openPorts.next())
+        
     
 
 def makeInterface(name,section):
@@ -146,6 +197,8 @@ def quip(x):
     if speaking:
         runhide("espeak",x) 
 def announceIp(x):
+    if os.path.isfile("no-ip-announce.txt"):
+        return
     runhide("espeak", "at "+x)  
 
 def seek(corpus,soughtName):  #look for soughtName:  value  and return value
@@ -156,6 +209,9 @@ def seek(corpus,soughtName):  #look for soughtName:  value  and return value
         if chunk[0:theLen]==sought:
             return chunk[len(sought):]
     return ''
+
+
+    
 
 
 MINUTES = 60
@@ -169,13 +225,23 @@ testSites = [
     Site("ayvex","ayvex.dnsalias.com",8081,200),
     Site("bogus1","notAyvex.dnsalias.com",80,200),
     Site("bogus2","yapulousity.envalponer.com",80,200),
-    Site("locaz1","192.168.1.1",80,200),
-    Site("locaz2","10.1.1.1",80,200)
+#    Site("locaz1","192.168.1.1",80,200),   #bugbug why so slow?
+#    Site("locaz2","10.1.1.1",80,200)      #bugbug why so slow?
+
 ]
 
 
+meshites = [
+    "http://ayvex.dnsalias.com:8081"
+]
+
+
+interfaces = dict()
+
 #chdir into own dir
 os.chdir(os.path.dirname(sys.argv[0]))    #this is failing bugbug
+
+
 
 # #figure the time for log file etc.
 theTime = time.gmtime()
@@ -246,6 +312,7 @@ for section in sections:  #each is an interface
     else:
         announceIp(ipAddr)
         interface = makeInterface(name,section)
+
         sitesOk = 0
         for site in testSites:
             if site.verify(interface):
@@ -257,13 +324,22 @@ for section in sections:  #each is an interface
 
         if sitesOk>0: #some are at least
             log("interface ok:" + interface.nick)
+            interface.isGood=True
             interfacesUp += 1
         else:
             quip(interface.nick + "is down")
+            interface.isGood=False
             #start pinging the router etc            
+
+        interfaces[interface.name]=interface
 
 if interfacesUp<1:
     quip("comcast is down")
+else:
+    useInterface = interfaces['eth0']  #bugbug or find the first isGood one???
+    allAboutMe = dict( interfaces=interfaces, externalIP=ipgetter.myip() )
+    for meshite in meshites:
+        tellMeshTemp(useInterface,meshite,allAboutMe)
 
         
 quip("c")
