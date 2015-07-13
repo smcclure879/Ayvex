@@ -32,7 +32,7 @@ function promiseLater(something) {
   });
 }
 
-//mine...  a promised get....
+//mine...  a promised http get....
 function proGet(options) {  //options ala http.get
 	return new Promise(
 		function (resolve, reject) {
@@ -50,110 +50,164 @@ function proGet(options) {  //options ala http.get
 
 
 
-function getSite(site) {
+var exec = subprocess.exec;
+//a promised system call...
+function proRun(path,arg1) {
+	return new Promise(
+		function (resolve, reject) {
+			child = exec(path+" "+arg1,  //bugbug shouldn't be concatting these, find a better method to call!!!
+							function (error, stdout, stderr) {
+								if (error || stderr) {
+									reject("errorCode="+error+"  stderr="+stderr);								
+								} else {
+									resolve({'stdout':stdout});
+								}
+							}
+						);
+		}
+	);
+}	
+
+function getSite(site) { // getSite("www.google.com");
 	var options = {
 	  host: site,
 	  port: 80,
 	  path: ''
 	};
 
-	proGet(options)
-	.then( function(finishedResponse) { console.log("it worked"+finishedResponse.body); } )
-	.then( function(x) { console.log("this too"); } )
-	.then( null, function(reason) { console.log("error="+reason) } );
+	return proGet(options)
+		.then( function(finishedResponse) { console.log("it worked"+finishedResponse.body); } )
+		.then( function(x) { console.log("this too"); } )
+		.then( null, function(reason) { console.log("error="+reason) } );
 }
 
-
-getSite("www.google.com");
-
-
-
-// //---------comb2---------
-
-
-
-// // settings
-// var echoToConsole = true;
-// var speaking = false;
-// var testSites = [
-    // new Site("google","www.google.com",80,200),
-    // new Site("comcast","www.comcast.com",80,301), 
-    // new Site("ayvex","ayvex.dnsalias.com",8081,200),
-    // new Site("bogus1","notAyvex.dnsalias.com",80,200),
-    // new Site("bogus2","yapulousity.envalponer.com",80,200),
-    // new Site("locaz1","192.168.1.1",80,200),
-    // new Site("locaz2","10.1.1.1",80,200)
-// ];
-
-
-
-// function run(prog,arg1) {
-    // var running = subprocess.execFile( prog, [arg1] );
-    // //running = 
-// }
+function run(prog,arg1) {
+	//var stdoutput = subprocess.execSync( prog, [arg1] );  //doesn't exist in this version !! bugbug
+    //return stdoutput;
+	
+	return 	proRun(prog,arg1)
+		.then(function(res) { print("bugbug1040a"); })
+		.then(null, function(reason) { print("reason="+reason); } );
+}
 
 // function runall(argsArray) {  //#of which prog is the first!
     // return run( argsArray[0], argsArray.splice(0,1) );
 // }
 
 
+proRun("dir");
+
+
+
+// // settings
+var echoToConsole = true;
+var speaking = false;
+var testSites = [
+	new Site("google","www.google.com",80,200),
+	new Site("comcast","www.comcast.com",80,301), 
+	new Site("ayvex","ayvex.dnsalias.com",8081,200),
+	new Site("bogus1","notAyvex.dnsalias.com",80,200),
+	new Site("bogus2","yapulousity.envalponer.com",80,200),
+	new Site("locaz1","192.168.1.1",80,200),
+	new Site("locaz2","10.1.1.1",80,200)
+];
 
 
 
 
-// var fh1=null;
-// function log(x) {
-    // x += "\n"
-    // if (fh1)
-	// fh1.write(x)
 
-    // if (echoToConsole)
-        // console.log(x)
-// }
+console.log("comb bugbug");
 
 
+var fh1=null;
+function log(x) {
+    x += "\n";
+    if (fh1)
+		fh1.write(x);
 
-// function closeAll() {
-    // try {
-        // fh1.close()
-    // } catch (ex) {
-        // //do nothing
-    // }
+    if (echoToConsole)
+        console.log(x);
+}
 
-    // try {
-        // FNULL.close()
-    // }
-    // catch (ex) {
-	// //do nothing
-    // }
 
-// }
 
+function closeAll() {
+    try {
+        fh1.close()
+    } catch (ex) {
+        //do nothing
+    }
+
+    try {
+        FNULL.close()
+    }
+    catch (ex) {
+	//do nothing
+    }
+
+}
+
+var print = console.log;
+function last2(x) {
+	x="000000"+x;
+	return x.slice(-2);
+}
+function fileFriendlyTime(t) {  //a Date obj
+	
+	return ""
+			+last2(t.getUTCFullYear())
+			+last2(t.getUTCMonth())
+			+last2(t.getUTCDate())
+			//+"--"
+			+last2(t.getUTCHours())
+			//+t.getUTCMinutes()
+			//t.getUTCSeconds()
+	;
+		
+	//print("year"+someTime.getFullYear());
+	//print(someTime.day);
+}
 
 
 // ////////////    START  /////////////
-// function startItUp(){
+function startItUp(){
     
-    // var MINUTES = 60;
+    var MINUTES = 60;
     
-    // // #chdir into own dir
-    // process.chdir(__dirname)
-    
-    
-    // // # #figure the time for log file etc.
-    // theTime = new Date();
-    // humanTime = theTime.toUTCString();
-    // timeForLogFile = theTime.toString( "YYYY-MM-DDTHH:mm:ss.sssZ" );
-    // console.log(timeForLogFile); //bugbug
+    // #chdir into own dir
+    process.chdir(__dirname);
     
     
-    // // # open the log
-    // var logFile = "./logs/meshing_"+timeForLogFile+".txt";
-    // var fh1=fs.openSync(logFile, 'a');
-    // log("----starting log----time="+humanTime);
+    // # #figure the time for log file etc.
+    theTime = new Date();
+    humanTime = theTime.toUTCString();
+    timeForLogFile = fileFriendlyTime(theTime);   //because this didn't work on PC! .toString( "YYYY-MM-DDTHH:mm:ss.sssZ" );
+    console.log(timeForLogFile); //bugbug
+    
+    
+    // # open the log
+    var logFile = "./logs/meshing_"+timeForLogFile+".txt";
+    var fh1=fs.openSync(logFile, 'a');
+    log("----starting log----time="+humanTime);
 
 
-    
+    //if less than N minutes since startup then hold off (exit)
+    uptime = parseInt(run("cat","/proc/uptime"));
+    log( "hrs up=" + uptime/3600 )
+    if ( uptime < 2*MINUTES ) {
+		log( "waiting 2 minutes " );
+		sleep(2*MINUTES);
+    }
+
+
+    // // # #if there's another of me then die -- bugbug just don't let this happen
+    // // # run ps grep for checkEverything
+    // // procs = run("ps", "-A").split()   should return zero lines containing nodejs??? bugbug
+
+
+
+
+	
     // var server = http.createServer(function (request, response) {
 	// response.writeHead(200, {"Content-Type": "text/plain"});
 	// response.end("Hello World\n");
@@ -164,23 +218,11 @@ getSite("www.google.com");
     // server.listen(meshPort);
 
 
-
-    // //if less than 5 minutes since startup then hold off (exit)
-    // uptime = parseInt(run("cat","/proc/uptime"));
-    // log( "hrs up=" + uptime/3600 )
-    // if ( uptime < 5*MINUTES ) {
-	// log( "waiting 5 minutes " );
-	// sleep(5*MINUTES);
-    // }
-
-
-    // // # #if there's another of me then die -- bugbug just don't let this happen
-    // // # run ps grep for checkEverything
-    // // procs = run("ps", "-A").split()   should return zero lines containing nodejs??? bugbug
-
-
-
-
+	
+	
+	
+	
+	
     // var sections = runall(["ifconfig"]).split("\n\n");
     // var interfacesUp = 0;
 
@@ -221,21 +263,21 @@ getSite("www.google.com");
 
         
     // log("Server running at http://127.0.0.1:"+meshPort+"/");
-
-// }
-
-
+	log("end of start");
+}
 
 
 
-// function Site(nick,host,port,expectCode) {
-    // this.nick = nick;
-    // this.host = host;
-    // this.port = port;
-    // this.expectCode = expectCode;
-    // this.strict = true;
-    // this.timeout = 10;
-// }
+
+
+function Site(nick,host,port,expectCode) {
+    this.nick = nick;
+    this.host = host;
+    this.port = port;
+    this.expectCode = expectCode;
+    this.strict = true;
+    this.timeout = 10;
+}
 
 
 // // never hand out the same port twice
@@ -348,7 +390,7 @@ getSite("www.google.com");
 
 
 
-// startItUp()
+startItUp();
 
 // //bugbug need event to run these...what's it called?
 // function doOnClose() {
