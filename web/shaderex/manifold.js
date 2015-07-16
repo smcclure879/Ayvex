@@ -1,13 +1,53 @@
+//convenience--do early so we can 
+var BILLION=1000000000;
+var pi=Math.PI;
+var pihalf=pi/2;
+var cos = Math.cos;
+var sin = Math.sin;
+var abs = Math.abs;
+var pow = Math.pow;
+var sqrt = Math.sqrt;
+function sqr(x) {	return x*x;  }
+function rad(degrees) { return degrees*pi/180; }
+function deg(radians) { return radians/pi*180; }
+
+
+//for clarity in indexing packed values
+var fieldX=0;
+var fieldY=1;
+var fieldZ=2;
+
+
+
+
 
 
 //settings (some should not be global TODO)
+var farDist=1*BILLION;  //bugbug move to user
+var nearDist=1;
+var fovy=80;
+var deltaTheta=2; //rad(canvas.height/canvas.width);  //bugbug dedup and math not quite right anyway
+var deltaPhi=rad(fovy);
 
 var user = {
 	eye:{		x:2.20,y:0.95,z:20.25
-				,theta:0,phi:180
+				,theta:rad(120),phi:rad(180)  //theta defined as "radians below zenith" !!
 		}   // initial Eye position
 };
 
+//here is how to make a wall...
+var oldGroundTestFunction=function(x,y,z){ return clamp(noisefn(x,y,z)+z/100,0,1); };
+var groundTestFunction=function(x,y,z){
+		var retval=0;
+		
+		if (y<-200) 
+			retval=10;
+		else if (x<-100) 
+			retval=10;
+		//if (z>100) return 1;
+		
+		return clamp(retval,0,1);
+	};
 
 var baseCube={
 		x: -40.0,
@@ -21,21 +61,22 @@ var baseCube={
 	
 
 var myColors={ 
-	blueSky:'87CEEB',  //	135,206,235
-	dirt:'836539',
-	red: "FF0000",
+	blueSky:colorObj('87CEEB'),  //	135,206,235
+	dirt:colorObj('FF0033'),
+	dirt2:colorObj('836539'),  //bugbug the real one
+	red: colorObj('FF0000'),
 };
 //tree consts
 var randForLocations=new RNG("fifty-seven"); //seeding for tree locations
-var numTrees=500;  //bugbugSOON 500
-var NNN=1 << 6;  //bugbugSOON  << 8
+var numTrees=500;
+var NNN=1 << 8;
 var sizeScale=0.3;
 var varyingScale=7.0/9.0;
 var timeFactor = 1.0/10.0;
 var dramaRatio=2.5;
 
 //movement consts
-var rotateSize = 0.05;
+var rotateSize = 0.02;
 var moveSize = 0.5;
 
 
@@ -57,23 +98,6 @@ function severalOctaveNoise(x,y,z)
 
 
 
-//convenience
-var pi=Math.PI;
-var pihalf=pi/2;
-var cos = Math.cos;
-var sin = Math.sin;
-var abs = Math.abs;
-var pow = Math.pow;
-var sqrt = Math.sqrt;
-function sqr(x) {	return x*x;  }
-function rad(degrees) { return degrees*pi/180; }
-function deg(radians) { return radians/pi*180; }
-
-
-//for clarity in indexing packed values
-var fieldX=0;
-var fieldY=1;
-var fieldZ=2;
 
 
 var canvas,gl,n,update,viewMatrix,u_ViewMatrix,u_ProjMatrix;
@@ -163,9 +187,9 @@ function initUserMethods()
 						x:e.x,
 						y:e.y,
 						z:e.z,
-						lx:e.x + s*cos(e.phi)*cos(e.theta),
-						ly:e.y + s*sin(e.theta),
-						lz:e.z + s*sin(e.phi)*cos(e.theta),
+						lx:e.x + s*cos(e.phi)*sin(e.theta),
+						ly:e.y + s*cos(e.theta),
+						lz:e.z + s*sin(e.phi)*sin(e.theta),
 			};
 		};
 	
@@ -183,21 +207,21 @@ function initUserMethods()
 	};
 	
 	user.tilt=function(rotation){
-		user.eye.theta += rotation;
+		user.eye.theta -= rotation;
 	};
 	user.rise=function(move){
 		user.eye.y += move;
 	};
 	user.advance=function(move){
 		var e=user.eye;
-		e.x += move*cos(e.phi)*cos(e.theta);
-		e.y += move*sin(e.theta);
-		e.z += move*sin(e.phi)*cos(e.theta);
+		e.x += move*cos(e.phi)*sin(e.theta);
+		e.y += move*cos(e.theta);
+		e.z += move*sin(e.phi)*sin(e.theta);
 	};
 	user.pan=function(move){
 		var e=user.eye;
-		e.x += move*cos(e.phi+pihalf)*cos(e.theta);
-		e.z += move*sin(e.phi+pihalf)*cos(e.theta);  //bugbug I think there's a minus sign in there somewhere
+		e.x += move*cos(e.phi+pihalf)*sin(e.theta);
+		e.z += move*sin(e.phi+pihalf)*sin(e.theta);  //bugbug I think there's a minus sign in there somewhere
 		//e.y += move*0; //panning is altitude-locked
 	};
 	
@@ -464,20 +488,22 @@ function buildBiSplitIndices(numBranches,indexOffset)
 
 function keydown(ev, gl, n, u_ViewMatrix, viewMatrix)   //bugbug all these args needed???
 {	
+	var mult=(window.event.shiftKey)? 1 : 20;  //shift key to go slow
+
 	switch(ev.keyCode)
 	{
-		case key.right: user.spin( rotateSize); break;
-		case key.left: 	user.spin(-rotateSize); break;
-		case key.up: 	user.tilt( rotateSize); break; 
-		case key.down: 	user.tilt(-rotateSize); break;
+		case key.right: user.spin( rotateSize*mult); break;
+		case key.left: 	user.spin(-rotateSize*mult); break;
+		case key.up: 	user.tilt( rotateSize*mult); break; 
+		case key.down: 	user.tilt(-rotateSize*mult); break;
 		
 		
-		case key.r: 	user.rise( moveSize); break;
-		case key.f: 	user.rise(-moveSize); break;
-		case key.w: 	user.advance( moveSize); break; 
-		case key.s: 	user.advance(-moveSize); break;
-		case key.a: 	user.pan(-moveSize); break;
-		case key.d: 	user.pan( moveSize); break;
+		case key.r: 	user.rise( moveSize*mult); break;
+		case key.f: 	user.rise(-moveSize*mult); break;
+		case key.w: 	user.advance( moveSize*mult); break; 
+		case key.s: 	user.advance(-moveSize*mult); break;
+		case key.a: 	user.pan(-moveSize*mult); break;
+		case key.d: 	user.pan( moveSize*mult); break;
 		
 		default: 		return true;        break;    //"not handled"
 	}
@@ -506,7 +532,8 @@ function draw(gl)
 
 	projMatrix = new Matrix4();
 	//projMatrix.setOrtho(-1.0, 1.0, -1.0, 1.0, 0.0, 2.0);
-	projMatrix.setPerspective(30,canvas.width/canvas.height,1,1000);
+	//                        (fovy, aspect, near, far)
+	projMatrix.setPerspective(fovy,canvas.width/canvas.height,1,farDist);
 	gl.uniformMatrix4fv(u_ProjMatrix, false, projMatrix.elements);
 
 	var viewMatrix=user.getViewMatrix();	
@@ -515,8 +542,8 @@ function draw(gl)
 
 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 	
-	sendAndDrawIfPossible(triModel,gl.TRIANGLES);  //bugbugSOON add the triangles back
-	sendAndDrawIfPossible(lineModel,gl.LINES);
+	sendAndDrawIfPossible(triModel,gl.TRIANGLES); 
+	//sendAndDrawIfPossible(lineModel,gl.LINES);   //bugbugSOON add the lines back
 }
 
 
@@ -595,6 +622,7 @@ function initVertexBuffers_land(baseCube)
 }
 
 
+var triSize=11;
 function getOffsetsRotated(user)
 {
 	var retval = [];
@@ -603,7 +631,7 @@ function getOffsetsRotated(user)
 	for (var ii=0; ii<3; ii++)
 	{
 		var offsetAngle=rad(120*ii + 90);
-		var vec=facePlanePolar(1,offsetAngle);  //bugbug vec could be array of consts set before now.  this could just be a map operation.
+		var vec=facePlanePolar(triSize,offsetAngle);  //bugbug vec could be array of consts set before now.  this could just be a map operation.
 		retval[ii] = viewMatrix.multiplyVector3(vec);
 	}
 	return retval;
@@ -629,33 +657,44 @@ function getMeshAroundMe(user)
 
 	
 	//cast some rays around user.  user has lookAt (and later a lookAtObject, selectedObject, etc) that can serve as base points to render from
-	var density=noisefn;
+	var density=groundTestFunction;
 	
 	var po = user.getPosOrient();
 	var phi0 = user.eye.phi;
 	var theta0 = user.eye.theta; 
 	
-	for(var ii=0; ii<1000; ii++)
+	
+	var visualAcuity=5000;
+	var visualAcuityShown=visualAcuity;
+	
+	//pick a buncha points in direction user is looking. 
+	for(var ii=0; ii<visualAcuity; ii++)
 	{
 		//pick random offset theta phi from lookAt direction (so need user.getThetaPhi??)
-		var deltaTheta=rad(15);
-		var deltaPhi=rad(15);
 		var theta=randCtrOffExponential(theta0,deltaTheta); //those are the one-sigma values from offset theta  
 		var phi=randCtrOffExponential(phi0,deltaPhi);
 		
-		var loopDelta = pi*2; //ha ha nothing to do with trig  but don't want an "even" number or even a rational!
-		var startDist=0.001;  //note can't be zero or less!
+		
+		var startDist=1.1;  //note can't be zero or less!  1.01 is low error, 1.1 is high error
+		var loopDelta = 50 * startDist; //bugbug what is this 50?
+		
+		
+		
+		
 		var testDensity=null;  //used in the loop
-		var vx=cos(phi)*cos(theta);
-		var vy=sin(theta);
-		var vz=sin(phi)*cos(theta);
+		var vx=cos(phi)*sin(theta);
+		var vy=cos(theta);
+		var vz=sin(phi)*sin(theta);
+		
+		//now find a surface in that direction....
+		
 		for(var dist = startDist; dist< 1e+32 && dist>=startDist && loopDelta>startDist; dist*=loopDelta) 
 		{
 			//var offset = polar to xyz (dist,theta,phi);
 			var testX = po.x + dist*vx; 
 			var testY = po.y + dist*vy;
 			var testZ = po.z + dist*vz; 
-			testDensity=density(testX,testY,testZ);
+			var testDensity=density(testX,testY,testZ);
 			if (testDensity>=groundDensity)
 			{
 				dist /= loopDelta;
@@ -669,14 +708,11 @@ function getMeshAroundMe(user)
 		var normalY=1;
 		var normalZ=0;
 		
-		//bugbug why can't I see the points???
-		var q=1.0;
-		testX /= q;
-		testY -= 9.0;
-		testZ /= q;
-		
-		
-		recentPoints.insert({x:testX,y:testY,z:testZ,color:color,normalX:normalX,normalY:normalY,normalZ:normalZ});
+		//remember the point...we'll make a triangle later.
+		recentPoints.insert({	x:testX, y:testY, z:testZ,
+								red:color.red,	green:color.green,	blue:color.blue, alpha:color.alpha,
+								normalX:normalX, normalY:normalY, normalZ:normalZ
+							});
 	}
 	
 	
@@ -695,7 +731,7 @@ function getMeshAroundMe(user)
 	//recentPoints.beginRead();
 	//alert("recentPoitns"+recentPoints.toJSON(""));
 	
-	var maxNodes = 10;  //bugbug
+	var maxNodes = visualAcuityShown;  //bugbug
 	var maxDistance = null;      //Number.MAX_VALUE;
 	var pointsToMakeIntoTriangles = recentPoints.nearest(po, maxNodes, maxDistance);
 	
@@ -706,7 +742,7 @@ function getMeshAroundMe(user)
 	{
 		var pointObject = pointsToMakeIntoTriangles[originalPointCount++][0];
 		var point = Vector3.CreateFromXyz(pointObject);
-		
+				
 		//copy a tiny triangle around that point into the vertices and verticesIndices buffer!
 		for(var kk=0; kk<3; kk++)
 		{
@@ -716,9 +752,16 @@ function getMeshAroundMe(user)
 			triModel.preVertices[ii++] = p[0];
 			triModel.preVertices[ii++] = p[1];
 			triModel.preVertices[ii++] = p[2];
+			
+			
 			if (triModel.colors) 
-				triModel.colors[mm++] = pointObject.color;
-
+			{
+				triModel.colors[mm++] = pointObject.red;
+				triModel.colors[mm++] = pointObject.green;
+				triModel.colors[mm++] = pointObject.blue;
+				triModel.colors[mm++] = pointObject.alpha;
+			}
+			
 			//one index to that point
 			triModel.preVerticesIndices[jj] = jj;
 			jj++;
@@ -736,8 +779,6 @@ function getMeshAroundMe(user)
 
 function colorForDensity(dens)
 {
-	return myColors.red;  //bugbug
-
 
 	if (dens<groundDensity) //we ran out of stuff so 
 		return myColors.blueSky;
@@ -819,7 +860,7 @@ function hslToRgb(h, s, l){
 //given a center and one sided sigma, generate a bell curve point randomly
 function randCtrOffExponential(ctr,sigma)
 {
-	return ctr+randForLocations.normal(sigma);
+	return ctr + randForLocations.normal()*sigma ;
 
 }
 
@@ -836,3 +877,44 @@ function decimalPart(x)
 {
 	return x-Math.floor(x);
 }
+
+
+
+function colorObj(hexString)
+{
+	return { red:red(hexString), green:grn(hexString), blue:blu(hexString), alpha:alf(hexString) };
+}
+
+//functions for converting string colors to 
+function red(s)
+{
+	return decodeByteToFloat(s,0);
+}
+function grn(s)
+{
+	return decodeByteToFloat(s,2);
+}
+function blu(s)
+{
+	return decodeByteToFloat(s,4);
+}
+function alf(s)
+{
+	return decodeByteToFloat(s,6);
+}
+
+function decodeByteToFloat(s,pos)
+{
+	if (s.length<2+pos)
+	{
+		return (pos==6) ? 1.0 : 0.0;
+	}
+	return clamp(  hexToFloat(s.substr(pos,2)),  0.0,  1.0  );
+}
+
+
+function hexToFloat(ss)  //assumes! two-chars only string 00-FF inclusive
+{
+	return parseInt(ss,16)/256.0;
+}
+
