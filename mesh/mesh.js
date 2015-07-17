@@ -22,11 +22,34 @@ var testSites = [
 
 ];
 
+function execSync(prog,args) {
+
+    var running = subprocess.exec(prog,args,function(error, stdout, stderr) {
+	    console.log('stdout: ', stdout);
+	    console.log('stderr: ', stderr);
+	    if (error !== null) {
+		console.log('exec error: ', error);
+	    }
+    });
+    
 
 
-function run(prog,arg1) {
-    var running = subprocess.execFile( prog, [arg1] );
-    running = 
+    bugbug you are here  this needs to be a sync wrapper
+}
+
+function run(prog,args) {
+    //var running = subprocess.execFile( prog, [arg1] );
+    var result = execSync(prog,args);
+    if (!result)
+	return { err:'fail1' };
+    result.err='fail2'; //until we know better
+    if (result.stderr) 
+	return result;
+    if (result.status!=0)
+	return result;
+
+    result.err=0;
+    return result;
 }
 
 function runall(argsArray) {  //#of which prog is the first!
@@ -83,6 +106,9 @@ function startItUp(){
     timeForLogFile = theTime.toString( "YYYY-MM-DDTHH:mm:ss.sssZ" );
     console.log(timeForLogFile); //bugbug
     
+
+// check space on disk with df
+
     
     // # open the log
     var logFile = "./logs/meshing_"+timeForLogFile+".txt";
@@ -103,11 +129,14 @@ function startItUp(){
 
 
     //if less than 5 minutes since startup then hold off (exit)
-    uptime = parseInt(run("cat","/proc/uptime"));
+    debugger;
+    var result = run("cat","/proc/uptime");
+    console.log(result);
+    var uptime = parseInt(result.output);
     log( "hrs up=" + uptime/3600 )
-    if ( uptime < 5*MINUTES ) {
-	log( "waiting 5 minutes " );
-	sleep(5*MINUTES);
+    if ( uptime < 1*MINUTES ) {
+	log( "waiting 1 minutes " );
+	sleep(1*MINUTES);
     }
 
 
@@ -118,7 +147,7 @@ function startItUp(){
 
 
 
-    var sections = runall(["ifconfig"]).split("\n\n");
+    var sections = runall(["ifconfig"]).output.split("\n\n");
     var interfacesUp = 0;
 
     console.log(sections)
