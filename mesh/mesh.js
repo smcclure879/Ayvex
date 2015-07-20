@@ -87,7 +87,7 @@ function run(prog,arg1) {
     //return stdoutput;
 	
 	return 	proRun(prog,arg1)
-		.then(function(res) { print("bugbug1040a"); })
+		.then(function(res) { print("bugbug1040a"+res); })
 		.then(null, function(reason) { print("reason="+reason); } );
 
 }
@@ -97,11 +97,12 @@ function run(prog,arg1) {
 // }
 
 
-proRun("dir");
+//proRun("dir");
 
 
 
-// // settings
+// settings
+var meshPort = 9091;  //more of a const really bugbug revisit
 var echoToConsole = true;
 var speaking = false;
 var testSites = [
@@ -117,8 +118,6 @@ var testSites = [
 
 
 
-
-console.log("comb bugbug");
 
 
 var fh1=null;
@@ -196,79 +195,96 @@ function startItUp(){
     log("----starting log----time="+humanTime);
 
 
-
-    
-    // var server = http.createServer(function (request, response) {
-    // 	response.writeHead(200, {"Content-Type": "text/plain"});
-    // 	response.end("Hello World\n");
-    // });
-    
-    
-    // var meshPort = 9091;
-    // server.listen(meshPort);
-
+    var uptime = null;
+    var sections = [];
+    var interfacesUp = 0;
 
 
 
     //if less than N minutes since startup then hold off (exit)
-    uptime = parseInt(run("cat","/proc/uptime"));
-    log( "hrs up=" + uptime/3600 )
-	var delay = 1*MINUTES;
-    if ( uptime < delay ) {
-		log( "waiting seconds="+delay );
-		sleep(delay);
-	log("sleep complete");
-    }
-
-
-    // // # #if there's another of me then die -- bugbug just don't let this happen
-    // // # run ps grep for checkEverything
-    // // procs = run("ps", "-A").split()   should return zero lines containing nodejs??? bugbug
+    proRun("cat","/proc/uptime")
+	.then( function(output) { 
+	    uptime=parseInt(output.split(" ")[0]);
+	    log( "hrs up=" + uptime/3600 ); 
+	    
+	    var delay = 1*MINUTES;
+	    if ( uptime < delay ) {
+		setTimeout(startItUp,delay); //try again in 5
+		throw new Exception("too early"); //to take us out of here for now
+	    }
 
 
 
-
-    var sections = runall(["ifconfig"]).output.split("\n\n");
-    var interfacesUp = 0;
-
-    console.log(sections)
-
-//  for section in sections:  #each is an interface
-//     lines=section.split("\n")
-//     name = lines[0].split("  ")[0]
-//     if not name:
-//         continue
-//     if name=='lo':
-//         continue
-//     print "interface="+name
-//     ipAddr=seek(section,"inet addr")
-//     if not ipAddr:
-//         quip("bad interface: "+getNick(name))
-//     else:
-//         interface = makeInterface(name,section)
-//         sitesOk = 0
-//         for site in testSites:
-//             if site.verify(interface):
-//                 sitesOk += 1
-//             else:
-//                 quip(site.nick + " is down")
+	    // # #if there's another of me then die -- bugbug just don't let this happen
+	    // ok don't do this.......procs = run("ps", "-A").split()   should return zero lines containing nodejs??? bugbug
+	    //...... instead....
+	    // var server = http.createServer(function (request, response) {
+	    // 	response.writeHead(200, {"Content-Type": "text/plain"});
+	    // 	response.end("Hello World\n");
+	    // });
+	    // server.listen(meshPort);  //for now is this unique enough?? todo revisit
 
 
 
-//         if sitesOk>0: #some are at least
-//             log("interface ok:" + interface.nick)
-//             interfacesUp += 1
-//         else:
-//             quip(interface.nick + "is down")
-//             #start pinging the router etc            
 
-// if interfacesUp<1:
-//     quip("comcast is down")
 
-        
+	    return proRun("ifconfig");  //really, pass on
+	}).then( function(output) {
+	    
+	    
+	    sections = output.split("\n\n");
+	    print(sections);
+	}).then(null, function(reason) {
+
+	    log("something went wrong"+reason);
+
+	});
+	   
+
+
+ 
+	    //  for section in sections:  #each is an interface
+	    //     lines=section.split("\n")
+	    //     name = lines[0].split("  ")[0]
+	    //     if not name:
+	    //         continue
+	    //     if name=='lo':
+	    //         continue
+	    //     print "interface="+name
+	    //     ipAddr=seek(section,"inet addr")
+	    //     if not ipAddr:
+	    //         quip("bad interface: "+getNick(name))
+	    //     else:
+	    //         interface = makeInterface(name,section)
+	    //         sitesOk = 0
+	    //         for site in testSites:
+	    //             if site.verify(interface):
+	    //                 sitesOk += 1
+	    //             else:
+	    //                 quip(site.nick + " is down")
+	    
+	    
+	    
+	    //         if sitesOk>0: #some are at least
+    //             log("interface ok:" + interface.nick)
+    //             interfacesUp += 1
+    //         else:
+    //             quip(interface.nick + "is down")
+    //             #start pinging the router etc            
+    
+    // if interfacesUp<1:
+    //     quip("comcast is down")
+    
+    
     // log("Server running at http://127.0.0.1:"+meshPort+"/");
-	log("end of start");
+    log("end of start");
+
+
+	//.then(null,function(reason) { print("bugbug125u"+reason); } );  //bugbug still need this on.
+
 }
+
+
 
 
 
@@ -288,11 +304,6 @@ function Site(nick,host,port,expectCode) {
 // var nextPort=8899;
 // var openPorts=function portGiver() {  return nextPort++; }
 
-
-
-
-
-// //  ----- bugbug comb  -----
 
 
 
