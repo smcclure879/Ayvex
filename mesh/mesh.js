@@ -238,12 +238,10 @@ function startItUp(){
  
 	    for (var sectionIndex=0, il=sections.length; sectionIndex<il; sectionIndex++) {  //  #each is an interface
 		var section=sections[sectionIndex];
-		print(section);
-		var lines=section.split("\n");
-		print(lines[0]);
-		continue;
 
-//bugbug
+		var lines=section.split("\n");
+
+
 		var name = lines[0].split("  ")[0];
 		if (!name)
 	            continue;
@@ -322,7 +320,7 @@ function Site(nick,host,port,expectCode) {
 
 
 
-
+bugbug you are here
 // //     def verify(self,interface):
 // //         print this.nick
 // //         try:
@@ -354,29 +352,22 @@ function Site(nick,host,port,expectCode) {
 
 
 
-// // class NetInterface:
-// //     def __init__(self,nick,name,ipAddr):
-// //         this.nick = nick
-// //         this.name = name
-// //         this.ipAddr = ipAddr
-// //     def getAddressTuple(self):
-// //         return (this.ipAddr,openPorts.next())
-    
+function NetInterface(self,nick,name,ipAddr) {
+    this.nick = nick;
+    this.name = name;
+    this.ipAddr = ipAddr;
+}
 
-// // def makeInterface(name,section):
-// //     nick=getNick(name)
-// //     ipAddr=seek(section,"inet addr")
-// //     return NetInterface(nick,name,ipAddr)
+NetInterface.prototype.getAddressTuple = function() {
+    return (this.ipAddr,openPorts.next())
+}
 
+function makeInterface(name,section) {
+    nick=getNick(name)
+    ipAddr=seek(section,"inet addr")
+    return new NetInterface(nick,name,ipAddr)
+}
 
-
-// // def getNick(name):
-// //     if name=="eth0":
-// //         return "wired"
-// //     elif name=="wlan0":
-// //         return "wireless"
-// //     else:
-// //         return "unknown"
 
 function getNick(name) {
     if (name=="eth0") return "wired";
@@ -407,11 +398,12 @@ function quip(x) {
 }
 
 function seek(corpus,soughtName)  {  //look for soughtName:  value  and return value
-    var chunks = corpus.split("  ");
+    var chunks = corpus.split("  ");  //that's a double space!
     var sought = soughtName + ":";
     var theLen = sought.length;
-    for (var chunk in chunks) {
-        if (chunk.substr(0,theLen)==sought)
+    for (var chunkIndex=0, il=chunks.length; chunkIndex<il; chunkIndex++ ) {
+	var chunk = chunks[chunkIndex];
+        if ( chunk.substr(0,theLen)==sought )
             return chunk.substr(theLen);
     }
     return '';
