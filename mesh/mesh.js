@@ -54,19 +54,21 @@ function proGet(options) {  //options ala http.get
 var exec = subprocess.exec;
 //a promised system call...
 function proRun(path,arg1) {
-	return new Promise(
+    if (!arg1) 
+	arg1='';
+    return new Promise(
 		function (resolve, reject) {
 			child = exec(path+" "+arg1,  //bugbug shouldn't be concatting these, find a better method to call!!!
 							function (error, stdout, stderr) {
 								if (error || stderr) {
-									reject("errorCode="+error+"  stderr="+stderr);								
+									reject("errorCode="+error+"  stderr="+stderr+"   stdout="+stdout);
 								} else {
 									resolve({'stdout':stdout});
 								}
 							}
 						);
 		}
-	);
+    );
 }	
 
 function getSite(site) { // getSite("www.google.com");
@@ -204,8 +206,9 @@ function startItUp(){
     //if less than N minutes since startup then hold off (exit)
     proRun("cat","/proc/uptime")
 	.then( function(output) { 
-	    uptime=parseInt(output.split(" ")[0]);
-	    log( "hrs up=" + uptime/3600 ); 
+	    var stdoutput = output.stdout.toString();
+	    uptime=parseInt(stdoutput.split(" ")[0]);
+	    log( "hrs up=" + Math.floor( uptime/3600 )); 
 	    
 	    var delay = 1*MINUTES;
 	    if ( uptime < delay ) {
@@ -231,56 +234,67 @@ function startItUp(){
 	    return proRun("ifconfig");  //really, pass on
 	}).then( function(output) {
 	    
+	    sections = output.stdout.split("\n\n");
+ 
+	    for (var sectionIndex=0, il=sections.length; sectionIndex<il; sectionIndex++) {  //  #each is an interface
+		var section=sections[sectionIndex];
+		print(section);
+		var lines=section.split("\n");
+		print(lines[0]);
+		continue;
+
+//bugbug
+		var name = lines[0].split("  ")[0];
+		if (!name)
+	            continue;
+		if (name=='lo')
+	            continue;
+	   
+		print("interface="+name);
 	    
-	    sections = output.split("\n\n");
-	    print(sections);
+		var ipAddr=seek(section,"inet addr");
+		if (!ipAddr) {
+		    quip("bad interface: "+getNick(name));
+		    continue;
+		}
+		
+		var interface = makeInterface(name,section);
+		sitesOk = 0;
+		for(var site in testSites) {
+		    if (site.verify(interface))
+			sitesOk += 1;
+		    else
+			quip(site.nick + " is down");
+		    
+		
+		    if (sitesOk>0) {  // #some are at least
+			log("interface ok:" + interface.nick);
+		        interfacesUp += 1;
+		    }else{
+		        quip(interface.nick + "  is down");
+			//#start pinging the router etc            //TODO
+		    }
+
+		} //next site
+
+	    } //next section
+
+
+	    if (interfacesUp<1)
+		quip("outside link is down");
+	    
+	    log("scan complete");	    
+
+
 	}).then(null, function(reason) {
 
 	    log("something went wrong"+reason);
 
 	});
-	   
 
 
- 
-	    //  for section in sections:  #each is an interface
-	    //     lines=section.split("\n")
-	    //     name = lines[0].split("  ")[0]
-	    //     if not name:
-	    //         continue
-	    //     if name=='lo':
-	    //         continue
-	    //     print "interface="+name
-	    //     ipAddr=seek(section,"inet addr")
-	    //     if not ipAddr:
-	    //         quip("bad interface: "+getNick(name))
-	    //     else:
-	    //         interface = makeInterface(name,section)
-	    //         sitesOk = 0
-	    //         for site in testSites:
-	    //             if site.verify(interface):
-	    //                 sitesOk += 1
-	    //             else:
-	    //                 quip(site.nick + " is down")
-	    
-	    
-	    
-	    //         if sitesOk>0: #some are at least
-    //             log("interface ok:" + interface.nick)
-    //             interfacesUp += 1
-    //         else:
-    //             quip(interface.nick + "is down")
-    //             #start pinging the router etc            
-    
-    // if interfacesUp<1:
-    //     quip("comcast is down")
-    
-    
-    // log("Server running at http://127.0.0.1:"+meshPort+"/");
-    log("end of start");
+    log("end of entry function");
 
-
-	//.then(null,function(reason) { print("bugbug125u"+reason); } );  //bugbug still need this on.
 
 }
 
@@ -364,37 +378,44 @@ function Site(nick,host,port,expectCode) {
 // //     else:
 // //         return "unknown"
 
+function getNick(name) {
+    if (name=="eth0") return "wired";
+    if (name=="wlan0") return "wireless";
+    return "unknown "+name;
+}
 
 
 
 
 
 
+// FNULL = open(os.devnull, 'w')
+// def runhide(prog,arg1):
+//     cmd = subprocess.Popen([prog,arg1],stderr=FNULL) #bugbug how to hide input??
+//     stdoutdata, stderrdata = cmd.communicate()
+//     return stdoutdata
 
+function run(prog,arg1) {
+    var x=proRun(prog,arg1).then(function(result) {return result});
+    print("quipping="+x);
+}
 
-// // FNULL = open(os.devnull, 'w')
-// // def runhide(prog,arg1):
-// //     cmd = subprocess.Popen([prog,arg1],stderr=FNULL) #bugbug how to hide input??
-// //     stdoutdata, stderrdata = cmd.communicate()
-// //     return stdoutdata
+function quip(x) {
+    log(x)
+    if (speaking)
+        runhide("espeak",x)  //it's noisy
+}
 
-
-// // def quip(x):
-// //     log(x)
-// //     if speaking:
-// //         runhide("espeak",x)  #it's noisy
-
-
-// // def seek(corpus,soughtName):  #look for soughtName:  value  and return value
-// //     chunks = corpus.split("  ")
-// //     sought = soughtName + ":"
-// //     theLen = len(sought)
-// //     for chunk in chunks:
-// //         if chunk[0:theLen]==sought:
-// //             return chunk[len(sought):]
-// //     return ''
-
-
+function seek(corpus,soughtName)  {  //look for soughtName:  value  and return value
+    var chunks = corpus.split("  ");
+    var sought = soughtName + ":";
+    var theLen = sought.length;
+    for (var chunk in chunks) {
+        if (chunk.substr(0,theLen)==sought)
+            return chunk.substr(theLen);
+    }
+    return '';
+}
 
 
 
