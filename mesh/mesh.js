@@ -7,6 +7,8 @@ var fs = require('fs');
 var subprocess = require('child_process');
 var Promise = require('promiscuous');
 
+
+
 var options = {
   host: 'www.google.com',
   port: 80,
@@ -71,7 +73,7 @@ function proRun(path,arg1) {
     );
 }	
 
-function getSite(site) { // getSite("www.google.com");
+function proGetSite(site) { // getSite("www.google.com");
 	var options = {
 	  host: site,
 	  port: 80,
@@ -83,6 +85,7 @@ function getSite(site) { // getSite("www.google.com");
 		.then( function(x) { console.log("this too"); } )
 		.then( null, function(reason) { console.log("error="+reason) } );
 }
+
 
 function run(prog,arg1) {
 	//var stdoutput = subprocess.execSync( prog, [arg1] );  //doesn't exist in this version !! bugbug
@@ -100,6 +103,148 @@ function run(prog,arg1) {
 
 
 //proRun("dir");
+
+
+
+
+
+
+
+
+            // for (var sectionIndex=0, il=sections.length; sectionIndex<il; sectionIndex++) {  //  #each is an interface
+	    // 	var section=sections[sectionIndex];
+
+
+
+
+
+
+function NetInterface(nick,name,ipAddr) {
+    this.nick = nick;
+    this.name = name;
+    this.ipAddr = ipAddr;
+}
+
+NetInterface.prototype.getAddressTuple = function() {
+    return (this.ipAddr,openPorts.next())
+}
+
+
+NetInterface.prototype.verify = function(site) {
+
+
+    return this.name;
+}
+
+
+
+
+function createNetInterface(section) {
+    var lines=section.split("\n");
+    var name = lines[0].split("  ")[0];
+    if (!name)
+	return null;
+    if (name=='lo')
+	return null;
+    
+    print("interface="+name);
+
+    var nick=getNick(name);
+    
+    var ipAddr=seek(section,"inet addr");
+    if (!ipAddr) {
+	quip("bad interface: "+getNick(name));
+	return null;
+    }
+    
+    return new NetInterface(nick,name,ipAddr)
+}
+
+
+function getNick(name) {
+    if (name=="eth0") return "wired";
+    if (name=="wlan0") return "wireless";
+    return "unknown "+name;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+function Site(nick,host,port,expectCode) {
+    this.nick = nick;
+    this.host = host;
+    this.port = port;
+    this.expectCode = expectCode;
+    this.strict = true;
+    this.timeout = 10;
+}
+
+
+// // never hand out the same port twice
+// var nextPort=8899;
+// var openPorts=function portGiver() {  return nextPort++; }
+
+
+
+
+
+//note: returns a promise-to-verify....rename TODO
+Site.prototype.verify = function(interface) {
+
+    print(this.nick);
+
+    var options = {
+	host: this.host,
+	port: this.port,
+	path: '',
+	'how to put in interfacebugbug': '',
+	verb:'HEAD'  //which option does this?
+    };
+
+
+    
+    return proGet(options)
+	.then(function(result) {
+	    return (res.status==this.expectCode);
+	}).then(null,function(reason) {
+	    print( " "+res.status, res.reason);
+	    return false;
+	});
+}
+
+
+
+//            conn = httplib.HTTPConnection(this.host, this.port, this.strict, this.timeout, interface.getAddressTuple())
+//            except HTTPException as ex:
+//            log("exception "+ex)
+//            return false
+            
+//        res = ''
+//        try:
+//            conn.request("HEAD", "/")
+//            res = conn.getresponse()
+//        except:
+//            log("failed response:"+this.nick)
+//            return false
+//
+//
+//        try:
+//            conn.close()
+//        except:
+//            pass
+
+
+
 
 
 
@@ -234,61 +379,33 @@ function startItUp(){
 	    return proRun("ifconfig");  //really, pass on
 	}).then( function(output) {
 	    
-	    sections = output.stdout.split("\n\n");
- 
-	    for (var sectionIndex=0, il=sections.length; sectionIndex<il; sectionIndex++) {  //  #each is an interface
-		var section=sections[sectionIndex];
-
-		var lines=section.split("\n");
+	    interfaces = output.stdout.split("\n\n")
+		.map(createNetInterface) //from a section
+		.filter(function(netInterface) {return netInterface!=null && netInterface.name!='lo'});
+			
 
 
-		var name = lines[0].split("  ")[0];
-		if (!name)
-	            continue;
-		if (name=='lo')
-	            continue;
-	   
-		print("interface="+name);
+	    return Promise.all( 
+		interfaces.map(
+		    function(interface) { return interface.verify(); }
+		)
+	    );
 	    
-		var ipAddr=seek(section,"inet addr");
-		if (!ipAddr) {
-		    quip("bad interface: "+getNick(name));
-		    continue;
-		}
-		
-		var interface = makeInterface(name,section);
-		sitesOk = 0;
-		for(var site in testSites) {
-		    if (site.verify(interface))
-			sitesOk += 1;
-		    else
-			quip(site.nick + " is down");
-		    
-		
-		    if (sitesOk>0) {  // #some are at least
-			log("interface ok:" + interface.nick);
-		        interfacesUp += 1;
-		    }else{
-		        quip(interface.nick + "  is down");
-			//#start pinging the router etc            //TODO
-		    }
-
-		} //next site
-
-	    } //next section
+	}).then( function(arrVerifyPromises) { //array of all interface.verify() results!!
 
 
-	    if (interfacesUp<1)
-		quip("outside link is down");
-	    
+	    print("output="+arrVerifyPromises);
+
 	    log("scan complete");	    
+	    //quip("all interfaces ok");
 
-
-	}).then(null, function(reason) {
-
+	}, /* catch */ function(reason) {
+    
 	    log("something went wrong"+reason);
+	    //quip("one interface bad maybe");
 
 	});
+
 
 
     log("end of entry function");
@@ -302,78 +419,46 @@ function startItUp(){
 
 
 
-function Site(nick,host,port,expectCode) {
-    this.nick = nick;
-    this.host = host;
-    this.port = port;
-    this.expectCode = expectCode;
-    this.strict = true;
-    this.timeout = 10;
-}
-
-
-// // never hand out the same port twice
-// var nextPort=8899;
-// var openPorts=function portGiver() {  return nextPort++; }
 
 
 
+//stuff i might still need...
 
 
-bugbug you are here
-// //     def verify(self,interface):
-// //         print this.nick
-// //         try:
-// //             conn = httplib.HTTPConnection(this.host, this.port, this.strict, this.timeout, interface.getAddressTuple())
-// //         except HTTPException as ex:
-// //             log("exception "+ex)
-// //             return false
-            
-// //         res = ''
-// //         try:
-// //             conn.request("HEAD", "/")
-// //             res = conn.getresponse()
-// //         except:
-// //             log("failed response:"+this.nick)
-// //             return false
+
+	//     sitesOk = 0;
+	// 	    //testSites.forEach(function(element,index,array){
+	// 	    //print("element"+element+index);
+
+	// 	    var siteResult = site.verify(interface);
+	// 	    print(JSON.stringify(siteResult));
+	// 	    if (siteResult===true)
+	// 		sitesOk += 1;
+	// 	    else
+	// 		quip(site.nick + " is down "+site);
+		    
+	// 	    if (sitesOk>0) {  // #some are at least
+	// 		log("interface ok:" + interface.nick);
+	// 	        interfacesUp += 1;
+	// 	    }else{
+	// 	        quip(interface.nick + "  is down");
+	// 		//#start pinging the router etc            //TODO
+	// 	    }
+
+	// 	}) //next site
+
+	//     } //next section
 
 
-// //         try:
-// //             conn.close()
-// //         except:
-// //             pass
-
-// //         if res.status==this.expectCode:
-// //             return true
-
-// //         print res.status, res.reason
-// //         return false
+	//     if (interfacesUp<1)
+	// 	quip("outside link is down");
 
 
 
 
-function NetInterface(self,nick,name,ipAddr) {
-    this.nick = nick;
-    this.name = name;
-    this.ipAddr = ipAddr;
-}
-
-NetInterface.prototype.getAddressTuple = function() {
-    return (this.ipAddr,openPorts.next())
-}
-
-function makeInterface(name,section) {
-    nick=getNick(name)
-    ipAddr=seek(section,"inet addr")
-    return new NetInterface(nick,name,ipAddr)
-}
 
 
-function getNick(name) {
-    if (name=="eth0") return "wired";
-    if (name=="wlan0") return "wireless";
-    return "unknown "+name;
-}
+
 
 
 
