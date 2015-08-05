@@ -1,55 +1,81 @@
+
+
 //  author:smcclure879
 
 
 // "imports"
 var http = require('http');
 var fs = require('fs');
+var util = require('util');
 var subprocess = require('child_process');
 var Promise = require('promiscuous');
 
 
 
-var options = {
-  host: 'www.google.com',
-  port: 80,
-  path: ''
-};
+function dump(x) {
+    //return JSON.stringify(x,2);
+    return util.inspect(x,false,null);
+}
 
-// http.get(options, function(res) {
-  // console.log("Got response: " + res.statusCode);
-// }).on('error', function(e) {
-  // console.log("Got error: " + e.message);
-// });
 
 
 //should work like this
-function promiseLater(something) {
-  return new Promise(function (resolve, reject) {
-    setTimeout(function () {
-      if (something)
-        resolve(something);
-      else
-        reject(new Error("nothing"));
-    }, 1000);
-  });
-}
+// function promiseLater(something) {
+//   return new Promise(function (resolve, reject) {
+//     setTimeout(function () {
+//       if (something)
+//         resolve(something);
+//       else
+//         reject(new Error("nothing"));
+//     }, 1000);
+//   });
+// }
+
+
+
+
+
 
 //mine...  a promised http get....
 function proGet(options) {  //options ala http.get
-	return new Promise(
-		function (resolve, reject) {
-			http.get(options,function(response) { 
-								// Continuously update stream with data
-								var body = '';
-								response.on('data', function(d) {	body += d;  });
-								response.on('end', function() {	resolve({'body':body,'response':response}); })
-							}
-					)
-				.on('error', function (er) { console.log("Got error: " + er.message); reject(er);}  );
-		}
-	);
-}
+    return new Promise(
+	function (resolve, reject) {
 
+	    var clr = function() {  clearTimeout(timeout);  };
+
+
+	    //bugbug here I need to add a short timeout like 10s....
+	    var request = http.get(options, function(response) { 
+				       
+		// Continuously update stream with data
+		var body = '';
+		response.on('data', function(d) {
+		    body += d;        
+		});
+		response.on('end', function() {	
+		    clearTimeout(timeout); 
+		    resolve(    { 'body' : body , 'response' : response }     ); 
+		});
+	    });
+
+	    // bugbug in future versions of nodejs, you can put this into the 
+	    //     response object so it's more parallel with 'data' and 'end' above!!
+	    request.on('error', function(er) {
+		print("Got error: " + er.message); //bugbug showing as soon as possible???
+		clearTimeout(timeout);
+		reject(er);
+	    });
+	
+
+	    var timeoutEh = function() {
+		print("aborting the request="+options.host);
+		request.abort();
+	    };
+
+	    var timeout = setTimeout(timeoutEh,2000);
+	}
+    );
+}
 
 
 
@@ -59,17 +85,17 @@ function proRun(path,arg1) {
     if (!arg1) 
 	arg1='';
     return new Promise(
-		function (resolve, reject) {
-			child = exec(path+" "+arg1,  //bugbug shouldn't be concatting these, find a better method to call!!!
-							function (error, stdout, stderr) {
-								if (error || stderr) {
-									reject("errorCode="+error+"  stderr="+stderr+"   stdout="+stdout);
-								} else {
-									resolve({'stdout':stdout});
-								}
-							}
-						);
-		}
+	function (resolve, reject) {
+	    child = exec(path+" "+arg1,  //bugbug shouldn't be concatting these, find a better method to call!!!
+			 function (error, stdout, stderr) {
+			     if (error || stderr) {
+				 reject("errorCode="+error+"  stderr="+stderr+"   stdout="+stdout);
+			     } else {
+				 resolve({'stdout':stdout});
+			     }
+			 }
+			);
+	}
     );
 }	
 
@@ -88,31 +114,11 @@ function proGetSite(site) { // getSite("www.google.com");
 
 
 function run(prog,arg1) {
-	//var stdoutput = subprocess.execSync( prog, [arg1] );  //doesn't exist in this version !! bugbug
-    //return stdoutput;
-	
-	return 	proRun(prog,arg1)
-		.then(function(res) { print("bugbug1040a"+res); })
-		.then(null, function(reason) { print("reason="+reason); } );
-
+    return proRun(prog,arg1)
+	.then(function(res) { print("bugbug1040a"+res); })
+	.then(null, function(reason) { print("reason="+reason); } );
+    
 }
-
-// function runall(argsArray) {  //#of which prog is the first!
-    // return run( argsArray[0], argsArray.splice(0,1) );
-// }
-
-
-//proRun("dir");
-
-
-
-
-
-
-
-
-            // for (var sectionIndex=0, il=sections.length; sectionIndex<il; sectionIndex++) {  //  #each is an interface
-	    // 	var section=sections[sectionIndex];
 
 
 
@@ -129,15 +135,12 @@ NetInterface.prototype.getAddressTuple = function() {
     return (this.ipAddr,openPorts.next())
 }
 
-
-NetInterface.prototype.verify = function(site) {
-
-
-    return this.name;
+NetInterface.prototype.verify = function() { // on all sites
+    var that = this;
+    return Promise.all(testSites.map(function(site) {
+	return site.verify(that);
+    }));
 }
-
-
-
 
 function createNetInterface(section) {
     var lines=section.split("\n");
@@ -177,9 +180,6 @@ function getNick(name) {
 
 
 
-
-
-
 function Site(nick,host,port,expectCode) {
     this.nick = nick;
     this.host = host;
@@ -190,58 +190,37 @@ function Site(nick,host,port,expectCode) {
 }
 
 
-// // never hand out the same port twice
-// var nextPort=8899;
-// var openPorts=function portGiver() {  return nextPort++; }
 
 
 
 
 
 //note: returns a promise-to-verify....rename TODO
-Site.prototype.verify = function(interface) {
+Site.prototype.verify = function(netInterface) {
 
-    print(this.nick);
+    print("verifying site="+this.nick+" on interf="+netInterface.nick);
 
     var options = {
 	host: this.host,
 	port: this.port,
 	path: '',
 	'how to put in interfacebugbug': '',
-	verb:'HEAD'  //which option does this?
+	verb:'HEAD'  //which option does this?  bugbug NOW
     };
 
 
-    
     return proGet(options)
-	.then(function(result) {
-	    return (res.status==this.expectCode);
+        .then(null,function(reason) {
+	    return { status:-1 };
+	}).then(function(result) {
+	    return result.status==this.expectCode;
 	}).then(null,function(reason) {
-	    print( " "+res.status, res.reason);
+	    //print( "bugbug790a "+dump(reason) );
 	    return false;
 	});
 }
 
 
-
-//            conn = httplib.HTTPConnection(this.host, this.port, this.strict, this.timeout, interface.getAddressTuple())
-//            except HTTPException as ex:
-//            log("exception "+ex)
-//            return false
-            
-//        res = ''
-//        try:
-//            conn.request("HEAD", "/")
-//            res = conn.getresponse()
-//        except:
-//            log("failed response:"+this.nick)
-//            return false
-//
-//
-//        try:
-//            conn.close()
-//        except:
-//            pass
 
 
 
@@ -256,10 +235,10 @@ var testSites = [
 	new Site("google","www.google.com",80,200),
 	new Site("comcast","www.comcast.com",80,301), 
 	new Site("ayvex","ayvex.dnsalias.com",8081,200),
-	new Site("bogus1","notAyvex.dnsalias.com",80,200),
-	new Site("bogus2","yapulousity.envalponer.com",80,200),
-	new Site("locaz1","192.168.1.1",80,200),
-	new Site("locaz2","10.1.1.1",80,200)
+	new Site("bogus1","notAyvex.dnsalias.com",80,-1),
+	new Site("bogus2","yapulousity.envalponer.com",80,-1),
+	new Site("locaz1","192.168.1.1",80,-1),
+	new Site("locaz2","10.1.1.1",80,-1)
 ];
 
 
@@ -271,7 +250,7 @@ var fh1=null;
 function log(x) {
     x += "\n";
     if (fh1)
-		fh1.write(x);
+	fh1.write(x);
 
     if (echoToConsole)
         console.log(x);
@@ -301,19 +280,13 @@ function last2(x) {
 	return x.slice(-2);
 }
 function fileFriendlyTime(t) {  //a Date obj
-	
-	return ""
-			+last2(t.getUTCFullYear())
-			+last2(t.getUTCMonth())
-			+last2(t.getUTCDate())
-			//+"--"
-			+last2(t.getUTCHours())
-			//+t.getUTCMinutes()
-			//t.getUTCSeconds()
-	;
-		
-	//print("year"+someTime.getFullYear());
-	//print(someTime.day);
+
+    return ""
+	+last2(t.getUTCFullYear())
+	+last2(t.getUTCMonth())
+	+last2(t.getUTCDate())
+	+last2(t.getUTCHours())
+    ;
 }
 
 
@@ -360,7 +333,7 @@ function startItUp(){
 		setTimeout(startItUp,delay); //try again in 5
 		throw new Exception("too early"); //to take us out of here for now
 	    }
-
+	}).then( function() {
 
 
 	    // # #if there's another of me then die -- bugbug just don't let this happen
@@ -373,17 +346,17 @@ function startItUp(){
 	    // server.listen(meshPort);  //for now is this unique enough?? todo revisit
 
 
-
-
-
+	}).then( function() {
 	    return proRun("ifconfig");  //really, pass on
 	}).then( function(output) {
 	    
 	    interfaces = output.stdout.split("\n\n")
 		.map(createNetInterface) //from a section
-		.filter(function(netInterface) {return netInterface!=null && netInterface.name!='lo'});
+		.filter(function(netInterface) {
+		    return netInterface!=null 
+			&& netInterface.name!='lo'
+		});
 			
-
 
 	    return Promise.all( 
 		interfaces.map(
@@ -393,15 +366,14 @@ function startItUp(){
 	    
 	}).then( function(arrVerifyPromises) { //array of all interface.verify() results!!
 
-
-	    print("output="+arrVerifyPromises);
+	    print("output="+dump(arrVerifyPromises));
 
 	    log("scan complete");	    
 	    //quip("all interfaces ok");
 
 	}, /* catch */ function(reason) {
     
-	    log("something went wrong"+reason);
+	    log("something went wrong"+dump(reason));
 	    //quip("one interface bad maybe");
 
 	});
@@ -423,6 +395,12 @@ function startItUp(){
 
 
 //stuff i might still need...
+
+
+// // never hand out the same port twice
+// var nextPort=8899;
+// var openPorts=function portGiver() {  return nextPort++; }
+
 
 
 
@@ -461,20 +439,10 @@ function startItUp(){
 
 
 
-
-
-
-
-// FNULL = open(os.devnull, 'w')
-// def runhide(prog,arg1):
-//     cmd = subprocess.Popen([prog,arg1],stderr=FNULL) #bugbug how to hide input??
-//     stdoutdata, stderrdata = cmd.communicate()
-//     return stdoutdata
-
-function run(prog,arg1) {
-    var x=proRun(prog,arg1).then(function(result) {return result});
-    print("quipping="+x);
-}
+//function run(prog,arg1) {
+//    var x=proRun(prog,arg1).then(function(result) {return result});
+//    print("quipping="+x);
+//}
 
 function quip(x) {
     log(x)
