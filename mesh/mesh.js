@@ -1,9 +1,7 @@
 
-
 //  author:smcclure879
 
 
-// "imports"
 var http = require('http');
 var fs = require('fs');
 var util = require('util');
@@ -11,25 +9,42 @@ var subprocess = require('child_process');
 var Promise = require('promiscuous');
 
 
-
+var print = console.log;
 function dump(x) {
-    //return JSON.stringify(x,2);
     return util.inspect(x,false,null);
 }
 
 
 
-//should work like this
-// function promiseLater(something) {
-//   return new Promise(function (resolve, reject) {
-//     setTimeout(function () {
-//       if (something)
-//         resolve(something);
-//       else
-//         reject(new Error("nothing"));
-//     }, 1000);
-//   });
+//this is a working example of a promise being used
+// function promiseLater(f) {
+//     return new Promise(function (resolve, reject) {
+// 	setTimeout(function () {
+// 	    if (f) {
+//		
+// 		var val=f();
+// 		if (val)
+// 		    resolve(val);
+// 		else
+// 		    reject(new Error("nothing"));
+// 	    }else{
+// 		reject(new Error("nothing2"));
+// 	    }
+//
+// 	}, 100);
+//     });
 // }
+//
+//
+// promiseLater(function() {
+//     return 477; 
+// }).then(function(c) { 
+//     print("c="+typeof c); 
+// });
+//
+// print("bugbug341");
+
+
 
 
 
@@ -61,14 +76,14 @@ function proGet(options) {  //options ala http.get
 	    // bugbug in future versions of nodejs, you can put this into the 
 	    //     response object so it's more parallel with 'data' and 'end' above!!
 	    request.on('error', function(er) {
-		print("Got error: " + er.message); //bugbug showing as soon as possible???
+		print("Got error: " + dump(options) + dump(er)); //bugbug showing as soon as possible???
 		clearTimeout(timeout);
 		reject(er);
 	    });
 	
 
 	    var timeoutEh = function() {
-		print("aborting the request="+options.host);
+		print("aborting the request="+(options.nick||options.host||dump(options)));
 		request.abort();
 	    };
 
@@ -186,7 +201,7 @@ function Site(nick,host,port,expectCode) {
     this.port = port;
     this.expectCode = expectCode;
     this.strict = true;
-    this.timeout = 10;
+    this.timeout = 10;  ///bugbug not using this value all the way thru!
 }
 
 
@@ -198,31 +213,41 @@ function Site(nick,host,port,expectCode) {
 //note: returns a promise-to-verify....rename TODO
 Site.prototype.verify = function(netInterface) {
 
-    print("verifying site="+this.nick+" on interf="+netInterface.nick);
+    //print("verifying site="+this.nick+" on interf="+netInterface.nick);
 
     var options = {
 	host: this.host,
 	port: this.port,
 	path: '',
-	'how to put in interfacebugbug': '',
-	verb:'HEAD'  //which option does this?  bugbug NOW
+	localAddress: netInterface.ipAddr,
+	method:'HEAD' 
     };
 
+    var that = this;
 
     return proGet(options)
         .then(null,function(reason) {
-	    return { status:-1 };
+	    return { status:-1 };  //no result at all?  fix it before continuing: sentinel values are
 	}).then(function(result) {
-	    return result.status==this.expectCode;
+	    return {
+		updown : result.status==that.expectCode,
+		nick : that.nick,
+		isExt : that.isExt()
+	    };
 	}).then(null,function(reason) {
-	    //print( "bugbug790a "+dump(reason) );
+	    print( "bugbug790a "+dump(reason) );
 	    return false;
 	});
 }
 
 
+function isdigit(c) {
+    return ((c >= '0') && (c <= '9'));
+}
 
-
+Site.prototype.isExt = function()  {
+    return !isdigit(this.host.charAt(0));
+}
 
 
 
@@ -274,7 +299,7 @@ function closeAll() {
 
 }
 
-var print = console.log;
+
 function last2(x) {
 	x="000000"+x;
 	return x.slice(-2);
@@ -283,7 +308,7 @@ function fileFriendlyTime(t) {  //a Date obj
 
     return ""
 	+last2(t.getUTCFullYear())
-	+last2(t.getUTCMonth())
+	+last2(t.getUTCMonth()+1)
 	+last2(t.getUTCDate())
 	+last2(t.getUTCHours())
     ;
@@ -356,17 +381,23 @@ function startItUp(){
 		    return netInterface!=null 
 			&& netInterface.name!='lo'
 		});
-			
 
 	    return Promise.all( 
-		interfaces.map(
-		    function(interface) { return interface.verify(); }
-		)
-	    );
-	    
+		    interfaces.map(  //ni = network interface
+			function(ni) { 
+			    return ni.verify();
+			}
+		    )
+	    );	    
 	}).then( function(arrVerifyPromises) { //array of all interface.verify() results!!
 
 	    print("output="+dump(arrVerifyPromises));
+
+	    //each item in array represents an interface.  each subitem a site result for that interface
+
+
+//	    if (arrVerifyPromises.any())
+//		quip("interface ok:"+
 
 	    log("scan complete");	    
 	    //quip("all interfaces ok");
