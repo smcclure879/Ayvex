@@ -8,13 +8,21 @@ var util = require('util');
 var subprocess = require('child_process');
 
 
-//bugbug figure out which promise lib to use
-//var Promise = require('promiscuous');  //simple
-var RSVP = require('rsvp');  //more features more complex
+//can't use promiscuous (it's simpler to follow, but doesn't do hashSettled()
+//var Promise = require('promiscuous');
+var RSVP = require('rsvp');  //so trying this lib instead
 var Promise = RSVP.Promise;
 
 
 
+Object.prototype.mapValues = function (fn) {
+    var retval = {};
+    for(var p in this) {
+	if (this.hasOwnProperty(p)) 
+	    retval[p]=fn(this[p]);
+    }
+    return retval;
+}
 
 
 
@@ -49,8 +57,6 @@ function dump(x) {
 // }).then(function(c) { 
 //     print("c="+typeof c); 
 // });
-//
-// print("bugbug341");
 
 
 
@@ -77,10 +83,10 @@ function proGet(options) {  //options ala http.get
 		});
 	    });
 
-	    // bugbug in future versions of nodejs, you can put this into the 
+	    // todo in future versions of nodejs, you can put this into the 
 	    //     response object so it's more parallel with 'data' and 'end' above!!
 	    request.on('error', function(er) {
-		//print("Got error: " + dump(options) + dump(er)); //bugbug showing as soon as possible???
+		//keep--  print("Got error: " + dump(options) + dump(er)); 
 		clearTimeout(timeout);
 		reject(er);
 	    });
@@ -118,27 +124,6 @@ function proRun(path,arg1) {
     );
 }	
 
-//bugbug used?
-function bugbugproGetSite(site) { // getSite("www.google.com");
-	var options = {
-	  host: site,
-	  port: 80,
-	  path: ''
-	};
-
-	return proGet(options)
-		.then( function(finishedResponse) { console.log("it worked"+finishedResponse.body); } )
-		.then( function(x) { console.log("this too"); } )
-		.then( null, function(reason) { console.log("error="+reason) } );
-}
-
-
-function run(prog,arg1) {
-    return proRun(prog,arg1)
-	.then(function(res) { print("bugbug1040a"+res); })
-	.then(null, function(reason) { print("reason="+reason); } );
-    
-}
 
 
 
@@ -151,15 +136,17 @@ function NetInterface(nick,name,ipAddr) {
     this.ipAddr = ipAddr;
 }
 
-NetInterface.prototype.getAddressTuple = function() {
-    return (this.ipAddr,openPorts.next())
-}
 
 NetInterface.prototype.verify = function() { // on all sites
     var that = this;
-    return Promise.all(testSites.map(function(site) {   //bugbug you are here
-	return site.verify(that);
-    }));
+    var hashOfPromises = testSites.mapValues(  function(site) {
+
+	//print("dumpsite="+dump(site));
+	return 	site.verify(that); 
+    }  );
+
+    //turn the hash of promises into a promise of a hash, in which promises are turned into {state,result/reason} objects
+    return RSVP.hashSettled(hashOfPromises);  
 }
 
 function createNetInterface(section) {
@@ -277,15 +264,16 @@ Site.prototype.isExt = function()  {
 var meshPort = 9091;  //more of a const really bugbug revisit
 var echoToConsole = true;
 var speaking = false;
-var testSites = [
-	new Site("google","www.google.com",80,200),
-	new Site("comcast","www.comcast.com",80,301), 
-	new Site("ayvex","ayvex.dnsalias.com",8081,200),
-	new Site("bogus1","notAyvex.dnsalias.com",80,-1),
-	new Site("bogus2","yapulousity.envalponer.com",80,-1),
-	new Site("locaz1","192.168.1.1",80,-1),//
-	new Site("locaz2","10.1.1.1",80,-1)
-];
+var testSites = {
+    //bugbug get rid of dup field???
+google:new Site("google","www.google.com",80,200),
+    comcast:new Site("comcast","www.comcast.com",80,301), 
+    ayvex:new Site("ayvex","ayvex.dnsalias.com",8081,200),
+    bogus1:new Site("bogus1","notAyvex.dnsalias.com",80,-1),
+    bogus2:new Site("bogus2","yapulousity.envalponer.com",80,-1),
+    locaz1:new Site("locaz1","192.168.1.1",80,-1),
+    locaz2:new Site("locaz2","10.1.1.1",80,-1)
+};
 
 
 
@@ -336,6 +324,11 @@ function fileFriendlyTime(t) {  //a Date obj
 }
 
 
+
+
+
+
+
 // ////////////    START  /////////////
 function startItUp(){
     
@@ -349,7 +342,7 @@ function startItUp(){
     theTime = new Date();
     humanTime = theTime.toUTCString();
     timeForLogFile = fileFriendlyTime(theTime);   //because this didn't work on PC! .toString( "YYYY-MM-DDTHH:mm:ss.sssZ" );
-    console.log(timeForLogFile); //bugbug
+//    console.log(timeForLogFile); //numeric??bugbug
     
 
 // check space on disk with df
@@ -399,8 +392,7 @@ function startItUp(){
 	    interfaces = output.stdout.split("\n\n")
 		.map(createNetInterface) //from a section
 		.filter(function(netInterface) {
-		    return netInterface!=null 
-			&& netInterface.name!='lo'
+		    return  netInterface!=null 	&&  netInterface.name!='lo' ;
 		});
 
 	    return Promise.all( 
@@ -449,11 +441,27 @@ function startItUp(){
 //stuff i might still need...
 
 
-// // never hand out the same port twice
-// var nextPort=8899;
-// var openPorts=function portGiver() {  return nextPort++; }
 
+// old examples of promises...
+// function bugbugproGetSite(site) { // getSite("www.google.com");
+// 	var options = {
+// 	  host: site,
+// 	  port: 80,
+// 	  path: ''
+// 	};
 
+// 	return proGet(options)
+// 		.then( function(finishedResponse) { console.log("it worked"+finishedResponse.body); } )
+// 		.then( function(x) { console.log("this too"); } )
+// 		.then( null, function(reason) { console.log("error="+reason) } );
+// }
+//
+//
+//function run(prog,arg1) {
+//   return proRun(prog,arg1)
+//	.then(function(res) { print("bugbug1040a"+res); })
+//	.then(null, function(reason) { print("reason="+reason); } );
+//}
 
 
 	//     sitesOk = 0;
