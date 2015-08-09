@@ -6,7 +6,16 @@ var http = require('http');
 var fs = require('fs');
 var util = require('util');
 var subprocess = require('child_process');
-var Promise = require('promiscuous');
+
+
+//bugbug figure out which promise lib to use
+//var Promise = require('promiscuous');  //simple
+var RSVP = require('rsvp');  //more features more complex
+var Promise = RSVP.Promise;
+
+
+
+
 
 
 var print = console.log;
@@ -15,8 +24,7 @@ function dump(x) {
 }
 
 
-
-//this is a working example of a promise being used
+//working example of a promise being used
 // function promiseLater(f) {
 //     return new Promise(function (resolve, reject) {
 // 	setTimeout(function () {
@@ -56,10 +64,6 @@ function proGet(options) {  //options ala http.get
     return new Promise(
 	function (resolve, reject) {
 
-	    var clr = function() {  clearTimeout(timeout);  };
-
-
-	    //bugbug here I need to add a short timeout like 10s....
 	    var request = http.get(options, function(response) { 
 				       
 		// Continuously update stream with data
@@ -76,7 +80,7 @@ function proGet(options) {  //options ala http.get
 	    // bugbug in future versions of nodejs, you can put this into the 
 	    //     response object so it's more parallel with 'data' and 'end' above!!
 	    request.on('error', function(er) {
-		print("Got error: " + dump(options) + dump(er)); //bugbug showing as soon as possible???
+		//print("Got error: " + dump(options) + dump(er)); //bugbug showing as soon as possible???
 		clearTimeout(timeout);
 		reject(er);
 	    });
@@ -114,7 +118,8 @@ function proRun(path,arg1) {
     );
 }	
 
-function proGetSite(site) { // getSite("www.google.com");
+//bugbug used?
+function bugbugproGetSite(site) { // getSite("www.google.com");
 	var options = {
 	  host: site,
 	  port: 80,
@@ -152,7 +157,7 @@ NetInterface.prototype.getAddressTuple = function() {
 
 NetInterface.prototype.verify = function() { // on all sites
     var that = this;
-    return Promise.all(testSites.map(function(site) {
+    return Promise.all(testSites.map(function(site) {   //bugbug you are here
 	return site.verify(that);
     }));
 }
@@ -220,20 +225,36 @@ Site.prototype.verify = function(netInterface) {
 	port: this.port,
 	path: '',
 	localAddress: netInterface.ipAddr,
-	method:'HEAD' 
+	method: 'HEAD'
     };
 
     var that = this;
 
     return proGet(options)
         .then(null,function(reason) {
-	    return { status:-1 };  //no result at all?  fix it before continuing: sentinel values are
-	}).then(function(result) {
 	    return {
-		updown : result.status==that.expectCode,
+		response: {
+		    statusCode:-1
+		} 
+	    };  //no result at all?  fix it before continuing: sentinel value
+	})
+	.then(function(result) {
+
+	    var statusCode=result.response.statusCode;
+
+	    return {
+		//the PK
 		nick : that.nick,
-		isExt : that.isExt()
+
+		//quick decider fields
+		updown : statusCode>0,  //it's "up" (true) if we get ANY status code (the connection is up)
+		perfect: statusCode==that.expectCode, //....but...the SITE might not be in perfect health tho!
+		isExt : that.isExt(),
+
+		//debug fields
+		statusCode: statusCode
 	    };
+
 	}).then(null,function(reason) {
 	    print( "bugbug790a "+dump(reason) );
 	    return false;
@@ -262,7 +283,7 @@ var testSites = [
 	new Site("ayvex","ayvex.dnsalias.com",8081,200),
 	new Site("bogus1","notAyvex.dnsalias.com",80,-1),
 	new Site("bogus2","yapulousity.envalponer.com",80,-1),
-	new Site("locaz1","192.168.1.1",80,-1),
+	new Site("locaz1","192.168.1.1",80,-1),//
 	new Site("locaz2","10.1.1.1",80,-1)
 ];
 
