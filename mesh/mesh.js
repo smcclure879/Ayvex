@@ -15,21 +15,39 @@ var Promise = RSVP.Promise;
 
 
 
-Object.prototype.mapValues = function (fn) {
-    var retval = {};
-    for(var p in this) {
-	if (this.hasOwnProperty(p)) 
-	    retval[p]=fn(this[p]);
-    }
-    return retval;
-}
-
 
 
 var print = console.log;
 function dump(x) {
     return util.inspect(x,false,null);
 }
+
+
+/// take object that is really a hash, and run the fn against all values (not recursively, maybe never support that??bugbug)
+Object.prototype.mapValues = function (fn) {  
+    var retval = {};
+    for(var p in this) {
+	if (this.hasOwnProperty(p)) 
+	    retval[p]=fn(this[p]);
+    }
+    return retval;
+};
+
+
+//generate an hash from an array using the field named keyField from each element as the key for the hash. the index numbers are lost
+Array.prototype.enhash = function(keyField) {
+    var retval = {};
+    for(var ii=0,il=this.length; ii<il; ii++) {
+	var item = this[ii];
+	var keyVal = item[keyField];
+	retval[keyVal]=item;
+    }
+    return retval;
+};
+
+
+
+
 
 
 //working example of a promise being used
@@ -393,24 +411,51 @@ function startItUp(){
 		.map(createNetInterface) //from a section
 		.filter(function(netInterface) {
 		    return  netInterface!=null 	&&  netInterface.name!='lo' ;
+		}).enhash('nick')  //nick is key!
+		.mapValues(function(ni) {   //ni = network interface
+		    return ni.verify();
 		});
 
-	    return Promise.all( 
-		    interfaces.map(  //ni = network interface
-			function(ni) { 
-			    return ni.verify();
-			}
-		    )
-	    );	    
-	}).then( function(arrVerifyPromises) { //array of all interface.verify() results!!
+	    return RSVP.hashSettled( interfaces );
+	   
+	}).then( function(hashNetInterfaces) {
 
-	    print("output="+dump(arrVerifyPromises));
+	    //each item in hash represents an interface.  each subitem a site result for that interface
+	    //redefining...(unpromising?  unpacking promises?)...
+	    //bugbug consolidate the dupe code below...maybe it should be recursive?
 
-	    //each item in array represents an interface.  each subitem a site result for that interface
+	    hashNetInterfaces = hashNetInterfaces.mapValues(function(nipf) {// nipf = network interface promise, hopefully fulfilled. 
+		print("nipf="+dump(nipf));
+		if (nipf.state != 'fulfilled') {
+		    print("bad nipf"+nipf.state);
+		    //throw new Exception("bugbug1249"+nipf.reason);
+		    return null;
+		}
+		var ni = nipf.value;
+		ni = ni.mapValues(function(spf) { //    spf=site promise, hopefully fulfilled
+		    print 
+		    if (spf.state != 'fulfilled') {
+			print("bad site"+spf.state);
+			//throw new Exception("bugbug546a"+spf.reason);
+			return null;
+		    }
+		    var site=spf.value;
+		    print(dump(site));
+		    return site;
+		});
+		print(dump(ni));
+		return ni;
+	    });
+
+
+	    print("bugbugfoo="+dump(hashNetInterfaces));
+
+
+	    
 
 
 //	    if (arrVerifyPromises.any())
-//		quip("interface ok:"+
+//		quip("interface ok:"+);
 
 	    log("scan complete");	    
 	    //quip("all interfaces ok");
