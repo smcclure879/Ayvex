@@ -15,67 +15,54 @@ var Promise = RSVP.Promise;
 
 
 
-
-
 var print = console.log;
 function dump(x) {
-    return util.inspect(x,false,null);
+    try {
+	if (typeof x === 'undefined')
+	    return 'undefined';
+	if (x == null) 
+	    return 'null';
+	var retval = util.inspect(x,false,null);
+	return retval;
+    } catch(ex) {
+	return "bugbug1248c"+ex;
+    }
+
 }
 
 
-/// take object that is really a hash, and run the fn against all values (not recursively, maybe never support that??bugbug)
-Object.prototype.mapValues = function (fn) {  
+function mapValuesInside(hash,fn) {
     var retval = {};
-    for(var p in this) {
-	if (this.hasOwnProperty(p)) 
-	    retval[p]=fn(this[p]);
+
+    for (var key in hash) {
+	if (!hash.hasOwnProperty(key))
+	    continue;
+	retval[key] = fn( hash[key] );
     }
     return retval;
-};
+}
+
+
+
+
+function settleMap(mapping) {
+    return RSVP.hashSettled( mapping );
+}
+
+
+
 
 
 //generate an hash from an array using the field named keyField from each element as the key for the hash. the index numbers are lost
-Array.prototype.enhash = function(keyField) {
+var enhash = function(arr,keyField) {
     var retval = {};
-    for(var ii=0,il=this.length; ii<il; ii++) {
-	var item = this[ii];
+    for(var ii=0,il=arr.length; ii<il; ii++) {
+	var item = arr[ii];
 	var keyVal = item[keyField];
-	retval[keyVal]=item;
+	retval[keyVal] = item;
     }
     return retval;
 };
-
-
-
-
-
-
-//working example of a promise being used
-// function promiseLater(f) {
-//     return new Promise(function (resolve, reject) {
-// 	setTimeout(function () {
-// 	    if (f) {
-//		
-// 		var val=f();
-// 		if (val)
-// 		    resolve(val);
-// 		else
-// 		    reject(new Error("nothing"));
-// 	    }else{
-// 		reject(new Error("nothing2"));
-// 	    }
-//
-// 	}, 100);
-//     });
-// }
-//
-//
-// promiseLater(function() {
-//     return 477; 
-// }).then(function(c) { 
-//     print("c="+typeof c); 
-// });
-
 
 
 
@@ -132,6 +119,7 @@ function proRun(path,arg1) {
 	    child = exec(path+" "+arg1,  //bugbug shouldn't be concatting these, find a better method to call!!!
 			 function (error, stdout, stderr) {
 			     if (error || stderr) {
+				 //log("rejecting: errorCode="+error+"  stderr="+stderr+"   stdout="+stdout);
 				 reject("errorCode="+error+"  stderr="+stderr+"   stdout="+stdout);
 			     } else {
 				 resolve({'stdout':stdout});
@@ -157,15 +145,15 @@ function NetInterface(nick,name,ipAddr) {
 
 NetInterface.prototype.verify = function() { // on all sites
     var that = this;
-    var hashOfPromises = testSites.mapValues(  function(site) {
 
-	//print("dumpsite="+dump(site));
+    var hashOfPromises = mapValuesInside(testSites, function(site) {
 	return 	site.verify(that); 
-    }  );
+    });
 
     //turn the hash of promises into a promise of a hash, in which promises are turned into {state,result/reason} objects
-    return RSVP.hashSettled(hashOfPromises);  
+    return settleMap(hashOfPromises);  
 }
+
 
 function createNetInterface(section) {
     var lines=section.split("\n");
@@ -175,7 +163,7 @@ function createNetInterface(section) {
     if (name=='lo')
 	return null;
     
-    print("interface="+name);
+    //print("interface="+name);
 
     var nick=getNick(name);
     
@@ -222,8 +210,6 @@ function Site(nick,host,port,expectCode) {
 
 //note: returns a promise-to-verify....rename TODO
 Site.prototype.verify = function(netInterface) {
-
-    //print("verifying site="+this.nick+" on interf="+netInterface.nick);
 
     var options = {
 	host: this.host,
@@ -282,16 +268,15 @@ Site.prototype.isExt = function()  {
 var meshPort = 9091;  //more of a const really bugbug revisit
 var echoToConsole = true;
 var speaking = false;
-var testSites = {
-    //bugbug get rid of dup field???
-google:new Site("google","www.google.com",80,200),
-    comcast:new Site("comcast","www.comcast.com",80,301), 
-    ayvex:new Site("ayvex","ayvex.dnsalias.com",8081,200),
-    bogus1:new Site("bogus1","notAyvex.dnsalias.com",80,-1),
-    bogus2:new Site("bogus2","yapulousity.envalponer.com",80,-1),
-    locaz1:new Site("locaz1","192.168.1.1",80,-1),
-    locaz2:new Site("locaz2","10.1.1.1",80,-1)
-};
+var testSites = enhash([
+    new Site("google","www.google.com",80,200),
+    new Site("comcast","www.comcast.com",80,301), 
+    new Site("ayvex","ayvex.dnsalias.com",8081,200),
+    new Site("bogus1","notAyvex.dnsalias.com",80,-1),
+    new Site("bogus2","yapulousity.envalponer.com",80,-1),
+    new Site("locaz1","192.168.1.1",80,-1),
+    new Site("locaz2","10.1.1.1",80,-1)
+],"nick");
 
 
 
@@ -301,11 +286,12 @@ google:new Site("google","www.google.com",80,200),
 var fh1=null;
 function log(x) {
     x += "\n";
-    if (fh1)
-	fh1.write(x);
 
     if (echoToConsole)
         console.log(x);
+
+    if (fh1)
+	fh1.write(x);
 }
 
 
@@ -350,6 +336,14 @@ function fileFriendlyTime(t) {  //a Date obj
 // ////////////    START  /////////////
 function startItUp(){
     
+
+    RSVP.on('error', function(reason) {
+	console.assert(false, reason);
+    });
+
+
+
+
     var MINUTES = 60;
     
     // #chdir into own dir
@@ -360,10 +354,10 @@ function startItUp(){
     theTime = new Date();
     humanTime = theTime.toUTCString();
     timeForLogFile = fileFriendlyTime(theTime);   //because this didn't work on PC! .toString( "YYYY-MM-DDTHH:mm:ss.sssZ" );
-//    console.log(timeForLogFile); //numeric??bugbug
+
     
 
-// check space on disk with df
+    // check space on disk with df
 
     
     // # open the log
@@ -374,7 +368,7 @@ function startItUp(){
 
     var uptime = null;
     var sections = [];
-    var interfacesUp = 0;
+    //var interfacesUp = 0;
 
 
 
@@ -411,12 +405,19 @@ function startItUp(){
 		.map(createNetInterface) //from a section
 		.filter(function(netInterface) {
 		    return  netInterface!=null 	&&  netInterface.name!='lo' ;
-		}).enhash('nick')  //nick is key!
-		.mapValues(function(ni) {   //ni = network interface
+		});
+
+	    interfaces=enhash(interfaces,'nick');  //nick is key!
+
+
+	    interfaces=mapValuesInside(interfaces,function(ni) {   //ni = network interface
 		    return ni.verify();
 		});
 
-	    return RSVP.hashSettled( interfaces );
+
+	    return settleMap( interfaces );
+
+
 	   
 	}).then( function(hashNetInterfaces) {
 
@@ -424,38 +425,75 @@ function startItUp(){
 	    //redefining...(unpromising?  unpacking promises?)...
 	    //bugbug consolidate the dupe code below...maybe it should be recursive?
 
-	    hashNetInterfaces = hashNetInterfaces.mapValues(function(nipf) {// nipf = network interface promise, hopefully fulfilled. 
-		print("nipf="+dump(nipf));
+	    hashNetInterfaces = mapValuesInside(hashNetInterfaces,function(nipf) {
+		
+		// nipf = network interface promise, hopefully fulfilled. 
+		
+		if (typeof nipf == 'undefined')
+		    return null;
+
+		//print("nipf="+dump(nipf));
 		if (nipf.state != 'fulfilled') {
 		    print("bad nipf"+nipf.state);
 		    //throw new Exception("bugbug1249"+nipf.reason);
 		    return null;
 		}
 		var ni = nipf.value;
-		ni = ni.mapValues(function(spf) { //    spf=site promise, hopefully fulfilled
-		    print 
+		//regark(ni);  //bugbug or should this happen earlier???
+		ni = mapValuesInside(ni, function(spf) { //    spf=site promise, hopefully fulfilled
 		    if (spf.state != 'fulfilled') {
 			print("bad site"+spf.state);
-			//throw new Exception("bugbug546a"+spf.reason);
+			throw new Exception("bugbug546a"+spf.reason);
 			return null;
 		    }
 		    var site=spf.value;
-		    print(dump(site));
+
 		    return site;
 		});
-		print(dump(ni));
+
 		return ni;
 	    });
 
 
-	    print("bugbugfoo="+dump(hashNetInterfaces));
+
+	    //print("----------"+humanTime+"--------\n");
+	    //print( dump(hashNetInterfaces) );
 
 
+	    for (var netNick in hashNetInterfaces) {
+
+		var ni = hashNetInterfaces[netNick];
+		var niUpdown = false;  //until proven otherwise
+
+		//bugbug make this an "any" call ??
+		for (var siteNick in ni) {
+		    if (!ni.hasOwnProperty(siteNick))
+			continue;
+
+		    var site = ni[siteNick];
+
+		    if (site.isExt && site.updown) {
+			niUpdown = true;
+		    }
+		}
+
+		hashNetInterfaces[netNick].updown=niUpdown; //bugbug needed??
+	    }
+
+
+
+	    for (var netNick in hashNetInterfaces) {
+		if (!hashNetInterfaces[netNick].updown)
+		    quip(netNick + " interface is down");
+		else 
+		    quip(netNick + " interface is up");
+		
+	    }
 	    
+	    hashNetInterfaces.utc=humanTime;
+	    print( dump( hashNetInterfaces ) );
 
 
-//	    if (arrVerifyPromises.any())
-//		quip("interface ok:"+);
 
 	    log("scan complete");	    
 	    //quip("all interfaces ok");
@@ -480,79 +518,10 @@ function startItUp(){
 
 
 
-
-
-
-//stuff i might still need...
-
-
-
-// old examples of promises...
-// function bugbugproGetSite(site) { // getSite("www.google.com");
-// 	var options = {
-// 	  host: site,
-// 	  port: 80,
-// 	  path: ''
-// 	};
-
-// 	return proGet(options)
-// 		.then( function(finishedResponse) { console.log("it worked"+finishedResponse.body); } )
-// 		.then( function(x) { console.log("this too"); } )
-// 		.then( null, function(reason) { console.log("error="+reason) } );
-// }
-//
-//
-//function run(prog,arg1) {
-//   return proRun(prog,arg1)
-//	.then(function(res) { print("bugbug1040a"+res); })
-//	.then(null, function(reason) { print("reason="+reason); } );
-//}
-
-
-	//     sitesOk = 0;
-	// 	    //testSites.forEach(function(element,index,array){
-	// 	    //print("element"+element+index);
-
-	// 	    var siteResult = site.verify(interface);
-	// 	    print(JSON.stringify(siteResult));
-	// 	    if (siteResult===true)
-	// 		sitesOk += 1;
-	// 	    else
-	// 		quip(site.nick + " is down "+site);
-		    
-	// 	    if (sitesOk>0) {  // #some are at least
-	// 		log("interface ok:" + interface.nick);
-	// 	        interfacesUp += 1;
-	// 	    }else{
-	// 	        quip(interface.nick + "  is down");
-	// 		//#start pinging the router etc            //TODO
-	// 	    }
-
-	// 	}) //next site
-
-	//     } //next section
-
-
-	//     if (interfacesUp<1)
-	// 	quip("outside link is down");
-
-
-
-
-
-
-
-
-
-//function run(prog,arg1) {
-//    var x=proRun(prog,arg1).then(function(result) {return result});
-//    print("quipping="+x);
-//}
-
 function quip(x) {
-    log(x)
+    log("SPEAKING : "+x);
     if (speaking)
-        runhide("espeak",x)  //it's noisy
+        runHide("espeak","\""+x+"\"");  //it's noisy
 }
 
 function seek(corpus,soughtName)  {  //look for soughtName:  value  and return value
@@ -569,7 +538,13 @@ function seek(corpus,soughtName)  {  //look for soughtName:  value  and return v
 
 
 
+function runHide(prog,arg1) {  //bugbug doesn't hide output yet??
+    proRun(prog,arg1)
+	.then(null,function(reason) {
+	//hide the yucky error.   //print("i didn't say it "+reason);
 
+	});
+}
 
 
 
