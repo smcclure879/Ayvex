@@ -478,7 +478,7 @@ function startItUp(){
 		    }
 		}
 
-		hashNetInterfaces[netNick].updown=niUpdown; //bugbug needed??
+		hashNetInterfaces[netNick].updown=niUpdown; 
 	    }
 
 
@@ -497,7 +497,6 @@ function startItUp(){
 
 
 	    log("scan complete");	    
-	    //quip("all interfaces ok");
 
 	}, /* catch */ function(reason) {
     
@@ -520,7 +519,7 @@ function startItUp(){
 
 
 function quip(x) {
-    log("SPEAKING : "+x);
+    log("quipping : "+x);
     if (speaking)
         runHide("espeak","\""+x+"\"");  //it's noisy
 }
@@ -554,8 +553,4 @@ function runHide(prog,arg1) {  //bugbug doesn't hide output yet??
 
 startItUp();
 
-// //bugbug need event to run these...what's it called?
-// function doOnClose() {
-    // quip("arrrrrr")
-    // closeAll()
-// }
+
