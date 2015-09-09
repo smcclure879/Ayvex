@@ -31,6 +31,9 @@ function dump(x) {
 }
 
 
+var fh1=null;
+
+
 function mapValuesInside(hash,fn) {
     var retval = {};
 
@@ -283,7 +286,7 @@ var testSites = enhash([
 
 
 
-var fh1=null;
+
 function log(x) {
     x += "\n";
 
@@ -291,25 +294,18 @@ function log(x) {
         console.log(x);
 
     if (fh1)
-	fh1.write(x);
+	fs.writeSync(fh1,x);
 }
 
 
 
 function closeAll() {
     try {
-        fh1.close()
+        fs.closeSync(fh1);
     } catch (ex) {
         //do nothing
     }
-
-    try {
-        FNULL.close()
-    }
-    catch (ex) {
-	//do nothing
-    }
-
+    fh1=null;
 }
 
 
@@ -347,6 +343,7 @@ function startItUp(){
     var MINUTES = 60;
     
     // #chdir into own dir
+    print("dirname="+__dirname+"xxx");
     process.chdir(__dirname);
     
     
@@ -361,8 +358,12 @@ function startItUp(){
 
     
     // # open the log
+    print(process.cwd());
     var logFile = "./logs/meshing_"+timeForLogFile+".txt";
-    var fh1=fs.openSync(logFile, 'a');
+    print("logfile="+logFile);
+    print("cwd="+process.cwd());
+    fh1=fs.openSync(logFile, 'a');
+
     log("----starting log----time="+humanTime);
 
 
