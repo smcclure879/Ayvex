@@ -492,7 +492,7 @@ function startItUp(){
 	    }
 	    
 	    hashNetInterfaces.utc=humanTime;
-	    print( dump( hashNetInterfaces ) );
+	    log( dump( hashNetInterfaces ) );
 
 
 
