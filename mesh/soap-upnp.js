@@ -1,5 +1,6 @@
 //  author:smcclure879
 
+var ayvex = require('ayvex')
 var http = require('http');
 var fs = require('fs');
 var util = require('util');
@@ -36,25 +37,10 @@ var upDown = '1';
 
 
 
-var multiline = function(f) {
-
-    var EOL = "\n";
-    var lines = f.toString().split(EOL);
-
-    //throw out first and last
-    lines.shift();
-    lines.pop();
-
-    return lines.join(EOL);
-
-};
+//var url = util.format('http://%s:5000/Public_UPNP_C3', routerIpAddr);
 
 
-var url = util.format('http://%s:5000/Public_UPNP_C3', routerIpAddr);
-
-
-
-var xmlTemplate = multiline(function(){  /*
+var xmlTemplate = ayvex.multiline(function(){  /*
 <?xml version="1.0"?>
 <s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/" s:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">
 <s:Body>
@@ -84,7 +70,7 @@ function postSoap(xmlData) {
 
     // An object of options to indicate where to post to
     var post_options = {
-	host: '192.168.1.1',
+	host: routerIpAddr,
 	port: '5000',
 	path: '/Public_UPNP_C3',
 	method: 'POST',
