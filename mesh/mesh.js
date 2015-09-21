@@ -1,17 +1,134 @@
-
 //  author:smcclure879
 
-
+var ayvex = require('ayvex');
 var http = require('http');
 var fs = require('fs');
 var util = require('util');
 var subprocess = require('child_process');
 
 
+//var nat = require('nat-upnp');  //couldn't install this lib on the pi, or 'nat-pmp'
+
 //can't use promiscuous (it's simpler to follow, but doesn't do hashSettled()
 //var Promise = require('promiscuous');
-var RSVP = require('rsvp');  //so trying this lib instead
+var RSVP = require('rsvp');  //so trying this lib instead  //bugbug needed?
 var Promise = RSVP.Promise;
+
+
+
+//bugbug all these should be detected/sussed by the prog not hardcoded
+var meshPort = '9091';  //more of a const really bugbug revisit
+var externalPort = meshPort;  //might need to override (bugbug) (eg. if two meshites in the same LAN)
+var internalPort = meshPort;
+
+
+var upDown = '1';
+
+
+
+var Exception = ayvex.Exception;
+
+//vars that will be assigned in the course of things
+var fh1=null;
+var bestInterface = null;
+
+
+
+var upDown = 1;  //1 means "want the mapping"
+
+
+
+
+function firstToSucceed(list,fn) {
+    return fn(list[0]);  //bugbug for now
+    // fn(list[ii]) returns a promise.  run them sequentially until something works, then return that fulfilled promise
+    
+}
+
+function getRouterIpList(internalIpAddr) {
+    if ( ayvex.startsWith(internalIpAddr,"192.168.") )
+	return  [ "192.168.1.1" , "192.168.1.0" ];
+    if ( ayvex.startsWith(internalIpAddr,"10.10.") )
+	return [ "10.10.1.1" ];
+    return '192.168.1.1';
+
+
+    //bugbugthrow new Exception("do not know how to deal with this ipAddr:"+internalIpAddr);
+}
+
+
+
+
+function proPortForward(netInterface,internalPort,preferredExternalPort) {
+
+    var xmlTemplate = ayvex.multiline(function(){  /*
+        <?xml version="1.0"?>
+	<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/" s:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">
+	<s:Body>
+	<u:AddPortMapping xmlns:u="urn:schemas-upnp-org:service:WANIPConnection:1">
+	<NewRemoteHost></NewRemoteHost>
+	<NewExternalPort>%s</NewExternalPort>
+	<NewProtocol>TCP</NewProtocol>
+	<NewInternalPort>%s</NewInternalPort>
+	<NewInternalClient>%s</NewInternalClient>
+	<NewEnabled>%s</NewEnabled>
+	<NewPortMappingDescription>ayvex:node:nat:upnp</NewPortMappingDescription>
+	<NewLeaseDuration>0</NewLeaseDuration>
+	</u:AddPortMapping>
+	</s:Body>
+	</s:Envelope>
+						   */});
+
+    var upDown = 1;  //1 means "want the mapping"
+
+
+    var internalIpAddr = netInterface.ipAddr; //my address on that interface, not the ip of the router which is .routerIpAddr
+
+    var xml = util.format(xmlTemplate, preferredExternalPort, internalPort, internalIpAddr, upDown);
+    // print(xml);
+
+    
+    return firstToSucceed(getRouterIpList(internalIpAddr), function (routerIp) {
+	return proPostSoap( xml, routerIp );
+    });
+}
+
+
+
+function proPostSoap(xmlData,routerIpAddr) {
+
+    var post_data = xmlData;
+
+    // An object of options to indicate where to post to
+    var options = {
+	host: routerIpAddr,
+	port: '5000',
+	path: '/Public_UPNP_C3',
+	method: 'POST',
+	headers: {
+
+ 	    'Content-Type': 'text/xml; charset="utf-8"',
+	    'Connection': 'close',
+	    'SOAPAction': '"urn:schemas-upnp-org:service:WANIPConnection:1#AddPortMapping"', 
+            'Content-Length': post_data.length
+	}
+    };
+
+    return proGet(options,xmlData);
+}
+
+//bugbug move to tests or something??  postSoap(xmlData);
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -31,7 +148,6 @@ function dump(x) {
 }
 
 
-var fh1=null;
 
 
 function mapValuesInside(hash,fn) {
@@ -74,7 +190,7 @@ var enhash = function(arr,keyField) {
 
 
 //mine...  a promised http get....
-function proGet(options) {  //options ala http.get
+function proGet(options,outData) {  //options ala http.get
     return new Promise(
 	function (resolve, reject) {
 
@@ -84,21 +200,26 @@ function proGet(options) {  //options ala http.get
 		var body = '';
 		response.on('data', function(d) {
 		    body += d;        
+		    //print(d);
 		});
 		response.on('end', function() {	
 		    clearTimeout(timeout); 
-		    resolve(    { 'body' : body , 'response' : response }     ); 
+		    resolve(    { 'body' : body , 'response' : response , 'ipAddr' : options.localAddress }     ); 
 		});
 	    });
 
 	    // todo in future versions of nodejs, you can put this into the 
 	    //     response object so it's more parallel with 'data' and 'end' above!!
 	    request.on('error', function(er) {
-		//keep--  print("Got error: " + dump(options) + dump(er)); 
+		print("Got error: " + dump(options) + dump(er)); 
 		clearTimeout(timeout);
 		reject(er);
 	    });
 	
+	    if (outData) {
+		request.write(outData);
+		request.end();
+	    }
 
 	    var timeoutEh = function() {
 		print("aborting the request="+(options.nick||options.host||dump(options)));
@@ -142,6 +263,10 @@ function proRun(path,arg1) {
 function NetInterface(nick,name,ipAddr) {
     this.nick = nick;
     this.name = name;
+    if (!ipAddr) { //bugbug
+	throw new Exception("no ip addr");
+	process.exit(47);
+    }
     this.ipAddr = ipAddr;
 }
 
@@ -152,6 +277,8 @@ NetInterface.prototype.verify = function() { // on all sites
     var hashOfPromises = mapValuesInside(testSites, function(site) {
 	return 	site.verify(that); 
     });
+
+    hashOfPromises.ipAddr = this.ipAddr;
 
     //turn the hash of promises into a promise of a hash, in which promises are turned into {state,result/reason} objects
     return settleMap(hashOfPromises);  
@@ -171,6 +298,7 @@ function createNetInterface(section) {
     var nick=getNick(name);
     
     var ipAddr=seek(section,"inet addr");
+
     if (!ipAddr) {
 	quip("bad interface: "+getNick(name));
 	return null;
@@ -218,7 +346,7 @@ Site.prototype.verify = function(netInterface) {
 	host: this.host,
 	port: this.port,
 	path: '',
-	localAddress: netInterface.ipAddr,
+	localAddress: netInterface.ipAddr,  //bugbug needed?
 	method: 'HEAD'
     };
 
@@ -227,8 +355,9 @@ Site.prototype.verify = function(netInterface) {
     return proGet(options)
         .then(null,function(reason) {
 	    return {
-		response: {
-		    statusCode:-1
+		response : {
+		    statusCode : -1,
+		    reason : reason
 		} 
 	    };  //no result at all?  fix it before continuing: sentinel value
 	})
@@ -244,6 +373,7 @@ Site.prototype.verify = function(netInterface) {
 		updown : statusCode>0,  //it's "up" (true) if we get ANY status code (the connection is up)
 		perfect: statusCode==that.expectCode, //....but...the SITE might not be in perfect health tho!
 		isExt : that.isExt(),
+//bugbug hopefully don't need		ipAddr : result.ipAddr,
 
 		//debug fields
 		statusCode: statusCode
@@ -253,7 +383,7 @@ Site.prototype.verify = function(netInterface) {
 	    print( "bugbug790a "+dump(reason) );
 	    return false;
 	});
-}
+}//returns a Promise, normally
 
 
 function isdigit(c) {
@@ -268,7 +398,7 @@ Site.prototype.isExt = function()  {
 
 
 // settings
-var meshPort = 9091;  //more of a const really bugbug revisit
+
 var echoToConsole = true;
 var speaking = false;
 var testSites = enhash([
@@ -343,7 +473,7 @@ function startItUp(){
     var MINUTES = 60;
     
     // #chdir into own dir
-    print("dirname="+__dirname+"xxx");
+    //    print("dirname="+__dirname+"xxx");
     process.chdir(__dirname);
     
     
@@ -358,7 +488,7 @@ function startItUp(){
 
     
     // # open the log
-    print(process.cwd());
+    //print(process.cwd());
     var logFile = "./logs/meshing_"+timeForLogFile+".txt";
     print("logfile="+logFile);
     print("cwd="+process.cwd());
@@ -391,11 +521,14 @@ function startItUp(){
 	    // # #if there's another of me then die -- bugbug just don't let this happen
 	    // ok don't do this.......procs = run("ps", "-A").split()   should return zero lines containing nodejs??? bugbug
 	    //...... instead....
-	    // var server = http.createServer(function (request, response) {
-	    // 	response.writeHead(200, {"Content-Type": "text/plain"});
-	    // 	response.end("Hello World\n");
-	    // });
-	    // server.listen(meshPort);  //for now is this unique enough?? todo revisit
+	}).then( function() {
+
+	    //maybe something else??
+
+	}).then( function() {
+
+
+	    startupServer();
 
 
 	}).then( function() {
@@ -412,12 +545,11 @@ function startItUp(){
 
 
 	    interfaces=mapValuesInside(interfaces,function(ni) {   //ni = network interface
-		    return ni.verify();
-		});
-
+		return ni.verify();//still a promise
+	    });
+				      
 
 	    return settleMap( interfaces );
-
 
 	   
 	}).then( function(hashNetInterfaces) {
@@ -452,6 +584,10 @@ function startItUp(){
 		    return site;
 		});
 
+
+
+		if (!ni.ipAddr)
+		    throw new Exception("bugbug431f"+ni);
 		return ni;
 	    });
 
@@ -484,10 +620,14 @@ function startItUp(){
 
 
 	    for (var netNick in hashNetInterfaces) {
-		if (!hashNetInterfaces[netNick].updown)
+		if (!hashNetInterfaces[netNick].updown) {
 		    quip(netNick + " interface is down");
-		else 
+		}
+		else {
 		    quip(netNick + " interface is up");
+		    if (!bestInterface)
+			bestInterface = hashNetInterfaces[netNick];
+		}
 		
 	    }
 	    
@@ -503,6 +643,24 @@ function startItUp(){
 	    log("something went wrong"+dump(reason));
 	    //quip("one interface bad maybe");
 
+	}).then(function() {
+
+	    if (!bestInterface || !bestInterface.ipAddr)
+	    {
+		print("bugbug128");
+		debugger;
+		return null;
+	    }
+
+	    return proPortForward(bestInterface,meshPort,meshPort);
+
+	}).then(function(result) {
+	    if (result && ayvex.contains(result.body,"WANIPConnection:1"))
+		print("success really 743i  !!!!!!!!!");
+	    else 
+		print("bugbug126...here set up response to port forwarding, turn on port 9091 server etc)");
+	    debugger;
+
 	});
 
 
@@ -515,6 +673,55 @@ function startItUp(){
 
 
 
+
+
+//function iammapped(bugbug) {
+//    return true;  //bugbug
+//}
+	
+// 	    client.getMappings(function(err,results) {    //bugbug you are here... you can force a connection as above, but need to inspect it maybe?...how to test from external???
+
+// 		if (err)
+// 		{
+// 		    log(err);
+// 		    reject(err);
+// 		    return false;
+// 		}
+		
+// 		log(result);
+		
+// 		if (iammapped(result))
+// 		{
+// 		    resolve(somethingbugbug);
+// 		    return result;
+// 		}
+// 		else
+// 		{
+
+// 		    mapMe(something,something);
+// 		}
+
+	 
+// 	    });
+//     });
+    
+// }
+
+
+
+
+
+
+
+function startupServer() {
+    
+    var server = http.createServer(function (request, response) {
+	response.writeHead(200, {"Content-Type": "text/plain"});
+	response.end("Hello World\n");
+    });
+    server.listen(meshPort);  //for now is this unique enough?? todo revisit
+    
+}
 
 
 
@@ -552,5 +759,4 @@ function runHide(prog,arg1) {  //bugbug doesn't hide output yet??
 
 
 startItUp();
-
 
