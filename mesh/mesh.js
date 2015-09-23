@@ -7,13 +7,18 @@ var util = require('util');
 var subprocess = require('child_process');
 
 
-//var nat = require('nat-upnp');  //couldn't install this lib on the pi, or 'nat-pmp'
+var Datastore = require('nedb');
 
+
+//var nat = require('nat-upnp');  //couldn't install this lib on the pi, or 'nat-pmp'
 //can't use promiscuous (it's simpler to follow, but doesn't do hashSettled()
 //var Promise = require('promiscuous');
 var RSVP = require('rsvp');  //so trying this lib instead  //bugbug needed?
 var Promise = RSVP.Promise;
 
+
+
+var databaseFile = "dbMeshites.db";
 
 
 //bugbug all these should be detected/sussed by the prog not hardcoded
@@ -22,7 +27,7 @@ var externalPort = meshPort;  //might need to override (bugbug) (eg. if two mesh
 var internalPort = meshPort;
 
 
-var upDown = '1';
+var upDown = '1';   //1 means "want the mapping"
 
 
 
@@ -31,12 +36,9 @@ var Exception = ayvex.Exception;
 //vars that will be assigned in the course of things
 var fh1=null;
 var bestInterface = null;
+var db = null;
 
-
-
-var upDown = 1;  //1 means "want the mapping"
-
-
+var MINUTE = 60 * 1000;
 
 
 function firstToSucceed(list,fn) {
@@ -55,6 +57,36 @@ function getRouterIpList(internalIpAddr) {
 
     //bugbugthrow new Exception("do not know how to deal with this ipAddr:"+internalIpAddr);
 }
+
+
+
+
+
+
+
+function proPrepDb() {
+    return proInsertDocDb(  { type: 'startup', logTime: humanTime }  );
+}
+
+function proInsertDocDb(doc) {	
+    return new Promise(function(resolve,reject) {
+	db.insert( doc, function (err, newDoc) {   
+	    if (err) {
+		console.log("err="+dump(err));
+		reject(err);
+	    } else { 
+		console.log("newDoc="+dump(newDoc));
+		resolve(newDoc);
+	    }
+	});
+    });
+}
+
+
+
+
+
+
 
 
 
@@ -184,7 +216,32 @@ var enhash = function(arr,keyField) {
 };
 
 
+function startBeacon() {
 
+    setTimeout(beacon,1); //now!
+
+    setInterval(beacon,5*MINUTE);  //and every 5 minutes //bugbug randomize better
+}
+
+function beacon() {
+    //known peers
+    db.find({type:'meshite'},function(err,docs){
+	var msg=dump(docs);
+	print("beacon msg="+msg);
+	for(var peer in docs) {	  
+	    //pk of peer is MAC
+	    tellPeer(peer,msg);
+	}
+    });
+}
+
+function discoverPeersOnLan() {
+    //broadcast. listen in web server
+}
+
+function tellDnsAlias() {
+    //best effort call
+}
 
 
 
@@ -497,6 +554,16 @@ function startItUp(){
     log("----starting log----time="+humanTime);
 
 
+
+
+    //better make sure we can get the DB file rights etc...
+    db = new Datastore({ filename: databaseFile, autoload: true });  //synchronous load
+
+
+
+
+
+
     var uptime = null;
     var sections = [];
     //var interfacesUp = 0;
@@ -523,7 +590,7 @@ function startItUp(){
 	    //...... instead....
 	}).then( function() {
 
-	    //maybe something else??
+	    return proPrepDb();  //writes a startup record in there
 
 	}).then( function() {
 
@@ -653,13 +720,30 @@ function startItUp(){
 	    }
 
 	    return proPortForward(bestInterface,meshPort,meshPort);
+	    //bugbug ssh port!
 
 	}).then(function(result) {
+
+	    //bugbug move this logic into proPortForward, and report error forward in promisy way.
+	    //   meantime tho, should always continue.  there might be another meshite on the local net
+
+	    
+
 	    if (result && ayvex.contains(result.body,"WANIPConnection:1"))
-		print("success really 743i  !!!!!!!!!");
-	    else 
-		print("bugbug126...here set up response to port forwarding, turn on port 9091 server etc)");
+		return;	    //SUCCESS
+
+
+	    log("bugbug126...here set up response to port forwarding, turn on port 9091 server etc)");
 	    debugger;
+
+	}, function(reason) {
+	    log("bugbug754c: "+reason);
+	    return; //SUCCESS also...we'll just keep on going
+	}).then(function() {
+
+	    startBeacon(); //known peers
+	    discoverPeersOnLan();
+	    tellDnsAlias();
 
 	});
 
@@ -679,7 +763,7 @@ function startItUp(){
 //    return true;  //bugbug
 //}
 	
-// 	    client.getMappings(function(err,results) {    //bugbug you are here... you can force a connection as above, but need to inspect it maybe?...how to test from external???
+// 	    client.getMappings(function(err,results) {    
 
 // 		if (err)
 // 		{
