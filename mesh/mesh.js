@@ -1,3 +1,5 @@
+"use strict";
+
 //  author:smcclure879
 
 var ayvex = require('ayvex');
@@ -5,7 +7,7 @@ var http = require('http');
 var fs = require('fs');
 var util = require('util');
 var subprocess = require('child_process');
-
+var dns = require('dns');
 
 var Datastore = require('nedb');
 
@@ -27,7 +29,28 @@ var externalPort = meshPort;  //might need to override (bugbug) (eg. if two mesh
 var internalPort = meshPort;
 
 
-var upDown = '1';   //1 means "want the mapping"
+//bugbug  make this two separate optional files  maybe not in git?
+
+var dnsName="ayvex.dnsalias.com";
+var pazzword="20abd9bc512f11e4814ccd0e1d232429";  //bugbug update this at some point
+
+//global vars  bugbug fix location
+var correctTime;  //note will need to call to update this periodically
+var dnsAddress = null;
+var ipAddr = null;
+
+
+
+var upDown = '1';   //1 means "want the mapping"  //bugbug rename
+var force = 0; //until sufficiently tested   forces dns write...bugbug rename
+
+
+//more globals
+var theTime;
+var humanTime;
+var localTime;
+var timeForLogFile;
+
 
 
 
@@ -35,6 +58,7 @@ var Exception = ayvex.Exception;
 
 //vars that will be assigned in the course of things
 var fh1=null;
+var interfaces = null;
 var bestInterface = null;
 var db = null;
 
@@ -52,10 +76,10 @@ function getRouterIpList(internalIpAddr) {
 	return  [ "192.168.1.1" , "192.168.1.0" ];
     if ( ayvex.startsWith(internalIpAddr,"10.10.") )
 	return [ "10.10.1.1" ];
-    return '192.168.1.1';
+    //return '192.168.1.1';
 
 
-    //bugbugthrow new Exception("do not know how to deal with this ipAddr:"+internalIpAddr);
+    throw new Exception("do not know how to deal with this ipAddr:"+internalIpAddr);
 }
 
 
@@ -155,6 +179,70 @@ function proPostSoap(xmlData,routerIpAddr) {
 
 
 
+function proTimeGet(host,path) {
+
+    var options = {
+	host:host,
+	port:80,
+	path:path,
+	method:'GET',
+	headers: {
+
+ 	    'Content-Type': 'text/text; charset="utf-8"',
+	    'Connection': 'close',
+	    //'SOAPAction': '"urn:schemas-upnp-org:service:WANIPConnection:1#AddPortMapping"', 
+            'Content-Length': 0
+
+	},
+	maxTime: 10000 
+    };
+
+
+    return new Promise(
+	function (resolve, reject) {
+
+	    //bugbug consolidate with proGet!!
+	    var request = http.get(options, function(response) { 
+				       
+		// Continuously update stream with data
+		var body = '';
+		response.on('data', function(d) {
+		    body += d;        
+		    //print(d);
+		});
+		response.on('end', function() {	
+		    clearTimeout(timeout); 
+
+		    resolve(   response.headers  );
+		});
+	    });
+
+	    // todo in future versions of nodejs, you can put this into the 
+	    //     response object so it's more parallel with 'data' and 'end' above!!
+	    request.on('error', function(er) {
+		print("Got error: " + dump(options) + dump(er)); 
+		clearTimeout(timeout);
+		reject(er);
+	    });
+	
+
+
+
+	    var timeoutEh = function() {
+		print("aborting the request="+(dump(options)));
+		request.abort();
+	    };
+
+	    var timeout = setTimeout(timeoutEh, options.maxTime || 2000);  
+
+	    request.end();
+	}
+    );
+
+
+
+}
+
 
 
 
@@ -229,25 +317,228 @@ function beacon() {
 	var msg=dump(docs);
 	print("beacon msg="+msg);
 	for(var peer in docs) {	  
-	    //pk of peer is MAC
+	    //pk of peer is MAC ??bugbug
 	    tellPeer(peer,msg);
 	}
     });
 }
 
 function discoverPeersOnLan() {
-    //broadcast. listen in web server
+    //later (bugbug) send broadcast or multicast UDP packet.  w.o. UDP functionality
+	//  the listen in web server
 }
 
-function tellDnsAlias() {
-    //best effort call
+
+
+
+
+//promise-wrapper for dns.resolve4
+function proResolve4(domain) {
+    return new Promise( function(resolve,reject) {
+
+
+	dns.resolve4( domain, function(err,addresses,family) {
+	    if (err) {
+		reject(err); 
+	    } else {
+		resolve(addresses);
+	    }
+	});
+
+
+    });
 }
+
+
+
+
+
+function proCheckFixDns() {
+
+    //////////////  SECTION  FOR external !!! ip addr....
+    //bugbug what about for each interface??? for now just to the "best"
+    // the address FROM dns system!!!
+
+
+    return proResolve4(dnsName)
+    
+        .then(function(dnsAddresses) {
+
+	    //domain, family, callback  for .lookup???
+	    //dnsAddress = dns.lookup(dnsName);
+	    if (dnsAddresses.length !== 1) {
+		throw new Exception( "dnsAddresses=" + dump(dnsAddresses) );
+	    }
+
+	    dnsAddress = dnsAddresses[0];
+
+	    log("dns address="+ dnsAddress);
+
+	}).then(function() {     
+
+	    // get ext IP addr
+	    var options = {
+		port: 80,
+		path: '/',
+		method: 'GET',
+		host: "checkip.dyndns.org",
+		errorMsg: "where is the internet2 ???",  //bugbug: make this option work in proGet 
+		maxTime: 5000  //5 seconds
+//		headers: {
+//		    "Content-type": "text/html",
+//		    "Content-length":0
+//		}
+	    };
+
+	    return proGet(options);   //bugbug need to add retries....this site is flaky???
+
+	}).then(function(stuff) {
+
+	    //log("bugbug956 stuff="+dump(stuff));
+
+	    var content = stuff.body;
+	    log("ext ip content="+content);
+
+	    debugger;
+
+	    var maybeIp = content.match(/([0-9]{1,3}\.){3}[0-9]{1,3}/i );
+
+            if (maybeIp) {
+		ipAddr = maybeIp[0];
+		log("measured ip="+ ipAddr);
+	    } else {
+		log("ERROR: no IP address at checkIP: here is start of content:"+content.substr(0,300));
+		throw new Exception("noIPaddr");
+	    }
+
+
+	    if (ayvex.contains(ipAddr,",")) {
+		log("bugbug408i");
+		throw new Exception("bugbug408s");
+	    }
+
+	}).then(function() {
+
+	    log( "ipAddr:   actual=" + ipAddr + " ...  dns=" + dnsAddress);
+	    log("force = "+force);
+
+	    if ( ipAddr==dnsAddress && !force ) {
+		log("not updating: no need");
+    
+	    }else {
+		log("need to update");
+	    
+		//bugbug test this branch!!!
+
+
+		//work with dyn.org
+		var urlTemplate=
+		    "http://ayvex:%s\@members.dyndns.org/nic/update?hostname=%s&myip=%s&wildcard=NOCHG&mx=NOCHG&backmx=NOCHG";
+		//like this...  http://username:password@members.dyndns.org/nic/update?hostname=yourhostname&myip=ipaddress&wildcard=NOCHG&mx=NOCHG&backmx=NOCHG
+		
+		var url = util.format(urlTemplate,pazzword,dnsName,ipAddr);
+		
+		log(url);
+		return proSimpleGet(url);		
+	    }
+
+
+	}).then(function(stuff) { 
+	    
+	    if (!stuff) 
+		return;
+	    
+	    var body = stuff.body;
+	    if (!body)
+		return;
+
+	    log( "body from not-quite-curl-bugbug:::" + dump(body));
+	    if ( ! /good/.test(body) ) {
+		log("bad body from dnsalias"+body);
+	    }
+	    return body; //bugbug???
+
+	});
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+    // #bugbug do this later....from the perl....
+
+    // #check old IP before rewriting file
+    // #my $oldIp;
+    // #open my $fhr, "<", "$mcLocalFolder$mcGuideFile";
+    // #while(<$fhr>)
+    // #{
+    // #    next unless /(\d{1,3}\.){3}\d{1,3}/gio;
+    // #    $oldIp=$&;
+    // #    last;
+    // #}
+
+    // #if ($force || ($oldIp ne $ipAddr))
+    // #{
+    // #print system(qq(git add $mcLocalFolder$mcGuideFile));
+    
+    // #    open my $fhw, ">", "updateIp.log."+time;
+    // #    print $fhw "direct connect IP address is:   $ipAddr:25565\n\n";
+    // #    print $fhw "timestamp=".$timeStr;
+    // #    print $fhw "\nbookmark this page!";
+    // #    print $fhw "\n\nThere is also a creative-mode server if you use 25566 instead\n";
+    // #    close $fhw;
+    
+    // ##system(qq(git commit -m "foobar" $mcLocalFolder$mcGuideFile )) == 0 or print "ERROR: bad commit operation\n";
+    // ##system(qq(git push )) == 0  or print "ERROR: bad push operation\n";
+    // ##print "skipping copy of file to   https://raw.github.com/smcclure879/Ayvex/master/web/mc/guide.htm\n\n"
+    // #}
+    // #else
+    // #{
+    // #    print "not writing file...same IP, not forced\n";
+    // #}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+function proSimpleGet(url) {
+    var options = {
+
+	href: url,
+
+
+    };
+    return proGet(options,'');
+}
+
 
 
 
 
 //mine...  a promised http get....
 function proGet(options,outData) {  //options ala http.get
+
+
     return new Promise(
 	function (resolve, reject) {
 
@@ -278,12 +569,13 @@ function proGet(options,outData) {  //options ala http.get
 		request.end();
 	    }
 
+
 	    var timeoutEh = function() {
 		print("aborting the request="+(options.nick||options.host||dump(options)));
 		request.abort();
 	    };
 
-	    var timeout = setTimeout(timeoutEh,2000);
+	    var timeout = setTimeout( timeoutEh,   options.maxTime || 2000  );
 	}
     );
 }
@@ -297,7 +589,7 @@ function proRun(path,arg1) {
 	arg1='';
     return new Promise(
 	function (resolve, reject) {
-	    child = exec(path+" "+arg1,  //bugbug shouldn't be concatting these, find a better method to call!!!
+	    var child = exec(path+" "+arg1,  //bugbug shouldn't be concatting these, find a better method to call!!!
 			 function (error, stdout, stderr) {
 			     if (error || stderr) {
 				 //log("rejecting: errorCode="+error+"  stderr="+stderr+"   stdout="+stdout);
@@ -537,9 +829,10 @@ function startItUp(){
     // # #figure the time for log file etc.
     theTime = new Date();
     humanTime = theTime.toUTCString();
+    localTime = theTime.toString();
     timeForLogFile = fileFriendlyTime(theTime);   //because this didn't work on PC! .toString( "YYYY-MM-DDTHH:mm:ss.sssZ" );
 
-    
+
 
     // check space on disk with df
 
@@ -566,22 +859,40 @@ function startItUp(){
 
     var uptime = null;
     var sections = [];
-    //var interfacesUp = 0;
 
 
 
     //if less than N minutes since startup then hold off (exit)
-    proRun("cat","/proc/uptime")
-	.then( function(output) { 
+    return  proRun("cat","/proc/uptime")
+    	.then(null,function(reason) {
+	    print(log("uptime computation didn't work:"+reason));
+	}).then(function(output) { 
 	    var stdoutput = output.stdout.toString();
 	    uptime=parseInt(stdoutput.split(" ")[0]);
 	    log( "hrs up=" + Math.floor( uptime/3600 )); 
-	    
+
 	    var delay = 1*MINUTES;
 	    if ( uptime < delay ) {
 		setTimeout(startItUp,delay); //try again in 5
 		throw new Exception("too early"); //to take us out of here for now
 	    }
+
+
+	    // get the external vs. internal clock time...
+	    return proTimeGet( 'www.timeapi.org','/utc/now' )
+	.then(null,function(reason) { //catch
+	    log("issue getting time:"+ reason);
+	    throw new Exception("bugbug440y"+reason);  
+	}).then(function(headers) {
+
+	    correctTime = headers.date;
+
+	    //here try to get the time for files we used there
+	    var timeStr = humanTime + " UTC    local=" + localTime; //bugbug is there previous time string available?? verify sources
+	    log( "computer clock: " + timeStr );
+	    log( "timeapi.org has: " + dump(correctTime) );
+
+
 	}).then( function() {
 
 
@@ -589,7 +900,7 @@ function startItUp(){
 	    // ok don't do this.......procs = run("ps", "-A").split()   should return zero lines containing nodejs??? bugbug
 	    //...... instead....
 	}).then( function() {
-
+	    //bugbug move creation code too???
 	    return proPrepDb();  //writes a startup record in there
 
 	}).then( function() {
@@ -659,11 +970,6 @@ function startItUp(){
 	    });
 
 
-
-	    //print("----------"+humanTime+"--------\n");
-	    //print( dump(hashNetInterfaces) );
-
-
 	    for (var netNick in hashNetInterfaces) {
 
 		var ni = hashNetInterfaces[netNick];
@@ -712,51 +1018,51 @@ function startItUp(){
 
 	}).then(function() {
 
+
 	    if (!bestInterface || !bestInterface.ipAddr)
 	    {
-		print("bugbug128");
-		debugger;
+		log("bugbug128p no best interface found");
 		return null;
 	    }
 
 	    return proPortForward(bestInterface,meshPort,meshPort);
 	    //bugbug ssh port!
 
-	}).then(function(result) {
+	}).then(function(result) {  
 
 	    //bugbug move this logic into proPortForward, and report error forward in promisy way.
 	    //   meantime tho, should always continue.  there might be another meshite on the local net
 
-	    
-
 	    if (result && ayvex.contains(result.body,"WANIPConnection:1"))
 		return;	    //SUCCESS
 
+	    //bugbug126...here set up response to port forwarding, turn on port 9091 server etc
 
-	    log("bugbug126...here set up response to port forwarding, turn on port 9091 server etc)");
-	    debugger;
 
 	}, function(reason) {
+
 	    log("bugbug754c: "+reason);
-	    return; //SUCCESS also...we'll just keep on going
+	    // but this is SUCCESS also...we'll just keep on going...
+
+	}).then(function() {
+
+	    return proCheckFixDns();
+
 	}).then(function() {
 
 	    startBeacon(); //known peers
 	    discoverPeersOnLan();
-	    tellDnsAlias();
 
 	});
 
 
 
-    log("end of entry function");
+	    log("end of entry function");
 
+
+	});  //returned
 
 }
-
-
-
-
 
 
 //function iammapped(bugbug) {
@@ -790,8 +1096,6 @@ function startItUp(){
 //     });
     
 // }
-
-
 
 
 
