@@ -15,7 +15,7 @@ var Datastore = require('nedb');
 //var nat = require('nat-upnp');  //couldn't install this lib on the pi, or 'nat-pmp'
 //can't use promiscuous (it's simpler to follow, but doesn't do hashSettled()
 //var Promise = require('promiscuous');
-var RSVP = require('rsvp');  //so trying this lib instead  //bugbug needed?
+var RSVP = require('rsvp');  //so trying this lib instead
 var Promise = RSVP.Promise;
 
 
@@ -44,13 +44,14 @@ var ipAddr = null;
 var upDown = '1';   //1 means "want the mapping"  //bugbug rename
 var force = 0; //until sufficiently tested   forces dns write...bugbug rename
 
+var doNotCheckIp = 0;  //bugbug remove before checkin!!!
 
 //more globals
 var theTime;
 var humanTime;
 var localTime;
 var timeForLogFile;
-
+var me;   //my local copy of everything I know, that I can write to DB??
 
 
 
@@ -108,7 +109,94 @@ function proInsertDocDb(doc) {
 
 
 
+/*
+here is the schema
 
+machineX(subj=hwAddr) thinks machineY(obj=hwAddr) at 4:32pm (time) was at 299.47.32.1 (ipAddr)
+
+we'll loosen later, go tight to get it working...
+
+pk1: type: 'think' 
+pk1: subj: hwAddr  (who thinks it)
+pk1: obj: hwAddr (who is thought about)
+pk1: utc: humanTime  (utc)
+   : ip: ipAddr (v4 for now)
+
+here's a cut n paste
+
+    type:
+    subj:
+    obj:
+    utc: 
+    ip: ipAddr (v4 for now)
+
+
+*/
+
+
+
+
+var think='think'; //for my own convenience
+
+function proVerifySelfRecord(inta) {  //inta is an an interface
+
+    if (!inta || !inta.hwAddr)
+	throw new Exception("bugbug143a");
+
+
+    return new Promise(function(resolve,reject) {
+
+
+	//bugbug SOON this should be changed to db.update(    ,options={upsert:true},  blah );
+
+
+
+	db.find( {
+	    type: think,
+	    subj: inta.hwAddr,
+	    obj: inta.hwAddr
+	},
+		 function(arrDocs) { 
+
+		     debugger; //xx156 wy is arrDocs null?  do I need to specify all fields??? 
+
+		     if (!arrDocs || arrDocs.length==0) {
+			 db.insert(  
+			     {				 
+				 type: think,
+				 subj: inta.hwAddr,
+				 obj: inta.hwAddr,
+				 utc: humanTime,
+				 ip: inta.ipAddr //(v4 for now)
+			     
+			     }, function(err,newDoc) {
+
+
+				 if (err) {
+				     log("bugbug417 error on insert"+err);
+				     reject("cannot create selfDoc:"+err);
+				 } else {
+				     logdump("newDoc",newDoc);
+				     resolve(newDoc);
+				 }
+			     }
+			 );
+		     } else if (arrDocs.length==1) {
+			 var selfDoc = arrDocs[0];
+			 if (selfDoc.hwAddr == hwAddr)
+			     //bugbug should  note the new access time and persist that to disk???
+			     resolve(selfDoc);
+			 else
+			     reject("wrong selfDoc:"+dump(selfDoc));
+		     } else {
+			 reject("wrong number of selfDocs:"+arrDocs);
+		     }
+		     
+		 });
+    });
+}
+
+    
 
 
 
@@ -157,6 +245,7 @@ function proPostSoap(xmlData,routerIpAddr) {
 
     // An object of options to indicate where to post to
     var options = {
+	retryCount: 1,
 	host: routerIpAddr,
 	port: '5000',
 	path: '/Public_UPNP_C3',
@@ -201,7 +290,7 @@ function proTimeGet(host,path) {
     return new Promise(
 	function (resolve, reject) {
 
-	    //bugbug consolidate with proGet!!
+	    //bugbug consolidate with proGet!!  esp retryCount!
 	    var request = http.get(options, function(response) { 
 				       
 		// Continuously update stream with data
@@ -267,6 +356,9 @@ function dump(x) {
 
 }
 
+function logdump(label,val) {
+    log(  label +"="+ dump(val)  );
+}
 
 
 
@@ -313,21 +405,44 @@ function startBeacon() {
 
 function beacon() {
     //known peers
-    db.find({type:'meshite'},function(err,docs){
-	var msg=dump(docs);
-	print("beacon msg="+msg);
-	for(var peer in docs) {	  
-	    //pk of peer is MAC ??bugbug
-	    tellPeer(peer,msg);
+    db.find({
+	type:think   //bugbug fix soon.... this is not selective enough??
+    },function(err,docs){
+
+
+	if (err) {
+	    //bugbug what to do here
+	    log("error with db.find of 'think':"+err);
+	
+	} else {
+
+	    return; //bugbug because this doesn't work yet <----------------   not selective enough "find" condition above
+
+	    var msg=dump(docs);
+	    print("beacon msg="+msg);
+	    debugger; //xx401
+	    for(var index in docs) {	  //
+		//pk of peer is MAC ??bugbug
+		
+		var peer = docs[index];
+		dumplog("telling peer",peer);
+		tellPeer(peer,msg);
+	    }
 	}
     });
 }
+
 
 function discoverPeersOnLan() {
     //later (bugbug) send broadcast or multicast UDP packet.  w.o. UDP functionality
 	//  the listen in web server
 }
 
+
+function tellPeer() {
+
+    log("bugbug934 --tellpeer is nyi");
+}
 
 
 
@@ -376,9 +491,14 @@ function proCheckFixDns() {
 
 	}).then(function() {     
 
+
+	    if (doNotCheckIp)
+		return "skipping";
+
 	    // get ext IP addr
 	    var options = {
-		port: 80,
+		
+		retryCount: 3,
 		path: '/',
 		method: 'GET',
 		host: "checkip.dyndns.org",
@@ -389,21 +509,24 @@ function proCheckFixDns() {
 //		    "Content-length":0
 //		}
 	    };
+	    
 
+	    
 	    return proGet(options);   //bugbug need to add retries....this site is flaky???
 
 	}).then(function(stuff) {
+
+	    if (stuff=="skipping")
+		return "skipping";
 
 	    //log("bugbug956 stuff="+dump(stuff));
 
 	    var content = stuff.body;
 	    log("ext ip content="+content);
 
-	    debugger;
-
 	    var maybeIp = content.match(/([0-9]{1,3}\.){3}[0-9]{1,3}/i );
 
-            if (maybeIp) {
+            if ( maybeIp && maybeIp[0] ) {
 		ipAddr = maybeIp[0];
 		log("measured ip="+ ipAddr);
 	    } else {
@@ -417,7 +540,11 @@ function proCheckFixDns() {
 		throw new Exception("bugbug408s");
 	    }
 
-	}).then(function() {
+	}).then(function(stuff) {
+
+	    if (stuff=="skipping")
+		return "skipping";
+
 
 	    log( "ipAddr:   actual=" + ipAddr + " ...  dns=" + dnsAddress);
 	    log("force = "+force);
@@ -445,7 +572,7 @@ function proCheckFixDns() {
 
 	}).then(function(stuff) { 
 	    
-	    if (!stuff) 
+	    if (!stuff || stuff=="skipping") 
 		return;
 	    
 	    var body = stuff.body;
@@ -524,6 +651,7 @@ function proCheckFixDns() {
 function proSimpleGet(url) {
     var options = {
 
+	retryCount: 1,
 	href: url,
 
 
@@ -538,6 +666,9 @@ function proSimpleGet(url) {
 //mine...  a promised http get....
 function proGet(options,outData) {  //options ala http.get
 
+
+    if (!options.retryCount)
+	options.retryCount = 3;
 
     return new Promise(
 	function (resolve, reject) {
@@ -561,7 +692,15 @@ function proGet(options,outData) {  //options ala http.get
 	    request.on('error', function(er) {
 		print("Got error: " + dump(options) + dump(er)); 
 		clearTimeout(timeout);
-		reject(er);
+
+
+		//reject(er); 
+		options.retryCount--;
+		if (options.retryCount<1) {
+		    reject("out of retries"+dump(options));
+		} else {
+		    return proGet(options,outData);  //bugbug did this work?  or use resolve(proGet(blah))???  //xx702
+		}
 	    });
 	
 	    if (outData) {
@@ -609,7 +748,7 @@ function proRun(path,arg1) {
 
 
 
-function NetInterface(nick,name,ipAddr) {
+function NetInterface(nick,name,ipAddr,hwAddr) {
     this.nick = nick;
     this.name = name;
     if (!ipAddr) { //bugbug
@@ -617,6 +756,7 @@ function NetInterface(nick,name,ipAddr) {
 	process.exit(47);
     }
     this.ipAddr = ipAddr;
+    this.hwAddr = hwAddr;
 }
 
 
@@ -648,12 +788,23 @@ function createNetInterface(section) {
     
     var ipAddr=seek(section,"inet addr");
 
+
+    var hwAddr=seek2(section,"HWaddr");
+
+    if (!hwAddr || !hwAddr.length>3) {
+
+	throw new Exception("bugbug626u="+hwAddr);
+    }
+
+
+    log("found hwAddr="+hwAddr);
+
     if (!ipAddr) {
 	quip("bad interface: "+getNick(name));
 	return null;
     }
     
-    return new NetInterface(nick,name,ipAddr)
+    return new NetInterface(nick,name,ipAddr,hwAddr)
 }
 
 
@@ -692,6 +843,7 @@ function Site(nick,host,port,expectCode) {
 Site.prototype.verify = function(netInterface) {
 
     var options = {
+	retryCount: 1,  //only 1 chance on a verification!
 	host: this.host,
 	port: this.port,
 	path: '',
@@ -865,7 +1017,8 @@ function startItUp(){
     //if less than N minutes since startup then hold off (exit)
     return  proRun("cat","/proc/uptime")
     	.then(null,function(reason) {
-	    print(log("uptime computation didn't work:"+reason));
+	    log("uptime computation didn't work:"+reason);
+	    //bugbug die  ayvex.die(why);
 	}).then(function(output) { 
 	    var stdoutput = output.stdout.toString();
 	    uptime=parseInt(stdoutput.split(" ")[0]);
@@ -879,20 +1032,22 @@ function startItUp(){
 
 
 	    // get the external vs. internal clock time...
-	    return proTimeGet( 'www.timeapi.org','/utc/now' )
-	.then(null,function(reason) { //catch
+	    return proTimeGet( 'www.timeapi.org','/utc/now' );
+
+	}).then(null,function(reason) { //catch
 	    log("issue getting time:"+ reason);
 	    throw new Exception("bugbug440y"+reason);  
 	}).then(function(headers) {
 
-	    correctTime = headers.date;
+	    correctTime = headers.date; //bugbug or it should be humanTime
 
 	    //here try to get the time for files we used there
 	    var timeStr = humanTime + " UTC    local=" + localTime; //bugbug is there previous time string available?? verify sources
 	    log( "computer clock: " + timeStr );
 	    log( "timeapi.org has: " + dump(correctTime) );
 
-
+	    // bugbug if theTime < year2015 then ayvex.die()
+	    log("end of time section");
 	}).then( function() {
 
 
@@ -921,18 +1076,18 @@ function startItUp(){
 
 	    interfaces=enhash(interfaces,'nick');  //nick is key!
 
-
-	    interfaces=mapValuesInside(interfaces,function(ni) {   //ni = network interface
+	    
+	    var interfacesForProcessing=mapValuesInside(interfaces,function(ni) {   //ni = network interface
 		return ni.verify();//still a promise
 	    });
 				      
 
-	    return settleMap( interfaces );
+	    return settleMap( interfacesForProcessing );
 
 	   
 	}).then( function(hashNetInterfaces) {
 
-	    //each item in hash represents an interface.  each subitem a site result for that interface
+	    //each item in hash represents an interface.  each subiem a site result for that interface
 	    //redefining...(unpromising?  unpacking promises?)...
 	    //bugbug consolidate the dupe code below...maybe it should be recursive?
 
@@ -950,7 +1105,7 @@ function startItUp(){
 		    return null;
 		}
 		var ni = nipf.value;
-		//regark(ni);  //bugbug or should this happen earlier???
+
 		ni = mapValuesInside(ni, function(spf) { //    spf=site promise, hopefully fulfilled
 		    if (spf.state != 'fulfilled') {
 			print("bad site"+spf.state);
@@ -995,74 +1150,128 @@ function startItUp(){
 	    for (var netNick in hashNetInterfaces) {
 		if (!hashNetInterfaces[netNick].updown) {
 		    quip(netNick + " interface is down");
-		}
-		else {
+		} else {
 		    quip(netNick + " interface is up");
-		    if (!bestInterface)
-			bestInterface = hashNetInterfaces[netNick];
+		    if (!bestInterface) {
+			bestInterface = netNick;
+		    }
 		}
-		
 	    }
 	    
 	    hashNetInterfaces.utc=humanTime;
-	    log( dump( hashNetInterfaces ) );
+	    log(dump(  hashNetInterfaces  ));
 
 
 
 	    log("scan complete");	    
 
-	}, /* catch */ function(reason) {
+	}).then(null, function(reason) {  //catch
     
 	    log("something went wrong"+dump(reason));
 	    //quip("one interface bad maybe");
 
 	}).then(function() {
 
+	    //bugbug you are here    bestInterface is only the nick for the best interface.  
+	    //     gotta go pull it from the hash, but hashNeInterfaces is already-scanned, so missing hwAddr etc etc
 
-	    if (!bestInterface || !bestInterface.ipAddr)
-	    {
-		log("bugbug128p no best interface found");
+	    //fix bestInterface up
+	    bestInterface = interfaces[bestInterface];
+
+
+	    
+	    if (!bestInterface) {
+		log("bugbug128p no best interface NICK found"+dump(bestInterface));
 		return null;
 	    }
 
+	    if (!bestInterface) {
+		log("bugbug128p no best interface ITEM found"+dump(bestInterface));
+		return null;
+	    }
+	    
+	    if (!bestInterface.hwAddr) {
+		log("bugbug128p no hwAddr found"+dump(bestInterface));
+	    }
+	
+
+   
+
+	    //check our identity-from db vs. our hwAddr from ifconfig 
+	    return proVerifySelfRecord(bestInterface);  
+
+	    //bugbug do we ahve enough to complete it here?  break it up into multiple records how???
+
+	}).then(null, function(er) {  // "catch"
+	    log(er);
+	    return null;  //as the self doc, because what else?
+	}).then(function(selfDoc) {
+	    
+	    logdump("selfDoc",selfDoc);
+	    me = selfDoc;  //bugbug verify this var usage everywhere?  what if null from above.
+
+
+
+	    //bugbug next you are here....make this a range of ports and record if it worked in a global and db.  it's important to know if we are full or half meshite.
+
 	    return proPortForward(bestInterface,meshPort,meshPort);
 	    //bugbug ssh port!
+
+	}).then(null, function() {  //catch
+
+
+	    return null;
+
 
 	}).then(function(result) {  
 
 	    //bugbug move this logic into proPortForward, and report error forward in promisy way.
 	    //   meantime tho, should always continue.  there might be another meshite on the local net
 
-	    if (result && ayvex.contains(result.body,"WANIPConnection:1"))
+	    if (result && result.body && ayvex.contains(result.body,"WANIPConnection:1"))
 		return;	    //SUCCESS
-
+	    else {
+		logdump("result",result); 
+	    }
 	    //bugbug126...here set up response to port forwarding, turn on port 9091 server etc
 
 
-	}, function(reason) {
+	}).then(null, function(reason) {  //catch
 
 	    log("bugbug754c: "+reason);
+	    log("starting sleep");
+
+	    return ayvex.proSleep(1000);
+
 	    // but this is SUCCESS also...we'll just keep on going...
+
 
 	}).then(function() {
 
+	    log("checking and fixing dns");
 	    return proCheckFixDns();
 
 	}).then(function() {
-
+	    log("starting beacon");
 	    startBeacon(); //known peers
 	    discoverPeersOnLan();
 
 	});
+	
 
-
+	
 
 	    log("end of entry function");
 
 
-	});  //returned
+	}  //returned
+	
 
-}
+
+
+
+
+
 
 
 //function iammapped(bugbug) {
@@ -1131,6 +1340,19 @@ function seek(corpus,soughtName)  {  //look for soughtName:  value  and return v
     return '';
 }
 
+function seek2(corpus,soughtName) {  //look for soughtName,whitespace,hexesAndColons
+
+    var chunks = corpus.split("  ");
+    var sought = soughtName + " ";
+    var theLen = sought.length;
+    for (var chunkIndex=0, il=chunks.length; chunkIndex<il; chunkIndex++ ) {
+	var chunk = chunks[chunkIndex];
+	if ( chunk.substr(0,theLen)==sought )
+	    return chunk.substr(theLen);
+    }
+
+
+}
 
 
 function runHide(prog,arg1) {  //bugbug doesn't hide output yet??
