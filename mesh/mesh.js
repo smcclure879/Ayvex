@@ -234,7 +234,7 @@ function proPortForward(netInterface,internalPort,preferredExternalPort) {
     
     return firstToSucceed(getRouterIpList(internalIpAddr), function (routerIp) {
 	var retval = 0;  //assume fail until success
-	proPostSoap( xml, routerIp )
+	return proPostSoap( xml, routerIp )
 	    .then(null,function(reason) {   //catch
 		retval = 0;
 		log("bugbug754c: "+reason);
@@ -248,13 +248,15 @@ function proPortForward(netInterface,internalPort,preferredExternalPort) {
 		    retval = 0;
 		}
 	    }).then(function(result) {
-		if (retval)
-		    return retval;
-		else
+		if (retval) {
+		    return new Promise(function(resolve,reject) {      //from proPortForward   //have to return as a promise
+			resolve(retval);
+		    });
+		} else {
 		    return ayvex.proSleep(1000);
+		}
 	    });
 
-	return retval;  //from proPortForward
     });
 
 	
@@ -1252,8 +1254,20 @@ function startItUp(){
 
 	}).then(function() {
 
+	    log("mapping two ssh ports as well!");
 
-	    //bugbug do the ssh port!
+	    var extraSshPort = meshPortBase+meshPortCount+1;
+	    return proPortForward(bestInterface,extraSshPort,22)  //might now work, we don't care
+	        .then(null, function(reason) { //catch
+		    logdump("ssh port mapping failed, reason=",reason);
+		}).then(function(result) {
+		    log("doing 2nd shh port");
+		    return proPortForward(bestInterface,22,22); //this might work, and if it doesn't then Oh well.
+		}).then(null, function(reason) { //catch
+		    logdump("ssh port mapping 22 failed",reason);
+		});
+	    
+	    
 
 	}).then(function() {
 
