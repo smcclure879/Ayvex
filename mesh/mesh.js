@@ -23,10 +23,11 @@ var Promise = RSVP.Promise;
 var databaseFile = "dbMeshites.db";
 
 
-//bugbug all these should be detected/sussed by the prog not hardcoded
-var meshPort = '9091';  //more of a const really bugbug revisit
-var externalPort = meshPort;  //might need to override (bugbug) (eg. if two meshites in the same LAN)
-var internalPort = meshPort;
+//bugbug all these should be detected/sussed by the prog not hardcoded ??
+var meshPortBase = 9091;  //more of a const really bugbug revisit
+//bugbug add this feature later  //var meshPortBaseInternal = 9091;  internal and external might be different
+var meshPortCount = 3;  //bugbug should be 10 approx once it works good.
+
 
 
 //bugbug  make this two separate optional files  maybe not in git?
@@ -69,7 +70,6 @@ var MINUTE = 60 * 1000;
 function firstToSucceed(list,fn) {
     return fn(list[0]);  //bugbug for now
     // fn(list[ii]) returns a promise.  run them sequentially until something works, then return that fulfilled promise
-    
 }
 
 function getRouterIpList(internalIpAddr) {
@@ -233,8 +233,32 @@ function proPortForward(netInterface,internalPort,preferredExternalPort) {
 
     
     return firstToSucceed(getRouterIpList(internalIpAddr), function (routerIp) {
-	return proPostSoap( xml, routerIp );
+	var retval = 0;  //assume fail until success
+	proPostSoap( xml, routerIp )
+	    .then(null,function(reason) {   //catch
+		retval = 0;
+		log("bugbug754c: "+reason);
+	    }).then(function(result) {  
+
+		if (result && result.body && ayvex.contains(result.body,"WANIPConnection:1")) {
+		    logdump("port forward OK",preferredExternalPort);
+		    retval = 1;	    //SUCCESS
+		} else {
+		    logdump("bugbug729x: result=",result); 
+		    retval = 0;
+		}
+	    }).then(function(result) {
+		if (retval)
+		    return retval;
+		else
+		    return ayvex.proSleep(1000);
+	    });
+
+	return retval;  //from proPortForward
     });
+
+	
+
 }
 
 
@@ -501,7 +525,8 @@ function proCheckFixDns() {
 		retryCount: 3,
 		path: '/',
 		method: 'GET',
-		host: "checkip.dyndns.org",
+		  //bugbug should use "firstToSucceed" semantics and have a list of ip-determining sites to try  (or best 3 of 5?)
+		host: "api.ipify.org",       //host: "checkip.dyndns.org", <--bugbug the server I pay for never works
 		errorMsg: "where is the internet2 ???",  //bugbug: make this option work in proGet 
 		maxTime: 5000  //5 seconds
 //		headers: {
@@ -1214,37 +1239,21 @@ function startItUp(){
 
 	    //bugbug next you are here....make this a range of ports and record if it worked in a global and db.  it's important to know if we are full or half meshite.
 
-	    return proPortForward(bestInterface,meshPort,meshPort);
-	    //bugbug ssh port!
+	    var meshPortMappings = ayvex.rangeMapping(meshPortBase, meshPortBase+meshPortCount); //  [[9091,9091],[9092,9092]]  etc
 
-	}).then(null, function() {  //catch
+	    var chain = meshPortMappings.reduce(function(previous,item) {
+		return previous.then(function(previousValue) {
+		    logdump("bugbug ignore previous value=",previousValue);
+		    return proPortForward(bestInterface,item[0],item[1]);
+		});
+	    }, Promise.resolve(7777) );  //bugbug7777
+	    
+	    return chain;
 
-
-	    return null;
-
-
-	}).then(function(result) {  
-
-	    //bugbug move this logic into proPortForward, and report error forward in promisy way.
-	    //   meantime tho, should always continue.  there might be another meshite on the local net
-
-	    if (result && result.body && ayvex.contains(result.body,"WANIPConnection:1"))
-		return;	    //SUCCESS
-	    else {
-		logdump("result",result); 
-	    }
-	    //bugbug126...here set up response to port forwarding, turn on port 9091 server etc
+	}).then(function() {
 
 
-	}).then(null, function(reason) {  //catch
-
-	    log("bugbug754c: "+reason);
-	    log("starting sleep");
-
-	    return ayvex.proSleep(1000);
-
-	    // but this is SUCCESS also...we'll just keep on going...
-
+	    //bugbug do the ssh port!
 
 	}).then(function() {
 
@@ -1252,6 +1261,7 @@ function startItUp(){
 	    return proCheckFixDns();
 
 	}).then(function() {
+
 	    log("starting beacon");
 	    startBeacon(); //known peers
 	    discoverPeersOnLan();
@@ -1314,9 +1324,9 @@ function startupServer() {
     
     var server = http.createServer(function (request, response) {
 	response.writeHead(200, {"Content-Type": "text/plain"});
-	response.end("Hello World\n");
+	response.end("Hello World  bugbug this is supposed to be for forwarding to other machines!!!  this is just sample for now\n");
     });
-    server.listen(meshPort);  //for now is this unique enough?? todo revisit
+    server.listen(meshPortBase);  //for now is this unique enough?? bugbug listen on all ports!  for what?  
     
 }
 
