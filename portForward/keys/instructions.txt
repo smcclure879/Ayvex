@@ -1,0 +1,1 @@
+must append the public key to ~/.ssh/authorized_keys  (bugbug automate this)
