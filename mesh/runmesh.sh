@@ -3,7 +3,8 @@
 pushd $(dirname $0)
 while true
 do
-      nodejs mesh.js
+    sleep 30
+    nodejs mesh.js
 done
 popd
 
