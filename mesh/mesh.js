@@ -1,4 +1,4 @@
-"use strict";
+ "use strict";
 
 //  author:smcclure879
 
@@ -29,23 +29,22 @@ var meshPortBase = 9091;  //more of a const really bugbug revisit
 var meshPortCount = 3;  //bugbug should be 10 approx once it works good.
 
 
+//switches to skip steps 
+var upDown = '1';   //1 means "want the mapping"  //bugbug rename...1 means turn on, 0 means turn off, but it's overruled later in code
+var force = 0; //until sufficiently tested   forces dns write...bugbug rename
+var doNotFixDns = 1;  //for resid  //bugbug noDns
+var takePort22 = 0;  //for resid
 
 //bugbug  make this two separate optional files  maybe not in git?
+//remove for resid  var dnsName="ayvex.dnsalias.com";
+//var pazzword="";  //removed for resid"
 
-var dnsName="ayvex.dnsalias.com";
-var pazzword="20abd9bc512f11e4814ccd0e1d232429";  //bugbug update this at some point
 
 //global vars  bugbug fix location
 var correctTime;  //note will need to call to update this periodically
 var dnsAddress = null;
 var ipAddr = null;
 
-
-
-var upDown = '1';   //1 means "want the mapping"  //bugbug rename
-var force = 0; //until sufficiently tested   forces dns write...bugbug rename
-
-var doNotCheckIp = 0;  //bugbug remove before checkin!!!
 
 //more globals
 var theTime;
@@ -203,7 +202,7 @@ function proVerifySelfRecord(inta) {  //inta is an an interface
 
 
 
-function proPortForward(netInterface,internalPort,preferredExternalPort) {
+function proPortForward(netInterface,preferredExternalPort,internalPort) {
 
     var xmlTemplate = ayvex.multiline(function(){  /*
         <?xml version="1.0"?>
@@ -229,7 +228,8 @@ function proPortForward(netInterface,internalPort,preferredExternalPort) {
     var internalIpAddr = netInterface.ipAddr; //my address on that interface, not the ip of the router which is .routerIpAddr
 
     var xml = util.format(xmlTemplate, preferredExternalPort, internalPort, internalIpAddr, upDown);
-    // print(xml);
+
+    //logdump("forwarding xml",xml);
 
     
     return firstToSucceed(getRouterIpList(internalIpAddr), function (routerIp) {
@@ -263,6 +263,22 @@ function proPortForward(netInterface,internalPort,preferredExternalPort) {
 
 }
 
+function tellPeer(peer,msg) {
+    var options = {
+	retryCount: 1,
+	host: peer.addr,
+	port: peer.port,
+	path: peer.path,
+	method: 'POST',
+	headers: {
+	    'Content-Type': 'text/json; charset="utf-8"',
+	    'Connection': 'close',
+	    'Content-Length': msg.length
+	}
+    };
+
+    return proGet(options,msg);    
+}
 
 
 function proPostSoap(xmlData,routerIpAddr) {
@@ -287,8 +303,6 @@ function proPostSoap(xmlData,routerIpAddr) {
 
     return proGet(options,xmlData);
 }
-
-//bugbug move to tests or something??  postSoap(xmlData);
 
 
 
@@ -423,40 +437,62 @@ var enhash = function(arr,keyField) {
 
 
 function startBeacon() {
-
     setTimeout(beacon,1); //now!
-
-    setInterval(beacon,5*MINUTE);  //and every 5 minutes //bugbug randomize better
+    setInterval(beacon,5*MINUTE);  //and every 5 minutes //bugbug randomize better?
 }
+
 
 function beacon() {
-    //known peers
-    db.find({
-	type:think   //bugbug fix soon.... this is not selective enough??
-    },function(err,docs){
 
+    log("beaconStart");
+    var msgObj = {
+	bestInterface: bestInterface    
+    };
 
-	if (err) {
-	    //bugbug what to do here
-	    log("error with db.find of 'think':"+err);
-	
-	} else {
+    var msg = JSON.stringify(msgObj); 
 
-	    return; //bugbug because this doesn't work yet <----------------   not selective enough "find" condition above
+    //bugbug should be  proGetPeerListFromDb()
+    var listOfPeers = [  {addr:"ayvex.dnsalias.com",      //bugbug the faces server, until the peer msg reception works in this file...
+			  port:"8081",
+			  path:'/meshite'
+			 }
+		      ];
 
-	    var msg=dump(docs);
-	    print("beacon msg="+msg);
-	    debugger; //xx401
-	    for(var index in docs) {	  //
-		//pk of peer is MAC ??bugbug
-		
-		var peer = docs[index];
-		dumplog("telling peer",peer);
-		tellPeer(peer,msg);
-	    }
-	}
-    });
+    
+    print("beacon msg="+msg);
+    debugger; //xx401
+    var peer = listOfPeers[0];  //bugbug just do one for now
+    //promise.sequentially.for(var peer in listOfPeers) {	  //like "ayvex.dnsalias.com:8081"
+    logdump("telling peer",peer);
+    tellPeer(peer,msg);
+    //}
+
+    log("fired and forgot tellPeer");
 }
+
+
+
+
+//function proGetPeerListFromDb()  {
+	
+//here's how to do it eventually...    
+//find the peers(extIp+port), THEN tell each of them the msg.
+//db.find({
+//type:think   //bugbug fix soon.... this is not selective enough??
+//subj: "$not "+myIpAddress
+//}).sort({utc:-1}).exec( function(err,docs){
+
+//if (err) {
+//bugbug what to do here
+//log("error with db.find of 'think':"+err);
+//
+//} else if (docs.length<0) {
+//logdump("docs",docs);
+//} else {
+//docs[0].extra = bestInterface;
+//pk of peer is MAC ??bugbug
+// }
+
 
 
 function discoverPeersOnLan() {
@@ -465,10 +501,6 @@ function discoverPeersOnLan() {
 }
 
 
-function tellPeer() {
-
-    log("bugbug934 --tellpeer is nyi");
-}
 
 
 
@@ -500,119 +532,125 @@ function proCheckFixDns() {
     //bugbug what about for each interface??? for now just to the "best"
     // the address FROM dns system!!!
 
-
-    return proResolve4(dnsName)
-    
-        .then(function(dnsAddresses) {
-
-	    //domain, family, callback  for .lookup???
-	    //dnsAddress = dns.lookup(dnsName);
-	    if (dnsAddresses.length !== 1) {
-		throw new Exception( "dnsAddresses=" + dump(dnsAddresses) );
-	    }
-
-	    dnsAddress = dnsAddresses[0];
-
-	    log("dns address="+ dnsAddress);
-
-	}).then(function() {     
+    //bugbug you are here  actually we need to go get ext. ip. addr. as best effort.  need it to report to other meshites!
 
 
-	    if (doNotCheckIp)
-		return "skipping";
 
-	    // get ext IP addr
-	    var options = {
-		
-		retryCount: 3,
-		path: '/',
-		method: 'GET',
-		  //bugbug should use "firstToSucceed" semantics and have a list of ip-determining sites to try  (or best 3 of 5?)
-		host: "api.ipify.org",       //host: "checkip.dyndns.org", <--bugbug the server I pay for never works
-		errorMsg: "where is the internet2 ???",  //bugbug: make this option work in proGet 
-		maxTime: 5000  //5 seconds
-//		headers: {
-//		    "Content-type": "text/html",
-//		    "Content-length":0
-//		}
-	    };
+    // get ext IP addr
+    var options = {
+	
+	retryCount: 3,
+	path: '/',
+	method: 'GET',
+	//bugbug should use "firstToSucceed" semantics and have a list of ip-determining sites to try  (or best 3 of 5?)
+	host: "api.ipify.org",       //host: "checkip.dyndns.org", <--bugbug the server I pay for never works
+	errorMsg: "where is the internet2 ???",  //bugbug: make this option work in proGet 
+	maxTime: 5000  //5 seconds
+	//		headers: {
+	//		    "Content-type": "text/html",
+	//		    "Content-length":0
+	//		}
+    };
 	    
 
 	    
-	    return proGet(options);   //bugbug need to add retries....this site is flaky???
+    return proGet(
+	options
+    ).then(function(stuff) {
+	//bugbug need to add retries....this site is flaky???
+	
 
-	}).then(function(stuff) {
-
-	    if (stuff=="skipping")
-		return "skipping";
-
-	    //log("bugbug956 stuff="+dump(stuff));
-
-	    var content = stuff.body;
-	    log("ext ip content="+content);
-
-	    var maybeIp = content.match(/([0-9]{1,3}\.){3}[0-9]{1,3}/i );
-
-            if ( maybeIp && maybeIp[0] ) {
-		ipAddr = maybeIp[0];
-		log("measured ip="+ ipAddr);
-	    } else {
-		log("ERROR: no IP address at checkIP: here is start of content:"+content.substr(0,300));
-		throw new Exception("noIPaddr");
-	    }
-
-
-	    if (ayvex.contains(ipAddr,",")) {
-		log("bugbug408i");
-		throw new Exception("bugbug408s");
-	    }
-
-	}).then(function(stuff) {
-
-	    if (stuff=="skipping")
-		return "skipping";
-
-
-	    log( "ipAddr:   actual=" + ipAddr + " ...  dns=" + dnsAddress);
-	    log("force = "+force);
-
-	    if ( ipAddr==dnsAddress && !force ) {
-		log("not updating: no need");
-    
-	    }else {
-		log("need to update");
+	//log("bugbug956 stuff="+dump(stuff));
+	
+	var content = stuff.body;
+	log("ext ip content="+content);
+	
+	var maybeIp = content.match(/([0-9]{1,3}\.){3}[0-9]{1,3}/i );
+	
+        if ( maybeIp && maybeIp[0] ) {
+	    ipAddr = maybeIp[0];
+	    log("measured ip="+ ipAddr);
+	} else {
+	    log("ERROR: no IP address at checkIP: here is start of content:"+content.substr(0,300));
+	    throw new Exception("noIPaddr");
+	}
+	
+	
+	if (ayvex.contains(ipAddr,",")) {
+	    log("bugbug408i");
+	    throw new Exception("bugbug408s");
+	}
+	
+    }).then(function(stuff) {
+	
+	
+	if (doNotFixDns || typeof pazzword==='undefined' || typeof dnsName==='undefined')
+	    return 'skipping';
+	
+	//else...
+	
+	return proResolve4(dnsName);
+    }).then(function(dnsAddresses) {
+	
+	if (dnsAddresses=='skipping')
+	    return 'skipping';
+	
+	//domain, family, callback  for .lookup???
+	//dnsAddress = dns.lookup(dnsName);
+	if (dnsAddresses.length !== 1) {
+	    throw new Exception( "dnsAddresses=" + dump(dnsAddresses) );
+	}
+	
+	dnsAddress = dnsAddresses[0];
+	
+	log("dns address="+ dnsAddress);
+	
+    }).then(function(stuff) {
+	
+	log( "ipAddr:   actual=" + ipAddr + " ...  dns=" + dnsAddress);
+	log("force = "+force);
+	
+	if (stuff=="skipping")
+	    return "skipping";
+	
+	
+	if ( ipAddr==dnsAddress && !force ) {
+	    log("not updating: no need");
 	    
-		//bugbug test this branch!!!
-
-
-		//work with dyn.org
-		var urlTemplate=
-		    "http://ayvex:%s\@members.dyndns.org/nic/update?hostname=%s&myip=%s&wildcard=NOCHG&mx=NOCHG&backmx=NOCHG";
-		//like this...  http://username:password@members.dyndns.org/nic/update?hostname=yourhostname&myip=ipaddress&wildcard=NOCHG&mx=NOCHG&backmx=NOCHG
-		
-		var url = util.format(urlTemplate,pazzword,dnsName,ipAddr);
-		
-		log(url);
-		return proSimpleGet(url);		
-	    }
-
-
-	}).then(function(stuff) { 
+	}else {
+	    log("need to update");
 	    
-	    if (!stuff || stuff=="skipping") 
-		return;
+	    //bugbug test this branch!!!
 	    
-	    var body = stuff.body;
-	    if (!body)
-		return;
-
-	    log( "body from not-quite-curl-bugbug:::" + dump(body));
-	    if ( ! /good/.test(body) ) {
-		log("bad body from dnsalias"+body);
-	    }
-	    return body; //bugbug???
-
-	});
+	    
+	    //work with dyn.org
+	    var urlTemplate=
+		"http://ayvex:%s\@members.dyndns.org/nic/update?hostname=%s&myip=%s&wildcard=NOCHG&mx=NOCHG&backmx=NOCHG";
+	    //like this...  http://username:password@members.dyndns.org/nic/update?hostname=yourhostname&myip=ipaddress&wildcard=NOCHG&mx=NOCHG&backmx=NOCHG
+	    
+	    var url = util.format(urlTemplate,pazzword,dnsName,ipAddr);
+	    
+	    log(url);
+	    return proSimpleGet(url);		
+	}
+	
+	
+    }).then(function(stuff) { 
+	
+	if (!stuff || stuff=="skipping") 
+	    return;
+	
+	var body = stuff.body;
+	if (!body)
+	    return;
+	
+	log( "body from not-quite-curl-bugbug:::" + dump(body));
+	if ( ! /good/.test(body) ) {
+	    log("bad body from dnsalias"+body);
+	}
+	return body; //bugbug???
+	
+    });
 
 }
 
@@ -1199,12 +1237,10 @@ function startItUp(){
 
 	}).then(function() {
 
-	    //bugbug you are here    bestInterface is only the nick for the best interface.  
+	    // bestInterface is only the nick for the best interface.  
 	    //     gotta go pull it from the hash, but hashNeInterfaces is already-scanned, so missing hwAddr etc etc
-
 	    //fix bestInterface up
 	    bestInterface = interfaces[bestInterface];
-
 
 	    
 	    if (!bestInterface) {
@@ -1254,14 +1290,16 @@ function startItUp(){
 
 	}).then(function() {
 
-	    log("mapping two ssh ports as well!");
+	    log("mapping ssh port(s) as well!");
 
 	    var extraSshPort = meshPortBase+meshPortCount+1;
 	    return proPortForward(bestInterface,extraSshPort,22)  //might now work, we don't care
 	        .then(null, function(reason) { //catch
 		    logdump("ssh port mapping failed, reason=",reason);
 		}).then(function(result) {
-		    log("doing 2nd shh port");
+		    if (!takePort22)
+			return 777;
+		    log("doing 2nd ssh port");
 		    return proPortForward(bestInterface,22,22); //this might work, and if it doesn't then Oh well.
 		}).then(null, function(reason) { //catch
 		    logdump("ssh port mapping 22 failed",reason);
@@ -1271,12 +1309,16 @@ function startItUp(){
 
 	}).then(function() {
 
-	    log("checking and fixing dns");
+	    logdump("checking and fixing dns?...doNotFixDns=",doNotFixDns);
 	    return proCheckFixDns();
 
 	}).then(function() {
 
+	    bestInterface.extIpAddr = ipAddr;
+
+	    
 	    log("starting beacon");
+
 	    startBeacon(); //known peers
 	    discoverPeersOnLan();
 
@@ -1297,10 +1339,6 @@ function startItUp(){
 
 
 
-
-//function iammapped(bugbug) {
-//    return true;  //bugbug
-//}
 	
 // 	    client.getMappings(function(err,results) {    
 
@@ -1333,7 +1371,7 @@ function startItUp(){
 
 
 
-
+//bugbug this should be where we tellPeer to, but it's not done yet
 function startupServer() {
     
     var server = http.createServer(function (request, response) {
