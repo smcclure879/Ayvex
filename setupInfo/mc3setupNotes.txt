@@ -1,0 +1,16 @@
+stuff I had to do to make LAGNI
+
+wget https://s3.amazonaws.com/MinecraftDownload/launcher/minecraft_server.jar
+java -Xmx256M -Xms256M -jar minecraft_server.jar
+but bigger values above...no good guidance.
+
+sudo apt-get install screen
+sudo apt-get install emacs
+sudo apt-get install espeak
+
+
+
+screen <enter><enter>
+
+
+
