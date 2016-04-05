@@ -74,8 +74,13 @@ The list of XP owners.
 55. oris: instructions panel advice
 56. oris: advice on video production
 57. steve: instructions panel coding
-
-
+58. realfaces: the people that made realfaces 1/6
+59. "
+60. "
+61. "
+62. "
+63. realfaces:  end block for realfaces people
+64. steve: faces adaptation
 
 
 
@@ -93,3 +98,8 @@ call about the reward structure.  Worst case scenario you can trade these coupon
 These *are* intended to be negotiable:  See steve to transfer XP. It will be done via edits to this file in
 the master branch of the Ayvex project.  It has been suggested to build a market in similar "penny options" 
 for startups...Trading them online, etc.  
+
+The benefits of doing it this way: many startups fail, but this way the failure is effectively free.  Success leaves just enough information to straighten out money in a fair way.
+
+
+---Ayvex Corporation is willing to trade XP+cash for expertise. see issues list on github.---
