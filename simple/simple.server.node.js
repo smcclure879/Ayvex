@@ -6,7 +6,7 @@ var http = require('http');
 var fs = require('fs');
 var path = require('path');
 var ext = /[\w\d_-]+\.[\w\d]+$/;
-
+var util = require("util");
 
 
 		 
@@ -34,6 +34,10 @@ Object.prototype.contains = function (sought) {
 }
 
 
+var dump=util.inspect;
+
+
+
 function getContentType(someFile) {
     someFile = ""+someFile;
     if (someFile.endsWith('.html')) return  'text/html';
@@ -48,13 +52,61 @@ function getFilePath(relPath) {
 }
 
 
-
+var users = {};
 
 
 function doApi(req,res) {
-    console.log('api-'+req.url);
-    res.writeHead(200, {'Content-Type': 'application/json'});
-    res.end('Hello World - api\n');    
+    console.log('api-' + req.method + "   " + req.url);
+
+    var url = ""+req.url;
+
+    if (req.method=='GET') {
+	if (url=="/api/user/") {
+	    bugbug("send back a list of all current users");	
+	} else if (url.startsWith("/api/user/")) {
+	    var userName = url.removeStart("/api/user/");
+	    if (users[userName]) {
+		res.writeHead(200, {'Content-Type': 'application/json'});
+		res.end(users[userName]);
+	    } else { //don't have
+		res.writeHead(404, {'Content-Type': 'application/json'});
+		res.end('{response:"nothing found"}\n');    
+	    }
+	} else {
+	    res.writeHead(404, {'Content-Type': 'application/json'});
+	    res.end('{response:"unknown api--'+req.url+'"}\n');    
+	}
+//    } else if (req.method=='POST') {
+//
+//	res.writeHead(404,  {'Content-Type': 'application/json'});
+//	res.end('{response:"POST NYI--'+req.method+'"}\n');    
+//
+    } else if (req.method=='PUT') {
+	//console.log(dump(req));
+	if (url.startsWith("/api/user/")) {
+	    var userName = url.removeStart("/api/user/");
+	    var body='';
+	    req.on('data',function(data){
+		body+=data;
+	    });
+	    req.on('end',function(){
+		console.log("body="+body);
+		users[userName]=body;
+		res.writeHead(200,  {'Content-Type': 'application/json'});
+		res.end('{response:"putOK"}\n');    //bugbug think we need to return id
+	    });
+	} else {
+	    res.writeHead(404,  {'Content-Type': 'application/json'});
+	    res.end('{response:"err328s:cannot PUT '+url+'"}');
+	}
+	
+    } else {
+	res.writeHead(404,  {'Content-Type': 'application/json'});
+	res.end('{response:"unknown http method--'+req.method+'"}\n');    
+    }
+    
+
+
 }
 
 

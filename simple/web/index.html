@@ -78,7 +78,7 @@
 </td>
 <td valign="top">
 <span style="font-family:Arial">
-<h6>Copyright 2014 -- Ayvex Light Industries</h6>
+<h6>Copyright 2016-- Ayvex Light Industries</h6>
 <br><br>
 pick dataset: 
 <select id="dataset">
@@ -954,7 +954,7 @@ function updateServerCallback(camera_state)
 	if (theUser._rev==1) 
 	{
 		delete theUser._rev;  //we'll get a new one, this is just sentinel value  
-		theUser._id="user_"+theUser.userId;   //todo const
+		theUser._id="user/"+theUser.userId;   //todo const
 	}	
 	theUser.mostRecentQuote=userQuote;
 	theUser.telecInfo=telecInfo;  //global local user's telecInfo goes into the local user being persisted
@@ -992,7 +992,7 @@ function updateServerCallback(camera_state)
 		}
 	});
 	
-	// call  http://localhost:5984/cosmos/_design/views/_view/currentUsers
+	// call  http://localhost:5984/api/_design/views/_view/currentUsers
 	//and put those users into "theDrawings" 
 	//need to get time of each user's writing from server, to show fading-of-color or ??
 		
@@ -1007,7 +1007,7 @@ function updateServerCallback(camera_state)
 			if (resp.status==404)
 				theUser._rev=1;  //which = a NEW 
 			else
-				alert("do not know how to deal with this error"+resp.status+"  "+JSON.stringify(resp));
+				alert("err523x: do not know how to deal with this error"+resp.status+"  "+JSON.stringify(resp));
 		},
 		complete: function(jqResp) {
 		}
@@ -1093,6 +1093,7 @@ function unquote(x)
 function initServerCallback(theUser)
 {
 	console.log("called init server callback");
+	var userInfo = getUserDocUrl(theUser);
 	
 	//todo consolidate this call with similar call above somehow?  worth it?
 	$.ajax({
@@ -1106,7 +1107,7 @@ function initServerCallback(theUser)
 			if (resp.status==404)
 				theUser._rev=1;  //which = NEW todo const
 			else
-				alert("do not know how to deal with this error"+JSON.stringify(resp));
+				alert("err523p:do not know how to deal with this error"+JSON.stringify(resp)+"   "+userInfo);
 		},
 		complete: function(jqResp) {
 			setServerTimeOffset(jqResp.getResponseHeader('Date'));
@@ -1118,19 +1119,18 @@ function initServerCallback(theUser)
 
 //todo figure both of these programmatically...find all "localhost" and fix them
 var server=window.location.hostname;  //todo must figure dynamically
-var port = "5984";
-var database = "cosmos";
+var port = "8081";
+var database = "api";
 var viewLocation = "_design/views/_view";
 //todo all the above from config???
 
 var databaseUrl = "http://"+server+":"+port+"/"+database;
 var viewPrefix = databaseUrl+"/"+viewLocation+"/";
 var getcurrentUsersUrl = viewPrefix+"currentUsers";
-//var getcurrentUsersUrl = "http://localhost:5984/cosmos/_design/views/_view/currentUsers";
 
 function getUserDocUrl(user)
 {
-	return databaseUrl+"/user_"+user.userId;
+	return databaseUrl+"/user/"+user.userId;
 }
 
 //this user is probably "theUser"...but maybe we change our mind later?
