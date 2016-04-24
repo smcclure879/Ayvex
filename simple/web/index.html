@@ -992,13 +992,13 @@ function updateServerCallback(camera_state)
 		}
 	});
 	
-	// call  http://localhost:5984/api/_design/views/_view/currentUsers
+	// call  http://WHATEVER/api/getCurrentUsers
 	//and put those users into "theDrawings" 
 	//need to get time of each user's writing from server, to show fading-of-color or ??
 		
 	$.ajax({
 		type: "GET",
-		url: getcurrentUsersUrl,
+		url: getCurrentUsersUrl,
 		contentType: "application/json",
 		success: function(data) {
 			updateDynamicObjects(data); //it better be a list of userDocs
@@ -1120,13 +1120,12 @@ function initServerCallback(theUser)
 //todo figure both of these programmatically...find all "localhost" and fix them
 var server=window.location.hostname;  //todo must figure dynamically
 var port = "8081";
-var database = "api";
-var viewLocation = "_design/views/_view";
+//var database = "api";
+//var viewLocation = "_design/views/_view";
 //todo all the above from config???
 
-var databaseUrl = "http://"+server+":"+port+"/"+database;
-var viewPrefix = databaseUrl+"/"+viewLocation+"/";
-var getcurrentUsersUrl = viewPrefix+"currentUsers";
+var databaseUrl = "http://"+server+":"+port+"/api";
+var getCurrentUsersUrl = databaseUrl+"/currentUsers";
 
 function getUserDocUrl(user)
 {
