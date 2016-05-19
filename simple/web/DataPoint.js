@@ -56,18 +56,10 @@ DataPoint.prototype.initFromArrDims=function (arrDims,text)
 			t: text
 		};
 	this.size=1;
-	this.color='red';
+	this.color='green';  //bugbug red!
 }
 
 
-//DataPoint.FromJson_old = function(jsonData) 
-//{
-//	bugbug just change its class...does this work???NO apparently
-//	jsonData.__proto__= DataPoint.prototype;
-//	jsonData.constructor.call(jsonData);
-//	jsonData.t='bugbug1004';
-//	return jsonData;
-//}
 
 var phase=0;
 DataPoint.prototype.realDraw=function(renderer,log2Size) //,gameTime)  //bugbug need to pass in gameTime soon where this is called--OR should time be a global???
@@ -134,6 +126,7 @@ DataPoint.prototype.realDraw=function(renderer,log2Size) //,gameTime)  //bugbug 
 	if (fillPoint(ctx,pointIn2d,size)==null)
 		return null;
 	
-	ctx.stroke();
+    ctx.stroke();
+    ctx.fillStyle = 'pink';   //bugbug this detects leaks 
 	
 }

@@ -29,54 +29,47 @@ function start3d(theDrawings,opts)
 	renderer.ctx.setStrokeColor(0x52 / 255, 0xbb / 255, 0x5c / 255, 1);
 	renderer.ctx.lineWidth = 1;
 
-	function draw() 
-	{		
-		if (!theDrawings) 
-		{
-			debugSet("no drawings");
-			return;
-		}
-		renderer.transform.reset();
-		//here, we could be translating model, but don't
-		//renderer.transform.translate(0, 0, 0);  // Center over the origin.  
-
-		renderer.transform.scale(1, 1, 1);  //todo consider if need stretch in Z  //bugbug needed?
-
-		renderer.ctx.setFillColor(mainBgColor);  //bugbug settings
-		renderer.drawBackground();
-
+	function draw() {		
+	    if (!theDrawings) {
+		debugSet("no drawings");
+		return;
+	    }
+	    renderer.transform.reset();
+	    //here, we could be translating model, but don't
+	    //renderer.transform.translate(0, 0, 0);  // Center over the origin.  
+	    
+	    renderer.transform.scale(1, 1, 1);  //todo consider if need stretch in Z  //bugbug needed?
+	    
+	    renderer.ctx.setFillColor(red(mainBgColor),green(mainBgColor),blue(mainBgColor),alpha(mainBgColor));  //bugbug settings
+	    renderer.drawBackground();
+	    
+	    
+	    for(var ii=0,lim=theDrawings.length; ii<lim; ii++)   {
+		var drawing = theDrawings[ii];	
 		
-		for(
-				var ii=0,lim=theDrawings.length;
-				ii<lim; 
-				ii++
-			)
-		{
-		    var drawing = theDrawings[ii];	
-			
-			//for debugging drawings of certain types (keep) bugbug revisit
-			// if (!drawing.isSign)  //bugbug
-			// {
-				// continue;
-			// }
-			
-					
-			drawIt(drawing);
-		}
+		//for debugging drawings of certain types (keep) bugbug revisit
+		// if (!drawing.isSign)  //bugbug
+		// {
+		// continue;
+		// }		
 		
-		//dynamic: e.g. from the DB
-		for(var key in theDrawings.dynamic)
-		{
-			var drawing = theDrawings.dynamic[key];
-			drawIt(drawing);
-		}
-		
-		
-		renderer.drawBuffer();
-		
-		//todo renderer.drawReticle();  //in screen coords
+		drawIt(drawing);
+	    }
+	    
+	    //dynamic: e.g. from the DB
+	    for(var key in theDrawings.dynamic)	    {
+		var drawing = theDrawings.dynamic[key];
+		drawIt(drawing);
+	    }
+	    
+	    
+	    renderer.drawBuffer();
+	    
+	    //todo renderer.drawReticle();  //in screen coords
 	}
-	
+    
+
+
 	function drawIt(drawing)
 	{
 		renderer.camera.transform.check();  //bugbug assert  //bugbug needed???
@@ -208,4 +201,35 @@ function start3d(theDrawings,opts)
 
 	//too early to draw() here, wait for tick()
 
+   
 }
+
+
+//bugbug move to use of ONLY color objects since customers of "color" want it too many ways and I don't want to write all this crud
+
+function red(x) {
+    if (x=='black') return 0;
+    if (x=='red') return 255;
+    return 100;
+}
+
+function green(x) {
+    if (x=='black') return 0;
+    if (x=='red') return 0;
+    if (x=='green') return 255;
+    return 100;
+}
+
+function blue(x) {
+    if ( x=='black' ) return 0;
+    if ( x=='red' ) return 0;
+    if ( x=='blue' ) return 255;
+    return 100;
+}
+
+
+function alpha(x) {
+    return 255;
+}
+
+

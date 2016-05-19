@@ -1,124 +1,137 @@
 // Copyright 2014 Ayvex Light Industries
 
-var StepperModule = (function()  //module Stepper
-{
-	//each step needs to be set off by the step before it, but on different thread to account for dynamic code
+var StepperModule = (
 
-	function Stepper(maxSteps)    //class Stepper
+
+function()  //module Stepper
+{
+    //each step needs to be set off by the step before it, but on different thread to account for dynamic code
+
+    function Stepper(maxSteps)    //class Stepper
+    {
+	this.arrSteps=[];
+	this.stepsTaken=0;
+	this.waitsTaken=0;
+	this.stepsLimit=maxSteps || 20;
+	this.waitsLimit=this.stepsLimit/2;
+	this.ii=0;  //the step number!!
+    }
+    
+    Stepper.Create = function(steps)
+    {
+	var retval=new Stepper();
+	retval.arrSteps=steps;
+	return retval;
+    }
+
+    //public
+    Stepper.prototype.run = function()
+    {	
+	this.doSteps();
+    }	
+    
+    Stepper.prototype.advance = function()
+    {
+	this.ii++;
+	this.doSteps();	
+    }
+    
+    Stepper.prototype.isBad=function()
+    {
+	if (this.ii>=this.arrSteps.length) 
 	{
-		this.arrSteps=[];
-		this.stepsTaken=0;
-		this.waitsTaken=0;
-		this.stepsLimit=maxSteps || 20;
-		this.waitsLimit=this.stepsLimit/2;
-		this.ii=0;  //the step number!!
+	    //bugbug needed???  alert("walked off end of array errCode658im");
+	    return true;
+	}			
+	
+	if (this.ii>this.stepsLimit)
+	{
+	    alert("doSteps limit passed errCode333kz");
+	    return true;
 	}
 	
-	Stepper.Create = function(steps)
+	if (this.waitsTaken>this.waitsLimit)
 	{
-		var retval=new Stepper();
-		retval.arrSteps=steps;
-		return retval;
+	    alert("wait limits exceeded errCode519zp");
+	    return true;
 	}
-
-	//public
-	Stepper.prototype.run = function()
-	{	
-		this.doSteps();
+	
+	var thisStep = this.arrSteps[this.ii];
+	if (thisStep==null) 
+	{
+	    alert("thisStep is null errCode521fr");
+	    return true;
 	}	
 	
-	Stepper.prototype.advance = function()
+	if (this.waitsTaken>this.waitLimit)
 	{
-		this.ii++;
-		this.doSteps();	
+	    alert("exceeded waitsTaken errCode659pk");
+	    return true;
 	}
 	
-	Stepper.prototype.isBad=function()
-	{
-		if (this.ii>=this.arrSteps.length) 
-		{
-			//bugbug needed???  alert("walked off end of array errCode658im");
-			return true;
-		}			
-		
-		if (this.ii>this.stepsLimit)
-		{
-			alert("doSteps limit passed errCode333kz");
-			return true;
-		}
-		
-		if (this.waitsTaken>this.waitsLimit)
-		{
-			alert("wait limits exceeded errCode519zp");
-			return true;
-		}
-		
-		var thisStep = this.arrSteps[this.ii];
-		if (thisStep==null) 
-		{
-			alert("thisStep is null errCode521fr");
-			return true;
-		}	
-		
-		if (this.waitsTaken>this.waitLimit)
-		{
-			alert("exceeded waitsTaken errCode659pk");
-			return true;
-		}
-		
-		return false;	
-	}
+	return false;	
+    }
 
+    
+    Stepper.prototype.doSteps =	function()
+    {
+	if (this.isBad()) return;		
+	var thisStep = this.arrSteps[this.ii];
+	var thisStepType = typeof thisStep;
 	
-	Stepper.prototype.doSteps =	function()
+	if (thisStepType=='function')
 	{
-		if (this.isBad()) return;		
-		var thisStep = this.arrSteps[this.ii];
-		var thisStepType = typeof thisStep;
-		
-		if (thisStepType=='function')
-		{
-			this.doStep( function(){ thisStep(); this.advance(); }  );
-		}
-		else if (thisStepType=='object')
-		{
-			var command = thisStep[0];
-			switch(command)
-			{
-				case "waiton": 	
-					this.waitsTaken++;  
-					this.doStep(function()	{ 
-									if (thisStep[1]()) //keep doing this until the condition is true  //who is still using this , is this good logic still?  bugbug
-										this.ii++;      //then we do the advance
-									else
-										alert('bugbug:1149rd WAIT');  //bugbug
-									//else it's
-									this.doSteps();  //without advancing!
-								 
-								}); 
-					break;
-				default: 
-					alert('errCode323wj,cmd='+command);
-					break;
-			}
-		}
-		else
-		{
-			alert('errCode1119rw:stepType='+thisStepType);
-		}
-
+	    this.doStep( function(){ thisStep(); this.advance(); }  );
 	}
-
-
-	Stepper.prototype.doStep = function(fnStep)  
+	else if (thisStepType=='object')
 	{
-		setTimeout(fnStep.bind(this),100);  //bugbug const?
-	}
+	    var command = thisStep[0];
+	    switch(command)
+	    {
+	    case "waiton": 	
+		this.waitsTaken++;  
+		this.doStep(function()	{ 
+		    if (thisStep[1]()) //keep doing this until the condition is true  //who is still using this , is this good logic still?  bugbug
+		    {
+			this.ii++;      //then we do the advance
+			this.waitsTaken=0; //in case more waits on different cases later
+		    }
+		    else
+		    {
+			alert('bugbug:1149rd WAIT');  //bugbug
+		    }
+		    
 
+		    this.doSteps();  //with or without advancing!
+		    
+		}); 
+		break;
+	    default: 
+		alert('errCode323wj,cmd='+command);
+		break;
+	    }
+	}
+	else
+	{
+	    alert('errCode1119rw:stepType='+thisStepType);
+	}
 	
-	return { //public classes...
-		Stepper:Stepper
-	};
-}
-)();
+    }
+    
+    
+    Stepper.prototype.doStep = function(fnStep)  
+    {
+	setTimeout(fnStep.bind(this),100);  //bugbug const?
+    }
+    
+    
+    return { //public classes...
+	Stepper:Stepper
+    };
+
+
+})();
+
+
+
 

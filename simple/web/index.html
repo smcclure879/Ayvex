@@ -4,14 +4,6 @@
 
 <!-- script src="jquery-1.10.2.min.js"></script   todo   -->
 
-<!--todo (probably not) is there a way to do the links this way and use from couchDB?
-// <scr  ipt src="/_utils/script/json2.js"></scr  ipt>
-// <scr  ipt src="/_utils/script/sha1.js"></scr  ipt>
-// <scr  ipt src="/_utils/script/jquery.js?1.4.2"></scr  ipt>
-// <scr  ipt src="/_utils/script/jquery.couch.js?0.11.0"></scr  ipt>
-// <scr  ipt src="/_utils/script/jquery.dialog.js?0.11.0"></scr  ipt>
--->
-<!-- s c r ipt src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/jquery-ui.min.js"></s c r ipt  -->
 
 <script src="lib/jquery-1.10.2.js"></script>
 <script src="lib/jquery-ui-1.10.4.js"></script> 
@@ -37,7 +29,7 @@
 <script src="conference.js"></script>
 <script src="adapter.js"></script>
 
-
+<script src="simple.js"></script>
 
 
 
@@ -97,7 +89,7 @@ pick dataset:
 xMOD:<select id="xanimate">
 	<option value="none">none</option>
 	<option value="sequence4">sequence4</option>
-	<option value="sequence5">sequence5</option>
+	<!-- <option value="sequence5">sequence5</option> -->
 	<option value="magic">magic</option>
 </select>
 
@@ -198,8 +190,14 @@ function debugSet(s)
 
 function definedAndTrue(val)
 {
-	if (typeof val == 'undefined') return false;
-	return val;
+    try {
+        val = eval(val);
+        if (typeof val == 'undefined') return false;
+    } catch (ex) {
+        return false;
+    }
+
+    return val;
 }
 
 function pushAll(ofThese,intoThese)  
@@ -222,7 +220,7 @@ function pushAll(ofThese,intoThese)
 //this works, but the script won't be live until you yield the thread for a while.  call it carefully!
 function addScript(filename)
 {
-	//http://www.javascriptkit.com/javatutors/loadjavascriptcss.shtml  
+	//a neat trick from  http://www.javascriptkit.com/javatutors/loadjavascriptcss.shtml  
 	var newScriptTag=document.createElement('script')
 	newScriptTag.setAttribute("type","text/javascript")
 	newScriptTag.setAttribute("src", filename)
@@ -507,6 +505,12 @@ function setFractalWorld()
 	$("#userName").text(theUser.userId);
 
 	
+	if (oGetVars["s"]==1)
+	{
+	    simpleStart(oGetVars); 
+	}
+
+
 	// "monsters" or "NPCs"
 	var ghost=[];
 	var numGhosts=7;
@@ -619,11 +623,14 @@ function addGamer(theDrawings,name,x,y,z)
 
 function setEarthquakeMap()
 {	
-	var filename="data/erq_all_month.js";
-	
-	//todo should go into extended CSV script file thingy, not here with 
+	//var filename="/web/data/erq_all_month.js";
+	var filename="/web/data/erq100lines.js";  //for debugging
+
+
+	//todo should go into extended CSV script file thingy, not here
+	//time,latitude,longitude,depth,mag,magType,nst,gap,dmin,rms,net,id,updated,place,type
 	var columnInfo=
-	[  //time,latitude,longitude,depth,mag,magType,nst,gap,dmin,rms,net,id,updated,place,type
+	[  
 		{name:'time',readas:'utc',scale:0.000001,offset:1.387e+12},  //todo what are the other columns about a column??  (isUTC, parseThisWay, limits, precision, short and long name
 		{name:'lat',readas:'float',scale:10,offset:0}, 
 		{name:'long',readas:'float',scale:10,offset:0},
@@ -633,16 +640,16 @@ function setEarthquakeMap()
 
 	//todo maybe this too into some kinda extended datafile format
 	var dataFileOptions={
-							'skipFirstLine':1,
-							'skipLinesWithFirstCharIn':'#'
-						};
+				'skipFirstLine':1,
+				'skipLinesWithFirstCharIn':'#'
+			};
 	
-	addScript(filename);
+	//addScript(filename);
 	
 		
 	var stuffToDo=StepperModule.Stepper.Create([  //todo convert to some "thenable" architecture....then()???;
-			// function() {addScript(filename);}.bind(this) //so that data set is fetchable, must be in other thread for the script to activate
-			['waiton',function(){ return (definedAndTrue(earthquakeDataLoaded)); }]
+			function() {addScript(filename);}.bind(this) //so that data set is fetchable, must be in other thread for the script to activate
+			,['waiton',function(){ return (definedAndTrue('earthquakeDataLoaded')); }]
 			,function() {parseDataSet(dataFileOptions,columnInfo);}.bind(this)
 			,function() {theDrawings.push(DataPoint.FromArr([-2000,100,100],"stand here to start")); }.bind(this)
 			,function() {
@@ -1133,11 +1140,15 @@ function getUserDocUrl(user)
 }
 
 //this user is probably "theUser"...but maybe we change our mind later?
-function initUserFromData(user,data)
-{
-	var obj = $.parseJSON(data);
+function initUserFromData(user,data) {
+
+
+	//bugbug yeah ???    var obj = $.parseJSON(data);
+	var obj = data; //why parse not needed now???
+
+
 	user.cam=obj.cam;
-	user._rev=obj._rev;
+	//user._rev=obj._rev;
 	user._id=obj._id;
 	//etc todo
 }
