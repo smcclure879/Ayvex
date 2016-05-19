@@ -43,7 +43,7 @@ function getContentType(someFile) {
     if (someFile.endsWith('.html')) return  'text/html';
     if (someFile.endsWith('.htm' )) return 'text/html';
     if (someFile.endsWith('.js'  )) return 'script/javascript';
-    return 'text/plain';
+	return 'text/plain';
 }
 
 
@@ -195,26 +195,26 @@ http.createServer(function (req, res) {
 
     if (path.startsWith("/api/")) {
 
-	return doApi(req,res);
+		return doApi(req,res);
 
     } else if (path.contains("?")) {
 
-	return doFancyApi(req,res);
+		return doFancyApi(req,res);
 
     } else if (path.startsWith("/web/")) {
 
-	return doStatic(req,res);
+		return doStatic(req,res);
 
     } else if (path=="/favicon.ico") {
 
-	return doStaticRedir(req,res);
+		return doStaticRedir(req,res);
 
     } else {
-	console.log("err320:"+path);  //these tend to become static redir
+		console.log("err320:"+path);  //these tend to become static redir
 
-	res.writeHead(200, {'Content-Type': 'text/plain'});
-	res.end('Hello World---base\n');
-	return;
+		res.writeHead(200, {'Content-Type': 'text/plain'});
+		res.end('Hello World---base\n');
+		return;
     }
 
 }).listen(8081);

@@ -463,13 +463,14 @@ function setMc2Map()
 	addMarkersAndWater(theDrawings);
 	addCoordinateVectors(theDrawings);
 	
-	var tid = setTimeout(setMode,1000);  //todo should be on some event??
 	function setMode()
 	{
 		$('#xanimate').val('none').trigger('change');
 		$anim.prop('checked', true).change();
 		updateAnimation();
 	}
+
+	var tid = setTimeout(setMode,1000);  //todo should be on some event??
 	
 }
 
@@ -535,13 +536,13 @@ function setFractalWorld()
 	
 	theDrawings.dynamic=dynamicObjects;  //so demoUtils etc can see them.
 
-	var tid = setTimeout(setMode,600);  //should be on some event??
-	function setMode()
-	{
-		$('#xanimate').val('magic').trigger('change');
-		$anim.prop('checked', false).change();
-	}
-	
+ 	//function setMode()
+	//{
+	//	$('#xanimate').val('magic').trigger('change');
+	//	$anim.prop('checked', false).change();
+	//}
+	//var tid = setTimeout(setMode,600);  //should be on some event??
+ 	
 	setTimeout(function() {
 						DemoUtils.Notify('moveCamera',{
 								rotate_x: rad(8),
@@ -554,7 +555,7 @@ function setFractalWorld()
 							$("#xanimate").val('sequence4').trigger('change');
 							$("#animate").prop('checked', true).trigger('change');  //todoneeded??
 							
-						},20);
+						},600);
 						
 	
 }
@@ -672,69 +673,79 @@ function setEarthquakeMap()
 
 function setFlowersMap()
 {
-	var shortBaseUrl = databaseUrl;  //todo: where to get this from??
-	var flowerUrl = shortBaseUrl+"/iris.json";  
-	
+	//var shortBaseUrl = databaseUrl;  //todo: where to get this from??
+	var flowerUrl = "/web/data/iris.json";  
 
 	var dataToSendWithRequest = ''
 	var reqHandler = $.getJSON( flowerUrl, 
 								dataToSendWithRequest, 
 								setFlowersMapStep2)  // on success, run this next function
 		//.done(function() {
-		//	//alert( "second success" );
+			//	alert( "second success" );
+			//$("#xanimate").val('sequence4').trigger('change');
+			//$("#animate").prop('checked', true).trigger('change');  //todoneeded??
 		//})
 		.fail(function() {
 			alert( "error" +reqHandler.error);
 		})
-		//.always(function() {
-		//	//alert( "finished258y" );
+ 		//.always(function() {
+		//	alert( "finished258y" );
 		//})
-	;
-		 
-	function setFlowersMapStep2(jsonData)
-	{
-		var columnInfo=
-		[ 
-			{name:'x',readas:'float',scale:100,offset:200},  //todo what are the other columns about a column??  (isUTC, parseThisWay, limits, precision, short and long name
-			{name:'y',readas:'float',scale:100,offset:200}, 
-			{name:'z',readas:'float',scale:100,offset:200},
-			{name:'q',readas:'float',scale:10,offset:0}
-		];
-	
-		theDrawings=[];
-		addCoordinateVectors(theDrawings);
-		
-		var theNewPoints = jsonData.docs.map(function(onePointJson) {
-												scaleJson(onePointJson,columnInfo);
-												return DataPoint.FromJson(onePointJson);
-											}); 
-		pushAll(theNewPoints,theDrawings);
-		
-		DemoUtils.Notify( 'moveCamera',{  //TODO wish i could say 'pointAt' instead
-			rotate_x: rad(0),
-			rotate_y: rad(283),
-			rotate_z: rad(0),
-			x: 17000,
-			y: 20000,
-			z: 19000});  //todo: magic numbers.  
-	}
-	
-	
-
-	function scaleJson(onePointJson,columnInfo)
-	{
-		onePointJson.x = convertAndScale(columnInfo[0],onePointJson.x);
-		onePointJson.y = convertAndScale(columnInfo[1],onePointJson.y);
-		onePointJson.z = convertAndScale(columnInfo[2],onePointJson.z);
-		
-		for(var ii=0,il=columnInfo.length; ii<il; ii++)
-		{
-			onePointJson.xd[ii] = convertAndScale(columnInfo[ii],onePointJson.xd[ii]);
-		}
-	}
-
-
+		;
 }
+		 
+function setFlowersMapStep2(jsonData)
+{
+	var columnInfo=
+	[ 
+		{name:'x',readas:'float',scale:100,offset:200},  //todo what are the other columns about a column??  (isUTC, parseThisWay, limits, precision, short and long name
+		{name:'y',readas:'float',scale:100,offset:200}, 
+		{name:'z',readas:'float',scale:100,offset:200},
+		{name:'q',readas:'float',scale:10,offset:0}
+	];
+
+	theDrawings=[];
+	addCoordinateVectors(theDrawings);
+	
+	var theNewPoints = jsonData.docs.map(function(onePointJson) {
+											scaleJson(onePointJson,columnInfo);
+											return DataPoint.FromJson(onePointJson);
+										}); 
+
+	pushAll(theNewPoints,theDrawings);
+	
+	DemoUtils.Notify( 'moveCamera',{  //TODO wish i could say 'pointAt' instead
+		rotate_x: rad(0),
+		rotate_y: rad(283),
+		rotate_z: rad(0),
+		x: 17000,
+		y: 20000,
+		z: 19000});  //todo: magic numbers.  
+
+	function setMode() {
+		$("#xanimate").val('sequence4').trigger('change');  
+		$("#animate").prop('checked', true).trigger('change');  //bugbug this is not happening here and several places
+	}
+	setTimeout(setMode,500);
+}
+
+	
+	
+
+function scaleJson(onePointJson,columnInfo)
+{
+	onePointJson.x = convertAndScale(columnInfo[0],onePointJson.x);
+	onePointJson.y = convertAndScale(columnInfo[1],onePointJson.y);
+	onePointJson.z = convertAndScale(columnInfo[2],onePointJson.z);
+	
+	for(var ii=0,il=columnInfo.length; ii<il; ii++)
+	{
+		onePointJson.xd[ii] = convertAndScale(columnInfo[ii],onePointJson.xd[ii]);
+	}
+}
+
+
+
 
 
 			
