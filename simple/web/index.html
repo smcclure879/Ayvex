@@ -963,17 +963,19 @@ function updateServerCallback(camera_state)
 		serverCallbackLocked=true;  //closes behind you, one at a time
 
 	
-	if (theUser._rev<1) 
-	{
-		initServerCallback(theUser);
-		return;
-	}
+	//if (theUser._rev<1) 
+	//{
+	//	initServerCallback(theUser);
+	//	return;
+	//}
+	//
+	//if (theUser._rev==1) 
+	//{
+	//	delete theUser._rev;  //we'll get a new one, this is just sentinel value  
+	//	theUser._id="user/"+theUser.userId;   //todo const
+	//}	
 
-	if (theUser._rev==1) 
-	{
-		delete theUser._rev;  //we'll get a new one, this is just sentinel value  
-		theUser._id="user/"+theUser.userId;   //todo const
-	}	
+
 	theUser.mostRecentQuote=userQuote;
 	theUser.telecInfo=telecInfo;  //global local user's telecInfo goes into the local user being persisted
 	theUser.saveTime=getOfficialTime();  //ideally the protocol would save a serverSaveTime as well and other clients will see cheating.
@@ -986,7 +988,6 @@ function updateServerCallback(camera_state)
 	var data = JSON.stringify(theUser);
 	var putUrl=getUserDocUrl(theUser)+revString(theUser._rev);
 	
-	//todo what can't use $.couch.urlPrefix="http://localhost:5984";  $.couch.get(blah) 
 	$.ajax(
 	{
 		type:"PUT",
@@ -1003,7 +1004,7 @@ function updateServerCallback(camera_state)
 			theUser._rev = unquote(jqXHR.getResponseHeader("ETAG"));  //so we can save next time
 		},
 		error: function( jqXHR, textStatus, errorThrown ) {
-			alert('put bad'+errorThrown);
+			alert('err1047u: put bad'+errorThrown);
 		},
 		complete: function(jqResp) {
 			serverCallbackLocked=false;  //open again one way or another
@@ -1162,6 +1163,12 @@ function initUserFromData(user,data) {
 	//user._rev=obj._rev;
 	user._id=obj._id;
 	//etc todo
+	
+	debugger;
+	if (user._rev<1) {
+		user._rev=1;
+	}
+	
 }
 
 function revString(rev)
@@ -1198,6 +1205,8 @@ function getCurrentTime()
 {
 	return 0+(new Date()).getTime();
 }
+
+//# sourceURL=index.html
 
 </script>
 
