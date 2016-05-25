@@ -986,7 +986,7 @@ function updateServerCallback(camera_state)
 		
 	
 	var data = JSON.stringify(theUser);
-	var putUrl=getUserDocUrl(theUser)+revString(theUser._rev);
+	var putUrl=getUserDocUrl(theUser);  //+revString(theUser._rev);
 	
 	$.ajax(
 	{
@@ -1000,11 +1000,10 @@ function updateServerCallback(camera_state)
 		//contentType: "application/json",
 		//dataType: "json",
 		success: function( data, textStatus, jqXHR ) {
-			//alert(textStatus);  
-			theUser._rev = unquote(jqXHR.getResponseHeader("ETAG"));  //so we can save next time
+			//no _rev for now....   theUser._rev = unquote(jqXHR.getResponseHeader("ETAG"));  //so we can save next time
 		},
 		error: function( jqXHR, textStatus, errorThrown ) {
-			alert('err1047u: put bad'+errorThrown);
+			alert('err1047u: put bad'+errorThrown)+putUrl+""+data;
 		},
 		complete: function(jqResp) {
 			serverCallbackLocked=false;  //open again one way or another
@@ -1034,15 +1033,21 @@ function updateServerCallback(camera_state)
 	});	
 }
 
+
+function deString(data) {  //might be object, might be dehydrated JSON object
+	var ttt=typeof data;
+	if (ttt=='string') return $.parseJSON(data);
+	if (ttt=='object') return data;
+	return {"badData":"err1115t"};
+}	
+
+
 var dynamicObjects={};  //eventually needs to be some space partitioning class  kd-dataStructure?  todo
-function updateDynamicObjects(data)
-{
-	var obj=$.parseJSON(data);
-	var count=obj.total_rows;
-	var list=obj.rows;
-	for(var ii=0;ii<count; ii++)
-	{
-		updateDynamicObjectFromServerData(list[ii]);
+function updateDynamicObjects(data) {
+	var obj = deString(data);  
+	var count=Object.keys(obj).count;
+	for(var key in Object.keys(obj))	{
+		updateDynamicObjectFromServerData(obj[key]);
 	}
 }
 
@@ -1144,7 +1149,7 @@ var port = "8081";
 //todo all the above from config???
 
 var databaseUrl = "http://"+server+":"+port+"/api";
-var getCurrentUsersUrl = databaseUrl+"/currentUsers";
+var getCurrentUsersUrl = databaseUrl+"/user/";  //like doing a directory query
 
 function getUserDocUrl(user)
 {

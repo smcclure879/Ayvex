@@ -53,12 +53,12 @@ function getFilePath(relPath) {
 
 
 var users = {};
-
+function getUserList() {
+	return JSON.stringify(users);  //bugbug you are here
+}
 
 function doApi(req,res) {
     console.log('api-' + req.method + "   " + req.url);
-
-    var url = ""+req.url;
 
     if (req.method=='GET') {
 		return doGet(req,res);
@@ -72,12 +72,14 @@ function doApi(req,res) {
 }
 	
 function doGet(req,res) {
+	var url = ""+req.url;
 	if (url=="/api/user/") {
-	    console.log("bugbug--should send back a list of all current users");	
+	    writeNormalHead(res);
+		res.end(getUserList());
 	} else if (url.startsWith("/api/user/")) {
 	    var userName = url.removeStart("/api/user/");
-	    if (users[userName]) {
-			res.writeHead(200, {'Content-Type': 'application/json'});
+		if (users[userName]) {
+			writeNormalHead(res);
 			res.end(users[userName]);
 	    } else { //don't have
 			res.writeHead(404, {'Content-Type': 'application/json'});
@@ -106,27 +108,35 @@ function unknownMethod(req,res) {
 	
 	
 function doPut(req,res) {
-	if (url.startsWith("/api/user/")) {
-	    var userName = url.removeStart("/api/user/");
-	    var body='';
-	    req.on('data',function(data){
-			body+=data;
-	    });
-	    req.on('end',function(){
-			console.log("body="+body);
-			users[userName]=body;
-			res.writeHead(200,  {'Content-Type': 'application/json'});
-			res.end('{response:"putOK"}\n');    //bugbug think we need to return id
-	    });
-	} else {
-	    res.writeHead(404,  {'Content-Type': 'application/json'});
-	    res.end('{response:"err328s:cannot PUT '+url+'"}');
-	}
+	var url = ""+req.url;
 	
-    
-
-
+	if (url.startsWith("/api/user/")) {
+		var userName = url.removeStart("/api/user/");
+		var body='';
+		req.on('data',function(data){
+			body+=data;
+		});
+		req.on('end',function(){
+			console.log("body="+body);
+			users[userName]=body[userName];
+			writeNormalHead(res);
+			res.end('{"response":"putOK"}\n');    //bugbug think we need to return id
+		});
+	} else {
+		res.writeHead(404,  {'Content-Type': 'application/json'});
+		res.end('{response:"err328s:cannot PUT '+url+'"}');
+	}
 }
+
+
+
+function writeNormalHead(res)  {   //response; 
+	res.writeHead(200, {'Content-Type': 'application/json'});
+}
+
+
+
+
 
 
 
