@@ -1114,32 +1114,32 @@ function unquote(x)
 	return x.substring(ii,jj-ii);
 }
 
-function initServerCallback(theUser)
-{
-	console.log("called init server callback");
-	var userInfo = getUserDocUrl(theUser);
-	
-	//todo consolidate this call with similar call above somehow?  worth it?
-	$.ajax({
-		type: "GET",
-		url: getUserDocUrl(theUser),
-		contentType: "application/json",
-		success: function(data) {
-			initUserFromData(theUser,data); //it better be a userDoc
-		},
-		error: function(resp) {
-			if (resp.status==404)
-				theUser._rev=1;  //which = NEW todo const
-			else
-				alert("err523p:do not know how to deal with this error"+JSON.stringify(resp)+"   "+userInfo);
-		},
-		complete: function(jqResp) {
-			setServerTimeOffset(jqResp.getResponseHeader('Date'));
-			serverCallbackLocked=false;  //open again one way or another
-		}
-		
-	});
-}
+//function initServerCallback(theUser)
+//{
+//	console.log("called init server callback");
+//	var userInfo = getUserDocUrl(theUser);
+//	
+//	//todo consolidate this call with similar call above somehow?  worth it?
+//	$.ajax({
+//		type: "GET",
+//		url: userInfo,
+//		contentType: "application/json",
+//		success: function(data) {
+//			initUserFromData(theUser,data); //it better be a userDoc
+//		},
+//		error: function(resp) {
+//			if (resp.status==404)
+//				theUser._rev=1;  //which = NEW todo const
+//			else
+//				alert("err523p:do not know how to deal with this error"+JSON.stringify(resp)+"   "+userInfo);
+//		},
+//		complete: function(jqResp) {
+//			setServerTimeOffset(jqResp.getResponseHeader('Date'));
+//			serverCallbackLocked=false;  //open again one way or another
+//		}
+//		
+//	});
+//}
 
 //todo figure both of these programmatically...find all "localhost" and fix them
 var server=window.location.hostname;  //todo must figure dynamically
@@ -1157,24 +1157,24 @@ function getUserDocUrl(user)
 }
 
 //this user is probably "theUser"...but maybe we change our mind later?
-function initUserFromData(user,data) {
-
-
-	//bugbug yeah ???    var obj = $.parseJSON(data);
-	var obj = data; //why parse not needed now???
-
-
-	user.cam=obj.cam;
-	//user._rev=obj._rev;
-	user._id=obj._id;
-	//etc todo
-	
-	debugger;
-	if (user._rev<1) {
-		user._rev=1;
-	}
-	
-}
+//function initUserFromData(user,data) {
+//
+//
+//	//bugbug yeah ???    var obj = $.parseJSON(data);
+//	var obj = data; //why parse not needed now???
+//
+//
+//	user.cam=obj.cam;
+//	//user._rev=obj._rev;
+//	user._id=obj._id;
+//	//etc todo
+//	
+//	debugger;
+//	if (user._rev<1) {
+//		user._rev=1;
+//	}
+//	
+//}
 
 function revString(rev)
 {
@@ -1187,7 +1187,7 @@ function revString(rev)
 }
 
 //todo make a serverTimeSync module
-var timeOffset=null;  //[int?todo]
+var timeOffset=0;      // later null when we again have "server time" concept;
 function getOfficialTime()  //we want it as an int for compactness and speed of math....but ideally we'd be putting this info in on the server side!
 {
 	if (timeOffset==null)
@@ -1197,14 +1197,14 @@ function getOfficialTime()  //we want it as an int for compactness and speed of 
 	return getCurrentTime()+timeOffset;
 }
 
-function setServerTimeOffset(serverTime)
-{
-	serverTime=(new Date(serverTime)).getTime();
-	if (serverTime<1400000000) 
-		return;
-	timeOffset=serverTime-getCurrentTime();
-	console.log("timeOffset="+timeOffset);
-}
+//function setServerTimeOffset(serverTime)
+//{
+//	serverTime=(new Date(serverTime)).getTime();
+//	if (serverTime<1400000000) 
+//		return;
+//	timeOffset=serverTime-getCurrentTime();
+//	console.log("timeOffset="+timeOffset);
+//}
 
 function getCurrentTime()
 {
