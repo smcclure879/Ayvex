@@ -1,0 +1,87 @@
+
+someday, all ayvex servers should have the wicd-curses app as part of their image.....SEE BOTTOM OF THIS FILE
+
+>>>>  in the meantime here are steps to set up first network, so you can pull down wicd-curses yourself.    <<<<
+
+SNIPPED FROM SOME WEB PAGE.....
+
+
+Open terminal and edit /etc/wpa_supplicant/wpa_supplicant.conf on the SD card (not on your machine).
+
+Here’s how to open it with nano:
+
+cd /path/to/your/sd/card/
+sudo nano etc/wpa_supplicant/wpa_supplicant.conf
+and add the following to the bottom of the file:
+
+network={
+    ssid="your-network-ssid-name"
+    psk="your-network-password"
+}
+
+
+
+
+
+
+SNIPPED FROM SOME WEB PAGE.....
+
+
+
+edit /etc/wpa_supplicant/wpa_supplicant.conf and add id_str="school" under the schools wpa info and id_str="home" under your homes wpa info. Your file should now look similar to this:
+
+ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev
+update_config=1
+
+network={
+    ssid="SCHOOLS NETWORK NAME"
+    psk="SCHOOLS PASSWORD"
+    id_str="school"
+}
+
+network={
+    ssid="HOME NETWORK NAME"
+    psk="HOME PASSWORD"
+    id_str="home"
+}
+Then set up /etc/network/interfaces with iface school inet static and iface home inet static in it so it looks like the following:
+
+auto lo
+
+iface lo inet loopback
+iface eth0 inet dhcp
+
+allow-hotplug wlan0
+iface wlan0 inet manual
+wpa-roam /etc/wpa_supplicant/wpa_supplicant.conf
+
+iface school inet static
+address <school address>
+gateway <school gateway>
+netmask <school netmask>
+
+iface home inet static
+address <home address>
+gateway <home gateway>
+netmask <home netmask>
+shareimprove this answer
+edited Oct 27 '14 at 3:05
+answered Nov 15 '13 at 21:54
+
+11chubby11
+1,1572926
+  	 	
+It might be worth noting: If I understand the documentation correctly, in order to use this approach, you must have and id_str property for EVERY network in your wpa_supplicant.conf file. Otherwise this won't work. Can you confirm? – PICyourBrain Mar 31 '14 at 20:29
+  	 	
+I don't believe this to be the case. – les Nov 21 '14 at 1:24
+add a comment
+up vote
+15
+down vote
+I recently stumbled across a console application that sorts all the wireless configuration hell out. You can also use this tool to configure the LAN interface.
+
+sudo apt-get install wicd-curses
+It will install quite a few other packages but ir uns its own daemon in the background. This manages the networks and makes sure you connect to the ones you want. Run it with
+
+sudo wicd-curses
+Screenshot of wicd-curses
