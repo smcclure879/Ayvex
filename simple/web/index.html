@@ -1046,36 +1046,39 @@ var dynamicObjects={};  //eventually needs to be some space partitioning class  
 function updateDynamicObjects(data) {
 	var obj = deString(data);  
 	var count=Object.keys(obj).count;
-	for(var key in Object.keys(obj))	{
-		updateDynamicObjectFromServerData(obj[key]);
-	}
+	$.each(obj,function(prop,val) {
+		updateDynamicObjectFromServerData(val);
+	});
+}
+
+function isSelf(item) {
+    return (item.userId==theUser.userId);
 }
 
 
-function updateDynamicObjectFromServerData(item)  //item is the data from server
-{
-	if (theUser._id==item.id) //todo revisit... for now disallow drawing self (strict first person for demo, can change later)
+function updateDynamicObjectFromServerData(item) {   //item is the data from server
+
+	item = deString(item);
+
+	if (isSelf(item)) //todo revisit... for now disallow drawing self (strict first person for demo, can change later)
 		return; 
 
 	var dynObj=dynamicObjects[item.id];
 		
 	//todo: apply factory pattern here instead.
-	switch(item.value.type)
-	{
+	switch(item.type)	{
 		case "Gamer":	
-			if (!dynObj)
-			{
+			if (!dynObj) {
 				dynObj=new Gamer();  
-				dynObj.name(item.value.userId || item.value._id);
-				dynamicObjects[item.id]=dynObj;
+				dynObj.name(item.userId);
+				dynamicObjects[item.userId]=dynObj;
 			}
 			dynObj.updateFromData(item);
 			maybeDoTeleconf(dynObj,item);  //item is from server  //users can do teleconf but probably no other types
 			break;
 		
 		case "DrawnObject":
-			if (!dynObj)
-			{
+			if (!dynObj) {
 				dynObj=new DrawnObject();
 				dynamicObjects[item.id]=dynObj; 
 			}

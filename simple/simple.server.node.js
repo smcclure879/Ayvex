@@ -54,7 +54,7 @@ function getFilePath(relPath) {
 
 var users = {};
 function getUserList() {
-	return JSON.stringify(users);  //bugbug you are here
+    return JSON.stringify(users); 
 }
 
 function doApi(req,res) {

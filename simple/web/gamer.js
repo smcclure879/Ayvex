@@ -61,9 +61,9 @@ Gamer.prototype.constructor=Gamer;
 	//todo again with the passing too much...change this to an object.  time should be in a pointh optionally, for instance
 Gamer.prototype.updateFromData=function (item)
 {
-	this.reposition( -item.value.cam.x, -item.value.cam.y, -item.value.cam.z,  //todo again why the negative
-					item.value.cam.rotate_x, item.value.cam.rotate_y, item.value.cam.rotate_z,
-					item.value.saveTime, item.value.mostRecentQuote
+	this.reposition( -item.cam.x, -item.cam.y, -item.cam.z,  //todo again why the negative
+					item.cam.rotate_x, item.cam.rotate_y, item.cam.rotate_z,
+					item.saveTime, item.mostRecentQuote
 					);
 }
 
