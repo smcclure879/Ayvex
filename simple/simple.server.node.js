@@ -54,7 +54,7 @@ function getFilePath(relPath) {
 
 var users = {};
 function getUserList() {
-	return JSON.stringify(users);  //bugbug you are here
+    return JSON.stringify(users); 
 }
 
 function doApi(req,res) {
@@ -75,7 +75,9 @@ function doGet(req,res) {
 	var url = ""+req.url;
 	if (url=="/api/user/") {
 	    writeNormalHead(res);
-		res.end(getUserList());
+	    var userList = getUserList();
+            console.log(userList);  //bugbug
+            res.end(userList);
 	} else if (url.startsWith("/api/user/")) {
 	    var userName = url.removeStart("/api/user/");
 		if (users[userName]) {
@@ -114,13 +116,14 @@ function doPut(req,res) {
 		var userName = url.removeStart("/api/user/");
 		var body='';
 		req.on('data',function(data){
-			body+=data;
+		    body+=data;
 		});
 		req.on('end',function(){
-			console.log("body="+body);
-			users[userName]=body[userName];
-			writeNormalHead(res);
-			res.end('{"response":"putOK"}\n');    //bugbug think we need to return id
+		    console.log("body="+body);
+		    users[userName]=body;
+                    console.log("wrote user="+userName+" "+dump(users));
+		    writeNormalHead(res);
+		    res.end('{"response":"putOK"}\n');    //bugbug think we need to return id
 		});
 	} else {
 		res.writeHead(404,  {'Content-Type': 'application/json'});
