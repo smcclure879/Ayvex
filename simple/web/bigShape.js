@@ -80,14 +80,13 @@ BigShape.prototype.get2dPoints=function(renderer){
 					},
 					this  // --> foo above
 				);
-}
+};
 
 
 
 ////////  class  /////////
 
-function BigLine()
-{
+function BigLine(){
 	//bugbug still gotta fill in some fields! see function BigSign()
 
 }
@@ -95,8 +94,7 @@ function BigLine()
 BigLine.prototype=new BigShape();
 BigLine.prototype.constructor=BigLine;
 
-function MakeBigLine(pointhA,pointB)  //={x: 0 , y:lowerPlane, z: 0, skipOffscreenPoint:false}	
-{
+function MakeBigLine(pointhA,pointB) {  //={x: 0 , y:lowerPlane, z: 0, skipOffscreenPoint:false}	
 	var retval = new BigLine();
 	retval.pointh=pointhA;  //remember the h means maybe some hash info, etc in there as well (for the whole object)
 	retval.pointList=[ 
@@ -106,8 +104,8 @@ function MakeBigLine(pointhA,pointB)  //={x: 0 , y:lowerPlane, z: 0, skipOffscre
 	return retval;
 }
 
-BigLine.prototype.realDraw=function(renderer,log2size) //,gameTime)  //bugbug need to pass in gameTime soon where this is called--OR should time be a global???
-{
+BigLine.prototype.realDraw=function(renderer,log2size) { //,gameTime)  //bugbug need to pass in gameTime soon where this is called--OR should time be a global???
+
 	// if (typeof this.selfDraw == 'function')  //bugbug needed???
 	// {
 		// return	this.selfDraw({    
@@ -118,7 +116,7 @@ BigLine.prototype.realDraw=function(renderer,log2size) //,gameTime)  //bugbug ne
 					// });     
 	// }	
 	
-	if (this.pointh==null) 
+	if (this.pointh===null) 
 		return null;  
 	
 	var ctx=renderer.ctx;
@@ -129,16 +127,15 @@ BigLine.prototype.realDraw=function(renderer,log2size) //,gameTime)  //bugbug ne
 	var b=tpt(renderer,this.pointList[1],false);
 	
 	drawLine(ctx,a,b,this.isDebug);
-	
-}
+	return 1;  //ok
+};
 
 
 	
 /////////////  class BigTriangle  /////////
 
 	
-function BigTriangle()  
-{
+function BigTriangle() {  
 	this.color='rgba(0,60,60,1)';
 	this.pointh={ x: -lowerPlaneScale, y:lowerPlane, z: -lowerPlaneScale, skipOffscreenPoint:false};  
 	var pointb={ x: 0 , y:lowerPlane, z: 0, skipOffscreenPoint:false};
@@ -154,8 +151,7 @@ function BigTriangle()
 BigTriangle.prototype=new BigShape();  //bugbug should be "tree"??? else why sharing so much code?
 BigTriangle.prototype.constructor=BigTriangle;
 
-BigTriangle.prototype.realDraw=function(renderer,log2size) //,gameTime)  //bugbug need to pass in gameTime soon where this is called--OR should time be a global???
-{
+BigTriangle.prototype.realDraw=function(renderer,log2size) { //,gameTime)  //bugbug need to pass in gameTime soon where this is called--OR should time be a global???
 	//bugbugNOW in theory change to "realDraw" fixed this  
 	//bugbugNOW pull this into the BigShape class somehow since it's behavior-in-common
 	// if (typeof this.selfDraw == 'function')
@@ -167,15 +163,15 @@ BigTriangle.prototype.realDraw=function(renderer,log2size) //,gameTime)  //bugbu
 			// });  //bugbug boundingBox3d, etc etc here?  vs. how much of this already in "this"  (cache "age"?)
 			
 	//bugbug can this go in the regular "draw()" also instead of "realDraw()"  (realdr
-	if (this.pointh==null) 
+	if (this.pointh===null) 
 		return null;  
 	
 	this.drawTri(renderer);  //the "real" draw function!
 	renderer.ctx.strokeStyle="red";  //NB: to insure we've closed the stroke! 
-}
+	return 1;
+};
 
-BigTriangle.prototype.drawTri=function drawTri(renderer)  
-{	
+BigTriangle.prototype.drawTri=function drawTri(renderer)  {	
 	renderer.ctx.beginPath();
 	var pts2 = this.get2dPoints(renderer);
 	var a=pts2[0], b=pts2[1], c=pts2[2];
@@ -187,7 +183,8 @@ BigTriangle.prototype.drawTri=function drawTri(renderer)
 		return null;
 	
 	drawTriangleAbs(ctx,a,b,c,this.planeColor); 
-}
+	return 1; //ok
+};
 
 
 

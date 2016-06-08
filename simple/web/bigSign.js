@@ -9,8 +9,7 @@
 
 ////////  class  /////////
 
-function BigSign(pointh,text)
-{
+function BigSign(pointh,text) {
 	this.pointh=pointh;
 	this.text=text;
 	this.skipOffscreenPoint = false;  //thus not actually "big"...oh well
@@ -24,8 +23,7 @@ function BigSign(pointh,text)
 BigSign.prototype=new BigShape();
 BigSign.prototype.constructor=BigSign;
 
-BigSign.prototype.realDraw = function(renderer,log2size)
-{	
+BigSign.prototype.realDraw = function(renderer,log2size) {	
 	var ctx=renderer.ctx;
 	ctx.beginPath();
 	var pts2 = this.get2dPoints(renderer);
@@ -71,7 +69,8 @@ BigSign.prototype.realDraw = function(renderer,log2size)
 	ctx.fill();
 	ctx.stroke();
 	ctx.fillStyle="purple";
-}
+	return 1; //ok
+};
 
 
 

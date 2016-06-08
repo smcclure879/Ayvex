@@ -43,23 +43,23 @@ function start3d(theDrawings,opts)
 	    renderer.ctx.setFillColor(red(mainBgColor),green(mainBgColor),blue(mainBgColor),alpha(mainBgColor));  //bugbug settings
 	    renderer.drawBackground();
 	    
-	    
+	    var drawing=null;
 	    for(var ii=0,lim=theDrawings.length; ii<lim; ii++)   {
-		var drawing = theDrawings[ii];	
-		
-		//for debugging drawings of certain types (keep) bugbug revisit
-		// if (!drawing.isSign)  //bugbug
-		// {
-		// continue;
-		// }		
-		
-		drawIt(drawing);
+			drawing = theDrawings[ii];	
+			
+			//for debugging drawings of certain types (keep) bugbug revisit
+			// if (!drawing.isSign)  //bugbug
+			// {
+			// continue;
+			// }		
+			
+			drawIt(drawing);
 	    }
 	    
 	    //dynamic: e.g. from the DB
-	    for(var key in theDrawings.dynamic)	    {
-		var drawing = theDrawings.dynamic[key];
-		drawIt(drawing);
+	    for(var key in theDrawings.dynamic)	{
+			drawing = theDrawings.dynamic[key];
+			drawIt(drawing);
 	    }
 	    
 	    
@@ -73,41 +73,33 @@ function start3d(theDrawings,opts)
 	function drawIt(drawing)
 	{
 		renderer.camera.transform.check();  //bugbug assert  //bugbug needed???
-		if (drawing instanceof iDrawable) 
-		{
+		if (drawing instanceof iDrawable) {
 			var log2Size=1;  //a 2m object (bugbug)
 			drawing.draw(renderer,log2Size);  //new path
-		}
-		else  //have the renderer do it  (old lib code path)
-		{
+		} else {  //have the renderer do it  (old lib code path)
 			renderer.drawPath(drawing);
 		}
 	}
 	  
 	//bugbug move this function into the renderer (pre3d.js function getnearest )
-	function findNearest(x,y,selectIt) //callback from demoUtils.js function handleCameraMouse
-	{
+	function findNearest(x,y,selectIt) { //callback from demoUtils.js function handleCameraMouse
 		var best={closestDrawingIndex:-1,closestPointIndex:-1,bestQuadranceSoFar:40000};  //quadrance=dist*dist //bugbug const
 		var lim=theDrawings.length;
 		var ii=0;
-		for(; ii<lim; ii++)  //ii=drawingNumber
-		{
-			var drawing = theDrawings[ii];
-			if (drawing instanceof iDrawable)
-			{
+		var drawing=null;
+		for(; ii<lim; ii++) { //ii=drawingNumber
+			drawing = theDrawings[ii];
+			if (drawing instanceof iDrawable) {
 				best = drawing.getNearest(x,y,renderer,best,ii);  //ii passed only for selection
-			}
-			else  //have the renderer do it
-			{
+			} else { //have the renderer do it
 				//pass the best thru, and insist it hand the old or new best back out  (end up with path#, point #, point serialNum, distance between click and selectPoint
 				best = renderer.getNearest(drawing,x,y,best,ii);  
 			}
 		}
 
 		
-		for(var key in theDrawings.dynamic)
-		{
-			var drawing = theDrawings.dynamic[key];
+		for(var key in theDrawings.dynamic) {
+			drawing = theDrawings.dynamic[key];
 			ii++; //bugbug should we???
 			best=drawing.getNearest(x,y,renderer,best,ii);
 			best.key=key;
@@ -123,26 +115,19 @@ function start3d(theDrawings,opts)
 
 	var selectedItem=null;
 	//best == newly selected item (best match to mouseclick)
-	function select(bestItem)  //bugbug get rid of "two kinds of stuff to iterate thru"
-	{
-		if (bestItem==null || bestItem.closestPointIndex<0) 
+	function select(bestItem) {  //bugbug get rid of "two kinds of stuff to iterate thru"
+		if (bestItem===null || bestItem.closestPointIndex<0) 
 			return;
 		
 		//debugSet(bestItem.closestDrawingIndex+","+bestItem.closestPointIndex);
 		
-		if (selectedItem!=null)
-		{
+		if (selectedItem!==null) {
 			//clear out the old selection
-			if (selectedItem!=null && selectedItem.closestDrawingIndex>=0 && selectedItem.closestDrawingIndex<theDrawings.length) 
-			{
+			if (selectedItem!==null && selectedItem.closestDrawingIndex>=0 && selectedItem.closestDrawingIndex<theDrawings.length) {
 				theDrawings[selectedItem.closestDrawingIndex].isSelected=false;
-			}
-			else if (selectedItem.key)
-			{
+			} else if (selectedItem.key) {
 				theDrawings.dynamic[selectedItem.key].isSelected=false;
-			}
-			else 
-			{
+			} else {
 				alert("wtfbugbug");
 			}
 		}
@@ -152,13 +137,10 @@ function start3d(theDrawings,opts)
 		var actualItem=bestItem.actualItem;
 		
 		//bugbug consolidate this handling of two lists of drawings...
-		if (selectedItem.key)
-		{
+		if (selectedItem.key) {
 			actualItem.isSelected=true;
 			actualItem.closestPointIndex=-177777;
-		}
-		else
-		{
+		} else {
 			actualItem.isSelected=true;
 			actualItem.closestPointIndex=bestItem.closestPointIndex;
 			//theDrawings[bestItem.closestDrawingIndex].closestPointIndex=bestItem.closestPointIndex;
@@ -166,10 +148,9 @@ function start3d(theDrawings,opts)
 	}
 	
 	//changing the global function to look inside me. bugbug revisit this
-	getSelectedItem = function()
-	{
+	getSelectedItem = function(){
 		return selectedItem;
-	}
+	};
 	
 	
 
