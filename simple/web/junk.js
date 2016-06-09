@@ -1,3 +1,4 @@
+/*jsl:ignoreall*/
 <script>
 <!-- 	var canvas = document.getElementById("c");
 	var ctx = canvas.getContext("2d");

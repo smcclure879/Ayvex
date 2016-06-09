@@ -1,27 +1,24 @@
 //DataPoints are iDrawables that always take 1 (or 4 depending on "big" checkbox) pixels on the screen. 
 //They also support more than 3 dimensions 
 
-function DataPoint()
-{
+function DataPoint() {
 	this.pointh={};
 	this.size=1;
 	this.color='pink';
 }
 
-DataPoint.FromArr = function(arr,text)
-{
+DataPoint.FromArr = function(arr,text) {
 	var retval=new DataPoint();
 	retval.initFromArrDims(arr,text);
 	return retval;
-}
+};
 
 
-DataPoint.FromJson=function(jsonData)   
-{
+DataPoint.FromJson=function(jsonData) {
 	var retval=new DataPoint();
 	retval.initFromJson(jsonData);
 	return retval;
-}
+};
 
 
 
@@ -29,8 +26,7 @@ DataPoint.prototype=new iDrawable();
 DataPoint.prototype.constructor=DataPoint;
 
 //bugbug is there a faster way that involves e.g. changing the type?  didn't work when tried
-DataPoint.prototype.initFromJson=function(jsonData)
-{		
+DataPoint.prototype.initFromJson=function(jsonData) {
 	this.pointh=
 		{
 			x: jsonData.x,  
@@ -42,10 +38,9 @@ DataPoint.prototype.initFromJson=function(jsonData)
 		};
 	this.size=1;
 	this.color='#0489B1';
-}
+};
  
-DataPoint.prototype.initFromArrDims=function (arrDims,text) 
-{
+DataPoint.prototype.initFromArrDims=function (arrDims,text) {
 	this.pointh = 
 		{
 			x: arrDims[0],
@@ -57,13 +52,12 @@ DataPoint.prototype.initFromArrDims=function (arrDims,text)
 		};
 	this.size=1;
 	this.color='green';  //bugbug red!
-}
+};
 
 
 
 var phase=0;
-DataPoint.prototype.realDraw=function(renderer,log2Size) //,gameTime)  //bugbug need to pass in gameTime soon where this is called--OR should time be a global???
-{
+DataPoint.prototype.realDraw=function(renderer,log2Size) { //,gameTime)  //bugbug need to pass in gameTime soon where this is called--OR should time be a global???
 	var tpt = function (pointh) {	
 	
 		var scaleDim = -1;
@@ -84,15 +78,16 @@ DataPoint.prototype.realDraw=function(renderer,log2Size) //,gameTime)  //bugbug 
 	} ;  
 	
 	
-	if (this.pointh==null) return;
+	if (this.pointh===null) 
+		return null;
 	
 	var ctx = renderer.ctx;
 	ctx.beginPath();
 	var pointIn2d=tpt(this.pointh);
-	if (pointIn2d==null)
+	if (pointIn2d===null)
 		return null;  //offscreen!
 	
-	if (typeof this.pointh.t!='undefined')
+	if (typeof this.pointh.t!=='undefined')
 	{
 		moveTo(ctx, pointIn2d);
 		
@@ -104,13 +99,10 @@ DataPoint.prototype.realDraw=function(renderer,log2Size) //,gameTime)  //bugbug 
 	}
 	
 	var size=big;
-	if (this.isSelected) 
-	{
+	if (this.isSelected) {
 		ctx.fillStyle='purple';
 		size++;
-	}
-	else
-	{
+	} else  {
 		ctx.fillStyle=this.color;
 	}
 	
@@ -123,10 +115,11 @@ DataPoint.prototype.realDraw=function(renderer,log2Size) //,gameTime)  //bugbug 
 		// return null;
 
 	// if (lineTo(ctx,tip2)==null) 
-	if (fillPoint(ctx,pointIn2d,size)==null)
+	if (fillPoint(ctx,pointIn2d,size)===null)
 		return null;
 	
     ctx.stroke();
     ctx.fillStyle = 'pink';   //bugbug this detects leaks 
 	
-}
+	return null;
+};

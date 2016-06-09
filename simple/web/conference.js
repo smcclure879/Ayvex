@@ -152,8 +152,7 @@ function useLocalOffer(offer)
 ////////  RECEIVER AND RECEIVE-ANSWER CODE  //////////
 
 //hook to maybe receive a call...
-function maybeDoTeleconfInternal(localCopyOfItem,itemFromServer)  
-{
+function maybeDoTeleconfInternal(localCopyOfItem,itemFromServer)  {
 	if (!localCopyOfItem) //bugbugSoon do we even need this here?  maybe to mark who is calling us, e.g. to paint larger or something.
 		return;	
 	
@@ -163,22 +162,15 @@ function maybeDoTeleconfInternal(localCopyOfItem,itemFromServer)
 		
 	//explicitly already tested to make sure this is not us, but maybe do it again???
 	var calleeKey = otherParty.telecInfo.callee;
-	if (!inCall && calleeKey && isMe(calleeKey) )  
-	{
+	if (!inCall && calleeKey && isMe(calleeKey) )  	{
 		processAsIncomingCall(otherParty);
-	}
-	else if (inCall==true && otherParty.telecInfo.answer)  //might be in THIS call, so can't use that bit!!!
-	{
-		if (theyAreWhoWeCalled(otherParty))
-		{
+	} else if (inCall===true && otherParty.telecInfo.answer) { //might be in THIS call, so can't use that bit!!!
+		if (theyAreWhoWeCalled(otherParty))	{
 			finalizeOfferCycle(otherParty);  //sets inCall to 2
 		}
-	}
-	else	
-	{
+	} else	{
 		//passthru: got a telecInfo, but it's not for us
-		if (typeof debug != 'undefined' && debug)  
-		{
+		if (typeof debug !== 'undefined' && debug)  {
 			alert("bugbug115p: unknown state:"+inCall+" "+dumps(pc));
 			alert("otherParty="+dumps(otherParty));
 		}
@@ -190,8 +182,7 @@ function maybeDoTeleconfInternal(localCopyOfItem,itemFromServer)
 
 ////////  RECEIVER CODE  ////////
 
-function processAsIncomingCall(callee)
-{
+function processAsIncomingCall(callee){
 	var currentOffer = callee.telecInfo.currentOffer;
 	if (!currentOffer)
 		return;
@@ -220,8 +211,7 @@ function processAsIncomingCall(callee)
 		);
 }
 // THENTO
-function acknowledgeConnection(localStream,currentOffer)
-{
+function acknowledgeConnection(localStream,currentOffer) {
 	//pc.onaddstream({stream: localStream});  //calling gotRemoteStream with local???
 	//show it locally
 	$localVideo.prop( 'src', URL.createObjectURL(localStream) ).change(); 
@@ -235,14 +225,12 @@ function acknowledgeConnection(localStream,currentOffer)
 	pc.setRemoteDescription(description,createAnswer,errorHandler);
 }
 // THENTO
-function createAnswer()
-{
+function createAnswer() {
 	//alert("creatingAnswer"+dumps(pc));
 	pc.createAnswer(useAnswer,errorHandler);
 }
 // THENTO
-function useAnswer(answer)
-{
+function useAnswer(answer) {
 	alert("connection going thru now");
 	//alert("pc state="+dumps(pc));
 	pc.setLocalDescription(new RTCSessionDescription(answer));
@@ -251,8 +239,7 @@ function useAnswer(answer)
 // THENTO  nope
 
 
-function handleIceCandidateMessage(iceCandidate)
-{
+function handleIceCandidateMessage(iceCandidate) {
 	pc.addIceCandidate(new RTCIceCandidate(iceCandidate));
 }
 
@@ -272,65 +259,52 @@ function handleIceCandidateMessage(iceCandidate)
  
 
 /////////  ANSWER TO THE ANSWER  ////////////
-function finalizeOfferCycle(otherParty)
-{
+function finalizeOfferCycle(otherParty){
 	//alert("finalizeConn..."+dumps(pc))	
 	pc.setRemoteDescription(new RTCSessionDescription(otherParty.telecInfo.answer),endOfFinalize,errorHandler);
 	inCall=2;
 }
 
-function endOfFinalize()
-{
+function endOfFinalize() {
 	//nothing
 }
 
 
 //////  ice candidate handling  //////
-function gotIceCandidateForSender(event) //,outgoingStream)
-{
-	if (event.candidate == null) 
-	{
+function gotIceCandidateForSender(event) { //,outgoingStream)
+	if (event.candidate === null) {
 		//alert("last of sender trickle: here is SDP"+pc.localDescription.sdp);
 		//sendCandidateSdpInfo();
 		sendMyOffer();
-	}
-	else
-	{
+	} //else {
 		//pc.addIceCandidate(new RTCIceCandidate(event.candidate)); 
 		//alert("send got ICE candidate: " + dumps(event));
-	}
+	//}
 }
 
-function gotIceCandidateForReceiver(event)  //skipped for now actually
-{
-	if (event.candidate == null)
-	{
+function gotIceCandidateForReceiver(event) {  //skipped for now actually
+	if (event.candidate === null) {
 		//alert("last of receiver trickle done...      localsdp"+pc.localDescription.sdp);
 		sendAnswer();  //bugbug sendMyAnswer
-	}
-	else
-	{
+	} //else {
 		//pc.addIceCandidate(new RTCIceCandidate(event.candidate));
 		//alert("recv got ICE candidate: \n" + dumps(event));
 		//alert("recv ice, pc.localDescription:"+dumps(pc.localDescription));
-	}
+	//}
 }
 
-function stripUserPrefix(s)
-{
+function stripUserPrefix(s){
 	return stripPrefix("user_",s);
 }
 
-function stripPrefix(prefix,s)
-{
+function stripPrefix(prefix,s){
 	if (s.startsWith(prefix))
 		return s.substring(prefix.length);
 	return s;		
 }
 
 
-function sendMyOffer()
-{
+function sendMyOffer(){
 	//trace("sending the following offer from localPeerConnection: \n" + offer);
 	var offer=pc.localDescription;
 	telecInfo.currentOffer=offer;  
@@ -344,8 +318,7 @@ function sendMyOffer()
 }
 
 //bugbug consolidate with the above
-function sendAnswer() 
-{
+function sendAnswer() {
 	//alert("setting global answer--state while postOfferSend from receiver: "+pc.iceConnectionState);
 	//alert("bugbugCHECK: localDescription --pc state in sendAnswer="+dumps(pc));
 	var answer = pc.localDescription;
@@ -360,8 +333,7 @@ function sendAnswer()
 
 
 //////  EVERYBODY //////
-function gotRemoteStream(ev,then)  //note similar function elsewhere in this file  _mine
-{
+function gotRemoteStream(ev,then)  {  //note similar function elsewhere in this file  _mine
 	var remoteStream=ev.stream; //bugbug
 	//alert("gotRemoteStream"+dumps(remoteStream));
 	//trace(remoteStream);
@@ -378,40 +350,32 @@ function gotRemoteStream(ev,then)  //note similar function elsewhere in this fil
 
 
 
-function showIceConnectionStateChange(ev)
-{
+function showIceConnectionStateChange(ev){
 	trace( "in showIceConnectionStateChange:"+	pc.iceConnectionState );
 }
 
-function errorHandler(err)  //bugbug consolidate with other similars.  3 functions!
-{
+function errorHandler(err) { //bugbug consolidate with other similars.  3 functions!
 	trace(err);
 	alert("err"+getStackTrace()+"  "+dumps(err));  //bugbug separate for separate cases????
 }
 
-function minorErrorHandler(err)  //bugbug consolidate with other similars.  3 functions!
-{
+function minorErrorHandler(err) {  //bugbug consolidate with other similars.  3 functions!
 	trace(err);
 	trace("err"+getStackTrace()+"  "+dumps(err));  //bugbug separate for separate cases????
 }
 
-function getStackTrace() 
-{
+function getStackTrace() {
 	var obj = {};
 	Error.captureStackTrace(obj, getStackTrace);
 	return obj.stack;
 }
 
-function trace(text) 
-{
+function trace(text) {
 	console.log((performance.now() / 1000).toFixed(3) + ": " + text);
 }
 
 
 
-
-			
-			
 //keep for testing...
 
 

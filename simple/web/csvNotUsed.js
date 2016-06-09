@@ -1,3 +1,4 @@
+/*jsl:ignoreall*/
 
     // This will parse a delimited string into an array of
     // arrays. The default delimiter is the comma, but this

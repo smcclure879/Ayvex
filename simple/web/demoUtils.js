@@ -161,7 +161,7 @@ var DemoUtils = (function() {
       if (state.first_event) {
         state.first_event = false;
       } else {  //this is where main "info" is constructed
-		debugSet
+		debugSet ;
         var info = {
           is_clicking: state.is_clicking,
           canvas_x: state.last_x,

@@ -3298,7 +3298,7 @@ return "time,latitude,longitude,depth,mag,magType,nst,gap,dmin,rms,net,id,update
 "2014-01-04T22:13:34.000Z,60.7566,-142.8566,9.9,1.1,ml,,,,0.14,ak,ak10961870,2014-01-04T22:20:06.423Z,\'80km NNW of Cape Yakataga, Alaska\',earthquake\r\n"+
 "2014-01-04T22:04:30.610Z,36.0316667,-117.7706667,2.38,0.39,ml,9,97,0.005257,0.07,ci,ci11410138,2014-01-07T16:34:06.630Z,\'42km N of Inyokern, California\',earthquake\r\n"+
 "2014-01-04T21:56:09.000Z,61.9916,-149.7404,34.2,1.7,ml,,,,0.38,ak,ak10961867,2014-01-04T22:20:05.812Z,\'19km SSE of Y, Alaska\',earthquake";
-};
+}
 
 function stupid()
 {
