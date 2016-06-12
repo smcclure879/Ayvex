@@ -33,20 +33,17 @@ var screenHeight;
 //todo we need an OBJECT here that implements a local k-d tree  there is an opensource k-d tree we should use....	
 var theDrawings=[];
 
-function debugAdd(s)
-{
+function debugAdd(s) {
 	toolbar.innerHTML+=s+'<br/>';
 }
 
-function debugSet(s)
-{
+function debugSet(s) {
 	if (toolbar)
 		toolbar.innerHTML=s;
 }
 
 
-function definedAndTrue(val)
-{
+function definedAndTrue(val) {
     try {
         val = eval(val);
         if (typeof val == 'undefined') return false;
@@ -57,17 +54,12 @@ function definedAndTrue(val)
     return val;
 }
 
-function pushAll(ofThese,intoThese)  
-{
-	if (ofThese instanceof Array)
-	{
-		for(var ii=0,il=ofThese.length; ii<il; ii++)
-		{
+function pushAll(ofThese,intoThese)  {
+	if (ofThese instanceof Array) {
+		for(var ii=0,il=ofThese.length; ii<il; ii++) {
 			intoThese.push(ofThese[ii]);
 		}
-	}
-	else
-	{
+	} else {
 		intoThese.push(ofThese);
 	}
 }
@@ -75,8 +67,7 @@ function pushAll(ofThese,intoThese)
 
 
 //this works, but the script won't be live until you yield the thread for a while.  call it carefully!
-function addScript(filename)
-{
+function addScript(filename) {
 	//a neat trick from  http://www.javascriptkit.com/javatutors/loadjavascriptcss.shtml  
 	var newScriptTag=document.createElement('script')
 	newScriptTag.setAttribute("type","text/javascript")
@@ -84,18 +75,14 @@ function addScript(filename)
 	document.getElementsByTagName("head")[0].appendChild(newScriptTag);
 }	
 
-function makeBigMap(data)
-{
+function makeBigMap(data) {
 	var path;
 	var jj=0;  //for the inner loop inside one path
 	var kk=0;  //index into the outputs
-	for(var ii=0, limit=data.length; ii<limit; ++ii)  
-	{
+	for(var ii=0, limit=data.length; ii<limit; ++ii) {
 		pt=data[ii];
-		if (ii==0 || pt[3]!='') //there is text so start a new path
-		{
-			if (path) //store the old path if there is one
-			{
+		if (ii==0 || pt[3]!='') { //there is text so start a new path
+			if (path) { //store the old path if there is one
 				theDrawings[kk++]=path;
 			}
 			path = new Pre3d.Path();
@@ -117,14 +104,11 @@ function makeBigMap(data)
 	theDrawings.push(path);  //close it out
 }
 
-function addTreesAndWater(paths)
-{
+function addTreesAndWater(paths) {
 	landmarkSpacing=200;  //todo consts throughout
 	abs=Math.abs;
-	for(var xx=-20000; xx<20000; xx+=landmarkSpacing)
-	{
-		for(var zz=-20000; zz<20000; zz+=landmarkSpacing)
-		{
+	for(var xx=-20000; xx<20000; xx+=landmarkSpacing) {
+		for(var zz=-20000; zz<20000; zz+=landmarkSpacing) {
 			var d=abs(xx)+abs(zz) + 5;
 			var h8=Hasher.consistentHash(['tree',xx,zz])%256;
 			if (hRndN(d,h8)<80)   paths.push(new Tree(xx,floor,zz,'calculate'));
@@ -135,24 +119,20 @@ function addTreesAndWater(paths)
 }
 
 
-function addMarkersAndWater(paths)
-{
+function addMarkersAndWater(paths) {
 	landmarkSpacing=200;  //todo consts throughout
 	abs=Math.abs;
-	for(var xx=-20000; xx<20000; xx+=landmarkSpacing)
-	{
-		for(var zz=-20000; zz<20000; zz+=landmarkSpacing)
-		{
+	for( var xx=-20000; xx<20000; xx+=landmarkSpacing ) {
+		for( var zz=-20000; zz<20000; zz+=landmarkSpacing ) {
 			var d=abs(xx)+abs(zz);
-			if (d>1000 && d<4000 && badRnd(d)<800)   paths.push(marker(xx,zz));
-			if (d>2000 && badRnd(d)<2000)            paths.push(waterMarker(xx+badRnd(500),zz+badRnd(500)));
+			if ( d>1000 && d<4000 && badRnd(d)<800 )   paths.push(marker(xx,zz));
+			if ( d>2000 && badRnd(d)<2000 )            paths.push(waterMarker(xx+badRnd(500),zz+badRnd(500)));
 		}
 	}
 	return paths;
 }
 
-function addCoordinateVectors(paths)
-{
+function addCoordinateVectors(paths) {
 	//coordinate vectors		
 	paths.push(infoLine( 	{x:1000,y:0,z:0,t:'X'},
 							{x:0   ,y:0,z:0}        ));
@@ -166,9 +146,8 @@ function addCoordinateVectors(paths)
 }
 
  
- //todo make the waves into "land" and only a few are actual waves (but the "sea level" is a good "default land level" for now)
- function waterMarker(xx,zz, waveHeight, waveLength)
- {
+//todo make the waves into "land" and only a few are actual waves (but the "sea level" is a good "default land level" for now)
+function waterMarker(xx,zz, waveHeight, waveLength) {
 	if (waveHeight===undefined) waveHeight=badRnd(8)-4;
 	if (waveLength===undefined) waveLength=badRnd(7)+13;
 	return twoSegmentPath(	darkBrown,  
@@ -177,50 +156,43 @@ function addCoordinateVectors(paths)
 							xx,64+waveHeight,zz+waveLength/3,
 							xx,62,zz+waveLength
 						); 
- }
+}
  
- //function markerOrTree(xx,zz, treePoleFrac)
- function marker(xx,zz)
- {
+//function markerOrTree(xx,zz, treePoleFrac)
+function marker(xx,zz)
+{
 	var height=40;
-
 	return twoSegmentPath( contrastBackground(),
 							  1,
 							  xx, floor, zz,   
 							  xx, height+floor, zz,
 							  xx, height+floor, zz-10);  //minus Z is north
-
- }
+}
  
- function contrastBackground()
- {
+function contrastBackground() {
 	if (mainBgColor=='white') return 'black';
 	if (mainBgColor=='black') return 'white';
 	return 'red'; //todo const
- }
+}
 
 
- function contrast(color)
- {
+function contrast(color) {
 	return 'green';
 	if (mainBgColor=='black' && color=='black') return 'white';
 	return color;
- }
+}
  
- function infoLine(ptA,ptB)
- {
+function infoLine(ptA,ptB) {
 	return linePath(	
 						'rgba(77,77,255,0.7)',  //'6666FF',
 						0.3,
 						ptA,
 						ptB
 					);
-							
  }
  
  
-function linePath(color,width,ptA,ptB)  //ptA includes a text .t  
-{
+function linePath(color,width,ptA,ptB)  { //ptA includes a text .t  
 	var path=new Pre3d.Path();
 	path.starting_point=0;
 	path.points[0]=ptA;
@@ -233,8 +205,7 @@ function linePath(color,width,ptA,ptB)  //ptA includes a text .t
 
 
 //todo move some of this to its own file
- function twoSegmentPath(color,width,x1,y1,z1,x2,y2,z2,x3,y3,z3)
- {
+function twoSegmentPath(color,width,x1,y1,z1,x2,y2,z2,x3,y3,z3) {
 	var path=new Pre3d.Path();
 	path.starting_point=0;
 	path.points[0]={x:x1,y:y1,z:z1,t:""};  //""+x1+","+y1
@@ -245,10 +216,9 @@ function linePath(color,width,ptA,ptB)  //ptA includes a text .t
 	path.color=color;
 	path.width=width;
 	return path;
- }
+}
  
-function makeFakeMap()
-{
+function makeFakeMap() {
 	var p0={x:0,y:15,z:20};    var t0='baseCamp';
 	var p1={x:50,y:-15,z:30};  var t1='end of the line';
 	var path = new Pre3d.Path();
@@ -266,20 +236,16 @@ function makeFakeMap()
 
 
 
-function setMap(dataSetName)  //no longer a callback from the cameraAndStuff.js  
-{
+function setMap(dataSetName) {  //no longer a callback from the cameraAndStuff.js  
 	//defaulting a bunch
-	if (typeof dataSetName === 'undefined')
-	{
+	if (typeof dataSetName === 'undefined') {
 		dataSetName=$("#dataset").value;
-		if (typeof dataSetName === 'undefined')
-		{
+		if (typeof dataSetName === 'undefined')	{
 			dataSetName='mc2map';
 		}
 	}
 	
-	switch(dataSetName)
-	{
+	switch(dataSetName)	{
 		case 'mc2map': setMc2Map(); break;
 		case 'frcWld': setFractalWorld();  break;   		//todo semantics "map" for these entities is wrong....it's a full presentation around a dataset, the framing around the map, etc.
 		case 'hiiDimAnlErq': setEarthquakeMap(); break;
@@ -289,50 +255,42 @@ function setMap(dataSetName)  //no longer a callback from the cameraAndStuff.js
 	
 }
 
-function changeHiDim(newMode)
-{
+function changeHiDim(newMode) {
 	DemoUtils.Notify("changeHiDim",matrixForMode(newMode));
 }
 
-function changeXanimate(ev)
-{
+function changeXanimate(ev) {
 	var newMode=ev.target.value;
 	changeHiDim(newMode);
 }
 
-function changeDataSet(ev)
-{
+function changeDataSet(ev) {
 	//todo find a better way to do this without refreshing...just an event to the camera or something....new call to start3d?
 	var newDataSetName=ev.target.value;
 	ev.stopPropagation();  //todo needed??
 	window.location.href="?dataset="+newDataSetName;
 }
 
-function setErrorMap(dataSetName)
-{
+function setErrorMap(dataSetName) {
 	debugSet("bugbug setErrorMap is nyi:"+dataSetName);
 }
 
-function setMc2Map()
-{
+function setMc2Map() {
 	var rawData=getMc2Data();
 	makeBigMap(rawData);
 	addMarkersAndWater(theDrawings);
 	addCoordinateVectors(theDrawings);
 	
-	function setMode()
-	{
+	function setMode() {
 		$('#xanimate').val('none').trigger('change');
 		$anim.prop('checked', true).change();
 		updateAnimation();
 	}
 
 	var tid = setTimeout(setMode,1000);  //todo should be on some event??
-	
 }
 
-function setFractalWorld()
-{
+function setFractalWorld() {
 	var treePoleFrac=0.5;
 	addCoordinateVectors(theDrawings);
 	//todo add perlin noise, etc etc etc
@@ -347,13 +305,10 @@ function setFractalWorld()
 	
 	
 	// bug57 & bug60
-	if (oGetVars["name"])
-	{
+	if (oGetVars["name"]) {
 		//bugbugSOON   LOAD the user here!
 		theUser.userId = oGetVars["name"];
-	}
-	else
-	{
+	} else {
 		theUser.userId = prompt("Please enter your username", "HarryPotter029");
 	}
 
@@ -363,8 +318,7 @@ function setFractalWorld()
 	$("#userName").text(theUser.userId);
 
 	
-	if (oGetVars["s"]==1)
-	{
+	if (oGetVars["s"]==1) {
 	    simpleStart(oGetVars); 
 	}
 
@@ -372,15 +326,13 @@ function setFractalWorld()
 	// "monsters" or "NPCs"
 	var ghost=[];
 	var numGhosts=7;
-	for(var ii=0; ii<numGhosts; ii++)
-	{
+	for(var ii=0; ii<numGhosts; ii++) {
 		ghost[ii]=addGamer(theDrawings,"ghost",1162,62,62);
 		ghost[ii].color="rgba(99,99,99,0.3)";///transparentblue="rgba(33,33,255,0.3)"; //'#00000000';
 	}
 	
 	setInterval(function() {
-					for(var ii=0; ii<numGhosts; ii++)
-					{
+					for(var ii=0; ii<numGhosts; ii++) {
 						ghost[ii].moveForward();
 						ghost[ii].mutateOrientation1();
 					}
@@ -415,10 +367,9 @@ function setFractalWorld()
 						},600);
 						
 	
-}
+} 
 
-function getWelcomeSign(pointh,text)
-{
+function getWelcomeSign(pointh,text) {
 	var text="Welcome to Frakture";
 	var pointh = { x: 100, y:sealevel, z:10 };
 	var sign=new BigSign(pointh,text);
@@ -426,8 +377,7 @@ function getWelcomeSign(pointh,text)
 }
 
 
-function addPolarRays(drawings)
-{
+function addPolarRays(drawings) {
 	//bugbug consts
 	var M = 100000;
 	var polarColor = "rgba(0,128,0,0.6)"; 
@@ -447,13 +397,11 @@ function addPolarRays(drawings)
 	//drawings.push(polarLine);  bugbugNOW
 }
 
-function getHorizon()
-{
+function getHorizon() {
 	var LEN = 10000000;  //todo const
 	var sealevel = 62; //todo const
 	var retvals=[];
-	for(var ang=0; ang<360; ang+=15)
-	{
+	for(var ang=0; ang<360; ang+=15) {
 		var angrad=Math.PI*ang/180;
 		var pt = new DataPoint();
 		pt.pointh.x = LEN * cos(angrad);
@@ -468,8 +416,7 @@ function getHorizon()
 
 
 //for ghosts
-function addGamer(theDrawings,name,x,y,z)
-{
+function addGamer(theDrawings,name,x,y,z) {
 	var gamer= new Gamer();
 	gamer.reposition(x,y,z,0,0,0,getOfficialTime());
 	gamer.name(name);
@@ -479,8 +426,7 @@ function addGamer(theDrawings,name,x,y,z)
 }
 
 
-function setEarthquakeMap()
-{	
+function setEarthquakeMap() {	
 	//var filename="/web/data/erq_all_month.js";
 	var filename="/web/data/erq100lines.js";  //for debugging
 
@@ -528,8 +474,7 @@ function setEarthquakeMap()
 }
 
 
-function setFlowersMap()
-{
+function setFlowersMap() {
 	//var shortBaseUrl = databaseUrl;  //todo: where to get this from??
 	var flowerUrl = "/web/data/iris.json";  
 
@@ -551,8 +496,7 @@ function setFlowersMap()
 		;
 }
 		 
-function setFlowersMapStep2(jsonData)
-{
+function setFlowersMapStep2(jsonData) {
 	var columnInfo=
 	[ 
 		{name:'x',readas:'float',scale:100,offset:200},  //todo what are the other columns about a column??  (isUTC, parseThisWay, limits, precision, short and long name
@@ -589,14 +533,12 @@ function setFlowersMapStep2(jsonData)
 	
 	
 
-function scaleJson(onePointJson,columnInfo)
-{
+function scaleJson(onePointJson,columnInfo) {
 	onePointJson.x = convertAndScale(columnInfo[0],onePointJson.x);
 	onePointJson.y = convertAndScale(columnInfo[1],onePointJson.y);
 	onePointJson.z = convertAndScale(columnInfo[2],onePointJson.z);
 	
-	for(var ii=0,il=columnInfo.length; ii<il; ii++)
-	{
+	for(var ii=0,il=columnInfo.length; ii<il; ii++) {
 		onePointJson.xd[ii] = convertAndScale(columnInfo[ii],onePointJson.xd[ii]);
 	}
 }
@@ -610,10 +552,8 @@ function scaleJson(onePointJson,columnInfo)
 
 
 
-function matrixForMode(hiDimMode)
-{
-	switch(hiDimMode)
-	{
+function matrixForMode(hiDimMode) {
+	switch(hiDimMode) {
 		case 'sequence4':
 			return [
 						[0,0,0,0],  //todo need helper to create this only giving 0,4,1
@@ -649,33 +589,28 @@ function matrixForMode(hiDimMode)
 
 
 var mainBgColor='white';
-function updateBackground(ev)
-{
+function updateBackground(ev) {
 	mainBgColor = ($("#black").is(':checked')) ? 'black' : 'white';
 }
 
 var big=1;
-function toggleBigness(ev)
-{
+function toggleBigness(ev) {
 	big=($("#big").is(':checked')) ? 2 : 1 ;
 }
 
 
 
-function parseDataSet(dataFileOptions,columnInfo)
-{
+function parseDataSet(dataFileOptions,columnInfo) {
 	addCoordinateVectors(theDrawings);
 	
-	if (typeof getData != 'function') 
-	{
+	if (typeof getData != 'function') {
 		alert("dynamic read fail: cannot read the data type 1");  //todo handle better
 		return theDrawings;	  // but you won't like it  
 	}
 	
 	var textData=getData();	
 	
-	if (!textData) 
-	{
+	if (!textData) {
 		alert("cannot read the data type 2");  //todo handle better
 		return theDrawings;
 	}
@@ -690,8 +625,7 @@ function parseDataSet(dataFileOptions,columnInfo)
 //used to track what keys are down
 isDown = DemoUtils.KeyTracker.isDown;
 
-$(document).ready(function() 
-{
+$(document).ready(function() {
 	if (oGetVars["dataset"]) 
 		$("#dataset").val(oGetVars["dataset"]); 
 		
@@ -729,17 +663,14 @@ $(document).ready(function()
 
 });
 
-function updateAnimation()
-{
+function updateAnimation() {
 	DemoUtils.Notify("animate",animate.checked); 
 }
 
-function finishGettingReady()
-{
+function finishGettingReady() {
 	$anim.click( updateAnimation );
 	
-	setTimeout(function()  //to avoid wasting CO2, we try to time out the animation...
-		{
+	setTimeout(function() { //to avoid wasting CO2, we try to time out the animation...
 			$anim.prop('checked',false); //todo but this should be set by the world/dataset/user, not ME
 			//tell demoUtils right now too
 			updateAnimation();
@@ -747,8 +678,7 @@ function finishGettingReady()
 		,30*1000);//milliseconds  //todo settings		
 
 	
-	$("#xanimate").change( function(event)
-		{
+	$("#xanimate").change( function(event) {
 			changeXanimate(event);
 		});
 	
@@ -758,28 +688,23 @@ function finishGettingReady()
 	//		DemoUtils.Notify("zipToSelected","thisArgNotNeeded");		
 	//	});
 		
-	$("#instructions").click( function(event)
-		{
+	$("#instructions").click( function(event) {
 			$("#legend").dialog("open");
 		});
 	
-	$("#dataset").change( function(event)
-		{
+	$("#dataset").change( function(event) {
 			changeDataSet(event);
 		});
-	$("#black").change( function(event)
-		{
+	$("#black").change( function(event)	{
 			updateBackground();
 		});
-	$("#big").change( function(event)
-		{
+	$("#big").change( function(event) {
 			toggleBigness();
 		});
 };
 
 
-function getUpdateServerCallback()
-{
+function getUpdateServerCallback() {
 	if (oGetVars["dataset"]=="frcWld")  //todo hack should be a property of the dataset or something
 		return updateServerCallback;
 	else
@@ -800,8 +725,7 @@ var theUser = {
 //two locks...one to not run more than once per 2s, one to keep 2 copies from running at same time
 var lastCalled=Date.now();
 var serverCallbackLocked=false;  //open it  -- like a semaphore??  todo revisit
-function updateServerCallback(camera_state)
-{
+function updateServerCallback(camera_state) {
 	theUser.cam=camera_state;  //always gotta update this one!
 	if (theUser.userId==null || theUser.userId=='') 
 		return;
@@ -836,8 +760,7 @@ function updateServerCallback(camera_state)
 	theUser.mostRecentQuote=userQuote;
 	theUser.telecInfo=telecInfo;  //global local user's telecInfo goes into the local user being persisted
 	theUser.saveTime=getOfficialTime();  //ideally the protocol would save a serverSaveTime as well and other clients will see cheating.
-	if (theUser.saveTime<1400000000) //1B, roughly 2001
-	{
+	if (theUser.saveTime<1400000000) { //1B, roughly 2001
 		console.log('cannot get official time');  //can't do much yet  ...wait for next callback...continue anyway with bad time...
 	}
 		
@@ -845,8 +768,7 @@ function updateServerCallback(camera_state)
 	var data = JSON.stringify(theUser);
 	var putUrl=getUserDocUrl(theUser);  //+revString(theUser._rev);
 	
-	$.ajax(
-	{
+	$.ajax({
 		type:"PUT",
 		headers: { 
 			'Accept': 'application/json',
@@ -952,23 +874,20 @@ function updateDynamicObjectFromServerData(item) {   //item is the data from ser
 }
 
 
-function theyAreWhoWeCalled()
-{
+function theyAreWhoWeCalled() {
 	return true; //bugbugNOW what should this be?  check callee or something
 }
 
 	
 
 	
-function isMe(someKey)
-{
+function isMe(someKey) {
 	return (someKey==theUser._id);
 }
 
 
 	
-function unquote(x)
-{
+function unquote(x) {
 	for(ii=0, il=x.length; ii<il && x.substring(ii,1)=="\""; ii++);
 	for(      jj=x.length; jj>=0 && x.substring(jj,1)=="\""; --jj); 
 	return x.substring(ii,jj-ii);
@@ -1011,8 +930,7 @@ var port = "8081";
 var databaseUrl = "http://"+server+":"+port+"/api";
 var getCurrentUsersUrl = databaseUrl+"/user/";  //like doing a directory query
 
-function getUserDocUrl(user)
-{
+function getUserDocUrl(user) {
 	return databaseUrl+"/user/"+user.userId;
 }
 
@@ -1036,22 +954,18 @@ function getUserDocUrl(user)
 //	
 //}
 
-function revString(rev)
-{
-	if (typeof rev == 'undefined') 
+function revString(rev) {
+	if (typeof rev === 'undefined') 
 		return "";
 	if (rev<=1) //brand new
 		return "";
 	return "?rev="+rev;
-	
 }
 
 //todo make a serverTimeSync module
 var timeOffset=0;      // later null when we again have "server time" concept;
-function getOfficialTime()  //we want it as an int for compactness and speed of math....but ideally we'd be putting this info in on the server side!
-{
-	if (timeOffset==null)
-	{
+function getOfficialTime() {  //we want it as an int for compactness and speed of math....but ideally we'd be putting this info in on the server side!
+	if (timeOffset==null) {
 		return -1;  //not ready this call...try again next time
 	}
 	return getCurrentTime()+timeOffset;
@@ -1066,8 +980,7 @@ function getOfficialTime()  //we want it as an int for compactness and speed of 
 //	console.log("timeOffset="+timeOffset);
 //}
 
-function getCurrentTime()
-{
+function getCurrentTime() {
 	return 0+(new Date()).getTime();
 }
 
