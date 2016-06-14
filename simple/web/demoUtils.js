@@ -382,9 +382,10 @@ var DemoUtils = (function() {
 	function pointAtSelected()
 	{
 		if (selectedItem==null) 
-			return;
+			return 0;
 		//given cam xyz and selected point xyz, set cam rotY and rotX to point at it. 		
 		pointAt(selectedItem);
+		return 1;
 	}
 
 	
@@ -502,7 +503,12 @@ var DemoUtils = (function() {
 	
 	function zipTo(frameNum)
 	{
-		pointAtSelected();
+
+		if (!pointAtSelected()) { //if can't point at selected
+			zipping = false;
+			return;
+		}
+
 		 //a=camera_state.rotate_y; camera_state.x += u*cos(a); camera_state.z += u*sin(a); 
 		//renderer.getSelected();
 		//camera always works with negative coordinates?
@@ -766,4 +772,5 @@ var DemoUtils = (function() {
   };
 })();
 
-
+
+
