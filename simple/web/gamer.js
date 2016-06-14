@@ -40,9 +40,9 @@ function drawDot(ctx,ctrPoint2d,radiusPix)
 
 function Gamer()
 {
-	this.color='7777FF';
-	this.pointh={ x:4700, y:4700, z:4700 };  //more fiedlds needed?  todo todo consts
-	this.prevPoint={ x:4600, y:4700, z:4700 };
+	this.color='#7777FF';
+	this.pointh=null; //bugbug{ x:4700, y:4700, z:4700 };  //more fiedlds needed?  todo todo consts
+	this.prevPoint=null; //{ x:4600, y:4700, z:4700 };
 	this.prevPrevPoint=null;
 	this.lastPublicPoint=null;
 	this.orientation={ rotx:0, roty:0, rotz:0 };
@@ -119,6 +119,7 @@ Gamer.prototype.name = function(name)
 var phase=0;
 Gamer.prototype.realDraw=function(renderer,log2size) //,gameTime)  //todo need to pass in gameTime soon where this is called--OR should time be a global???
 {
+	debugSet('gamerDraw');
 	//todo this is second copy of this routine....move to some type of sharign ??
 	//and dynamically creating it each call here???
 	// var tpt = function (pointh) {	
@@ -200,29 +201,35 @@ Gamer.prototype.realDraw=function(renderer,log2size) //,gameTime)  //todo need t
 	var headPoint3d=mm.addPoints3d(this.pointh,{x:0,y:height,z:0});
 	var nosePoint3d=projection(headPoint3d, noseLength, this.orientation);
 
-	if (nosePoint3d==null) 
-		return null;
-		
+	if (!nosePoint3d)  return null;
+	if (!this.prevPoint) 
+		this.prevPoint = mm.addPoints3d(this.pointh,{x:0,y:-400,z:0});
+
+	if (!this.prevPrevPoint) //fixit
+		this.prevPrevPoint = this.prevPoint;
+
+	//so now all the points we'll transform are nonnull
+			
 	var nosePoint2d=tpt(nosePoint3d);
 	var headPoint2d=tpt(headPoint3d);
-	var prevPoint2d=tpt(this.prevPoint);
+	var prevPoint2d=tpt(this.prevPoint);  //this is where it goes bad 
 	var prevPrevPoint2d=tpt(this.prevPrevPoint);
 	var lastPublicPoint2d=tpt(this.lastPublicPoint);
 	//footPoint2d already done early
 	
-	if (nosePoint2d==null) 
-	{
+	if (nosePoint2d===null) {
 		//console.log('no nose');  
 		return null;
 	}
-	if (headPoint2d==null)
-	{
+	if (headPoint2d===null) {
 		//console.log('no head');  
 		return null;
 	}
-	//todo if any more points turn that into an array or something!
-	
-
+	if (prevPoint2d===null) {
+		return null;		
+	}
+		//todo if any more points turn that into an array or something!
+	//todo bugbugSOON ifAnyOfTheseNullReturn(nosePoint2d,headPoint2d,etc)
 	
 	//ctx.drawTetrahedron()  TODO do this now with drawTriangleAbs()
 	
@@ -251,6 +258,8 @@ Gamer.prototype.realDraw=function(renderer,log2size) //,gameTime)  //todo need t
 	if (prevPoint2d!=null)
 	{
 		//drawLineAbsAbs(ctx,footPoint2d,prevPoint2d);  //tail
+		ctx.stroke();
+		ctx.beginPath();
 		drawTriangleAbs(ctx,headPoint2d,footPoint2d,prevPoint2d,this.color);  
 	}
 	else 

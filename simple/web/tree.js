@@ -3,8 +3,7 @@
 //"importing" the Pre3d math functions...
 var mm = Pre3d.Math;
 
-function transformPoint(renderer,pointh)  //transformPoint ThreeTo2AkaTheCamera  (see standardTransform in bigTriangle.js)
-{
+function transformPoint(renderer,pointh) { //transformPoint ThreeTo2AkaTheCamera  (see standardTransform in bigTriangle.js)
 	if (pointh==null)
 		return null;
 		
