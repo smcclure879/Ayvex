@@ -404,33 +404,31 @@ var DemoUtils = (function() {
 	
 	
 	
-	//bugbugNOW move to debounce.js
-	var deadKeys=[];
-	function debounce(keyNum,proc,args)
-	{
-		if (deadKeys[keyNum]) 
-			return;
-			
-		deadKeys[keyNum]=true;
-		setTimeout(	function(){   //bugbug convert to use a Stepper?
-							deadKeys[keyNum]=true;
-							proc(args);
-							setTimeout( function(){  
-												DemoUtils.KeyTracker.forceKeyUp(keyNum);
-												deadKeys[keyNum]=false;
-											},
-										500);
-								
-							},
-					20 
-				);		
-	}
+     //bugbug move to debounce.js
+     var deadKeys=[];
+     function debounce(keyNum,proc,args) {
+	 if (deadKeys[keyNum]) 
+	     return;
+	 
+	 deadKeys[keyNum]=true;
+	 setTimeout(	function(){   //bugbug convert to use a Stepper?
+	     deadKeys[keyNum]=true;
+	     proc(args);
+	     setTimeout( function(){  
+		 DemoUtils.KeyTracker.forceKeyUp(keyNum);
+		 deadKeys[keyNum]=false;
+	     },
+			 500);
+	     
+	 },
+			20 
+		   );		
+     }
+     
 	
 	
 	
-	
-	function myTick(frameNum)
-	{
+	function myTick(frameNum) {
 		//debugSet("k=" + DemoUtils.KeyTracker.AsString())
 		zstep=0.001;
 		dirtyCam=(frameNum<20 || frameNum%fps==0);  //start out false (most of the time)
@@ -464,32 +462,36 @@ var DemoUtils = (function() {
 		redoTheCam(frameNum);
 	}
 
-	function redoTheCam(frameNum)
-	{
-		if (!dirtyCam) return; //no point
-		
-		//need more heuristics to avoid calling so much!
-		if (typeof opts.updateServerCallback=='function') 
-			opts.updateServerCallback(camera_state);
 
-		//update control panel
-		$("#frameNum").val(frameNum);
-		$("#camX").val(-camera_state.x);
-		$("#camY").val(-camera_state.y);  //bugbug same as the "negate" calls  Try to find a way to avoid
-		$("#camZ").val(-camera_state.z);
-		$("#camRotX").val(deg(camera_state.rotate_x));  //degrees for display only
-		$("#camRotY").val(deg(camera_state.rotate_y));
-		$("#camRotZ").val(deg(camera_state.rotate_z));
+     function redoTheCam(frameNum) {
+	 if (!dirtyCam) 
+	     return; //no point
+	 
+	 //need more heuristics to avoid calling so much!
+	 if (typeof opts.updateServerCallback=='function') 
+	     opts.updateServerCallback(camera_state);
+	 
+	 //update control panel
+	 updatecp("#frameNum", frameNum);
+	 updatecp("#camX", -camera_state.x);
+	 updatecp("#camY", -camera_state.y);  //todo -- same as the "negate" calls  Try to find a way to avoid
+	 updatecp("#camZ", -camera_state.z);
+	 updatecp("#camRotX", deg(camera_state.rotate_x)); //degrees for display only
+	 updatecp("#camRotY", deg(camera_state.rotate_y));
+	 updatecp("#camRotZ", deg(camera_state.rotate_z));
+	 
+	 setupCamera();
+	 draw_callback();
+	 dirtyCam=false;
+     }
 
-		setupCamera();
-		draw_callback();
-		dirtyCam=false;
-	}
-
+     function updatecp(name,val) {
+	 $(name).text(val);
+     }
+     
 	
 
-	function animateIt(frameNum)
-	{
+	function animateIt(frameNum) {
 		oscSize=2.0;  //bugbug these and many other speeds depend on the fps.  separate that!
 		var ang=frameNum/0.5;
 		dx=2.3*oscSize*cos(ang/17);
@@ -522,8 +524,7 @@ var DemoUtils = (function() {
 	}
 	
 	
-	function jumpUp(increment)
-	{
+	function jumpUp(increment) {
 		camera_state.y -= increment;	
 	}	
 	
@@ -682,14 +683,12 @@ var DemoUtils = (function() {
 
 
 	//bugbug move to separate file
-	function KeyTracker()
-	{
+	function KeyTracker() {
 	}
 
 	KeyTracker._daKeys={};
 	KeyTracker.isDown=function(c) {return (c in KeyTracker._daKeys);}
-	KeyTracker.shouldSkip=function(ev) 
-	{
+	KeyTracker.shouldSkip=function(ev) {
 		switch(ev.which)
 		{
 			case 116: return true; // F5
@@ -699,31 +698,26 @@ var DemoUtils = (function() {
 	};
 
 
-	KeyTracker.onKeyDown=function(ev)
-	{
+	KeyTracker.onKeyDown=function(ev) {
 		if (KeyTracker.shouldSkip(ev)) return;
 		KeyTracker._daKeys[ev.which]=1;
 		ev.preventDefault();
 	}
 
 
-	KeyTracker.onKeyUp=function(ev)
-	{
+	KeyTracker.onKeyUp=function(ev) {
 		if (KeyTracker.shouldSkip(ev)) return;
 		KeyTracker.forceKeyUp(ev.which);
 		ev.preventDefault();
 	}
 	
-	KeyTracker.forceKeyUp=function(keyCode)
-	{
+	KeyTracker.forceKeyUp=function(keyCode)	{
 		delete KeyTracker._daKeys[keyCode];
 	}
 
-	KeyTracker.AsString = function()
-	{
+	KeyTracker.AsString = function() {
 		retval = "";
-		for(c=0; c<400; c++)
-		{
+		for(c=0; c<400; c++){
 			retval += (  (KeyTracker.isDown(c))  ?  c+","  :  ""  );
 		}
 		return retval;
@@ -731,15 +725,13 @@ var DemoUtils = (function() {
 
 
 	$(document)
-		.keydown(KeyTracker.onKeyDown)
-		.keyup(  KeyTracker.onKeyUp);
+	.keydown(KeyTracker.onKeyDown)
+	.keyup(  KeyTracker.onKeyUp);
 
 
 	//figure out cleaner way than this
-	function Notify(item,state)
-	{
-		switch(item)
-		{
+	function Notify(item,state) {
+		switch(item) {
 			case "animate": animate=state; break;
 			//case "zipToSelected": zipping=true; break;  //bugbug maybe not needed since caller is commented out
 			case "moveCamera": newCameraState=state; break;
@@ -753,12 +745,12 @@ var DemoUtils = (function() {
 
 
   return {
-    Ticker: Ticker,
-	KeyTracker: KeyTracker,
-    registerMouseListener: registerMouseListener,
-    autoCamera: autoCamera,
-    ToggleToolbar: ToggleToolbar,
-	Notify: Notify
+      Ticker: Ticker,
+      KeyTracker: KeyTracker,
+      registerMouseListener: registerMouseListener,
+      autoCamera: autoCamera,
+      ToggleToolbar: ToggleToolbar,
+      Notify: Notify
   };
 })();
 
