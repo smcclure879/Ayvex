@@ -379,8 +379,7 @@ var DemoUtils = (function() {
 	function doAZip() { zipping=true; zipTo(frameNum); }
 	
 	
-	function pointAtSelected()
-	{
+	function pointAtSelected() {
 		if (selectedItem==null) 
 			return 0;
 		//given cam xyz and selected point xyz, set cam rotY and rotX to point at it. 		
@@ -389,8 +388,7 @@ var DemoUtils = (function() {
 	}
 
 	
-	function pointAt(targetPoint)
-	{
+	function pointAt(targetPoint)	{
 		var delta = Pre3d.Math.subPoints3d(negate(camera_state),targetPoint);
 		var rotX = Math.atan2(delta.y,Math.sqrt(delta.x*delta.x+delta.z*delta.z))    
 		var rotY = Math.atan2(delta.z,delta.x)-halfPi;
@@ -501,8 +499,7 @@ var DemoUtils = (function() {
 		dirtyCam=true;
 	}
 	
-	function zipTo(frameNum)
-	{
+	function zipTo(frameNum) {
 
 		if (!pointAtSelected()) { //if can't point at selected
 			zipping = false;
@@ -512,8 +509,7 @@ var DemoUtils = (function() {
 		 //a=camera_state.rotate_y; camera_state.x += u*cos(a); camera_state.z += u*sin(a); 
 		//renderer.getSelected();
 		//camera always works with negative coordinates?
-		if (mm.quadrancePts(camera_state,negate(selectedItem))<70000)  //lucky that camera_state works as a point!  //bugbug const related to "scale"?
-		{
+		if (mm.quadrancePts(camera_state,negate(selectedItem))<70000) { //lucky that camera_state works as a point!  //bugbug const related to "scale"?
 			var goodDistanceToJumpUp=70;
 			zipping=false;
 			jumpUp(goodDistanceToJumpUp);  //bugbug const
@@ -532,28 +528,24 @@ var DemoUtils = (function() {
 	}	
 	
 	
-	function updateCameraState(frameNum)
-	{
+	function updateCameraState(frameNum) {
 		copyPointData(newCameraState,camera_state);
 		copyAngleData(newCameraState,camera_state);
 		newCameraState=null;  //so it can be used to signal again
 		dirtyCam=true;	
 	}
 	
-	function setHiDimProj(new_mhi)  //return value true means the camera is "dirty"
-	{
+	function setHiDimProj(new_mhi)  { //return value true means the camera is "dirty"
 		return renderer.setHiDimProj(new_mhi);
 	}
 	
-	function copyPointData(src,dst)
-	{
+	function copyPointData(src,dst) {
 		dst.x=src.x;
 		dst.y=src.y;
 		dst.z=src.z;
 	}
 	
-	function copyAngleData(src,dst)
-	{
+	function copyAngleData(src,dst) {
 		dst.rotate_x=src.rotate_x;
 		dst.rotate_y=src.rotate_y;
 		dst.rotate_z=src.rotate_z;
@@ -572,13 +564,11 @@ var DemoUtils = (function() {
     var cur_pending = null;
     function handleCameraMouse(info) {
 	
-	  if (info.wasClick)
-	  {
+	  if (info.wasClick) {
 		selectedItem = find_callback(info.canvas_x,info.canvas_y,true);
 	  }
 	
-      if (!info.is_clicking)
-	  {  
+      if (!info.is_clicking) {  
          return;
 	  }
 

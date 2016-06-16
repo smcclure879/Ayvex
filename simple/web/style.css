@@ -1,0 +1,68 @@
+body {
+    margin-top: 0px;
+    margin-left:0px;
+    margin-right:0px;
+    margin-bottom:0px;
+    background-color: lightblue;
+}
+
+#canvasholder {
+    width: 98%;
+    height: 500px;
+    border: 2px solid #337711;
+}
+
+#c {
+    position:absolute;
+    width: 100%;
+    z-index: 100;
+    border:2px solid #0000DD;
+    background-color:beige;
+}
+
+
+#controlPanel {
+    position:relative;
+    width: 20%;
+    float:right;
+    z-index: 700;
+    font-family: Arial;
+    font-size: 15px;
+    line-height: 25px;
+    color: yellow;
+    font-family:Arial;
+    border:2px solid #007777;
+}
+
+
+
+#copyright {
+    float:right;
+    font-family:Times;
+    color: yellow;
+    border:2px solid #FF7700;
+}
+
+
+#userName {
+    position:absolute;
+    color:yellow;
+}
+
+#readout {
+    position:relative;
+    left:0px;
+    top:88%;
+    width:50%;
+    color:yellow;
+    z-index:600;
+    border: 1px solid #333399;
+}
+
+#legend {
+    display:none;
+    background-color:pink;
+    z-index:-1;
+}
+
+

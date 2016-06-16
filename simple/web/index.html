@@ -1,156 +1,129 @@
 <html>
-<head>
-<title>Higher Dimensional Client</title>
+  <head>
 
-<!-- script src="jquery-1.10.2.min.js"></script   todo   -->
+    <title>Higher Dimensional Client</title>
 
+    <link rel="stylesheet" type="text/css" href="style.css">
 
-<script src="lib/jquery-1.10.2.js"></script>
-<script src="lib/jquery-ui-1.10.4.js"></script> 
-<script src="lib/pre3d.js"></script>
-<script src="lib/queryParams.js"></script>
-<script src="demoUtils.js"></script>
-<script src="cameraAndStuff.js"></script>
-<script src="mc2data.js"></script>
-<script src="memoize.js"></script>
-<script src="stepper.js"></script>
-<script src="tree.js"></script>
-<script src="hasher.js"></script>
-<script src="loadDataFile.js"></script>
-<script src="localSettings.js"></script>
-<script src="DataPoint.js"></script>
-<script src="gamer.js"></script>
-<script src="drawnObject.js"></script>
-<script src="standardTransform.js"></script>
-<script src="buildPointList.js"></script>
-<script src="bigShape.js"></script>
-<script src="bigSign.js"></script>
-<script src="talk.js"></script>
-<script src="conference.js"></script>
-<script src="adapter.js"></script>
+    <script src="lib/jquery-1.10.2.js"></script>
+    <script src="lib/jquery-ui-1.10.4.js"></script> 
+    <script src="lib/pre3d.js"></script>
+    <script src="lib/queryParams.js"></script>
+    <script src="demoUtils.js"></script>
+    <script src="cameraAndStuff.js"></script>
+    <script src="mc2data.js"></script>
+    <script src="memoize.js"></script>
+    <script src="stepper.js"></script>
+    <script src="tree.js"></script>
+    <script src="hasher.js"></script>
+    <script src="loadDataFile.js"></script>
+    <script src="localSettings.js"></script>
+    <script src="DataPoint.js"></script>
+    <script src="gamer.js"></script>
+    <script src="drawnObject.js"></script>
+    <script src="standardTransform.js"></script>
+    <script src="buildPointList.js"></script>
+    <script src="bigShape.js"></script>
+    <script src="bigSign.js"></script>
+    <script src="talk.js"></script>
+    <script src="conference.js"></script>
+    <script src="adapter.js"></script>
+    <script src="simple.js"></script>
 
-<script src="simple.js"></script>
-
-
-
-
-
-</head>
-
-<body>
-
-<div id="userName"></div>
-
-<!-- style="display:none" -->
-<div id="legend" class="ui-dialog-osx" style="display:none;background-color:pink;z-index:-1">
-<br>
-<br>
-<br>
-<br>A & D orbit left and right (must have something selected)
-<br>Y & H orbit up and down
-<br>W & S forward and back
-<br>Q & E strafe left and right
-<br>Arrow Keys move the view around (work like your eyes)
-<br>R & F rise and fall
-<br>T talk (text announce)
-<br>
-<br>only if a person is selected: 
-<br>V start video conference
-<br>
-<br>only if person or object selected: 
-<br>Z zip to selected item
-<br>
-</div>
+  </head>
+  <body>
 
 
-<table border="0" height="90%">
-<tr>
-<td style="width:1000px" oncontextmenu=";return false"> <!-- disallowing context menu in the map surface only! -->
-<canvas width="1000" height="600" id="c" style="border:2px solid #0000DD;background-color:beige;" />
-</td>
-<td valign="top">
-<span style="font-family:Arial">
-<h6>Copyright 2016-- Ayvex Light Industries</h6>
-<br><br>
-pick dataset: 
-<select id="dataset">
-  <option value="mc2map">mc2 world map</option>
-  <option value="frcWld">fractals</option>
-  <option value="hiiDimAnlErq">erquake</option>
-  <option value="hiiDimAnlFlw">flower</option>
-</select>
-<br><br><br>
-<span  style="font-family:Arial;font-size:12">
-<div style="border:2px solid #000000;background-color:lightGray" id="controlPanel">
-<bugbug-not-input type="button" id="flyTo" value="flyTo"/>
-<input type="button" id="instructions" value="instructions" />
+    <div id="legend" class="ui-dialog-osx">
+      <br>
+      <br>
+      <br>
+      <br>A & D orbit left and right (must have something selected)
+      <br>Y & H orbit up and down
+      <br>W & S forward and back
+      <br>Q & E strafe left and right
+      <br>Arrow Keys move the view around (work like your eyes)
+      <br>R & F rise and fall
+      <br>T talk (text announce)
+      <br>
+      <br>only if a person is selected: 
+      <br>V start video conference
+      <br>
+      <br>only if person or object selected: 
+      <br>Z zip to selected item
+      <br>
+    </div>
 
-<input type="checkbox" value="animate" id="animate" checked>ANM</input>
-xMOD:<select id="xanimate">
+
+    <span id="canvasholder" oncontextmenu="return false;"> <!-- disallowing context menu in the map surface only! bugbug can we combine this?-->
+      <canvas id="c" width="1000px" height="600" />
+    </span>
+
+    <div id="readout">
+      user:   <span class="userName">...BUSY...</span>
+      frame:  <span id="frameNum">x</span>
+      camX:   <span id="camX">x</span>
+      camY:   <span id="camY">x</span>
+      camZ:   <span id="camZ">x</span>
+      camRotX: <span id="camRotX">x</span>
+      camRotY: <span id="camRotY">x</span>
+      camRotZ: <span id="camRotZ">x</span>
+    </div>
+
+
+    <video id="localVideo" width="50" height="50" style="" autoplay>localVid bugbug position these better</video>
+    <video id="remoteVideo" width="100" height="100"  style="z-index:5; position:absolute; left:-20px; top: -20px" autoplay>remoteVid</video>
+
+
+
+    <div  id="controlPanel">
+      <div id="copyright" >Copyright 2016-- Ayvex Light Industries</div>
+      <br><br>
+
+      <input type="button" id="instructions" value="instructions" />
+      <br>
+      pick dataset: 
+      <select id="dataset">
+	<option value="mc2map">mc2 world map</option>
+	<option value="frcWld">fractals</option>
+	<option value="hiiDimAnlErq">erquake</option>
+	<option value="hiiDimAnlFlw">flower</option>
+      </select>
+      
+      
+      <bugbug-not-input type="button" id="flyTo" value="flyTo"/>
+
+      <br>
+      <input type="checkbox" value="animate" id="animate" checked>ANM</input>
+      xMOD:
+      <select id="xanimate">
 	<option value="none">none</option>
 	<option value="sequence4">sequence4</option>
 	<!-- <option value="sequence5">sequence5</option> -->
 	<option value="magic">magic</option>
-</select>
+      </select>
+      
+      
+      
+      <!-- 	<input type="button" id="startButton" value="Start" />
+		<input type="button" id="callButton" value="Call" />
+		<input type="button" id="hangupButton" value="Hang Up" /> -->
+      
+      
+      <br>
+      <input type="checkbox" value="lockon" id="lockon" >LCK</input>
+      <input type="checkbox" value="black" id="black" checked>BLK</input>
+      <input type="checkbox" value="grav" id="grav" >GRV</input>
+      <input type="checkbox" value="big" id="big" >BIG</input>
+      <br>
+      tags:<input type="text"/>   <!-- value="<all>" id="tags" style="color:red"/> -->
+      <br>
+      <div id="toolbar"> ......  </div>
+      
 
+    </div> <!--end control panel-->
 
-	<video id="localVideo" width="50" height="50" style="" autoplay>localVid</video>
-	<video id="remoteVideo" width="100" height="100"  style="z-index:5; position:absolute; left:-20px; top: -20px" autoplay>remoteVid</video>
-
-<!-- 	<input type="button" id="startButton" value="Start" />
-	<input type="button" id="callButton" value="Call" />
-	<input type="button" id="hangupButton" value="Hang Up" /> -->
-
-
-<br>
-<input type="checkbox" value="lockon" id="lockon" >LCK</input>
-<input type="checkbox" value="black" id="black" checked>BLK</input>
-<input type="checkbox" value="grav" id="grav" >GRV</input>
-<input type="checkbox" value="big" id="big" >BIG</input>
-</span><br>
-tags:<input type="text"/>   <!-- value="<all>" id="tags" style="color:red"/> -->
-</span>
-</div>
-<br><div id="readout" style="background-color:yellow">
-<table>
-<tr><td colspan="2">readout</td>
-<tr style="font-family:Arial;font-size:12">
-<td>
-frame<input type="text" id="frameNum" value="x"/><br>
-camX<input type="text" id="camX" value="x"/><br>
-camY<input type="text" id="camY" value="x"/><br>
-camZ<input type="text" id="camZ" value="x"/><br>
-</td>
-<td>
-<br>
-camRotX<input type="text" id="camRotX" value="x"/><br>
-camRotY<input type="text" id="camRotY" value="x"/><br>
-camRotZ<input type="text" id="camRotZ" value="x"/><br>
-</td>
-</tr>
-</table>
-<br>
-
-
-
-
-
-
-
-
-
-
-</div>
-<div><br><br><br><br><br><br><br><br><br>
-</div>
-
-<div id="toolbar" style="position: relative; bottom: 0; left: 0; border:1px solid #000000; padding:10px; spacing:10px"> </div>
-</td>
-<!--position: absolute; bottom: 0;-->
-
-</tr>
-</table>
-
-
-</body>
+  </body>
 </html>
+
+

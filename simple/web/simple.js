@@ -1,13 +1,5 @@
 
-//smcclure,ayvexLightIndustries
-
-
-
-
-
-
-
-
+//copyright 2016 smcclure,ayvexLightIndustries
 
 
 var debug=false; 
