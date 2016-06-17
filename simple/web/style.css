@@ -7,14 +7,16 @@ body {
 }
 
 #canvasholder {
-    width: 98%;
+    width: 95%;
+    left: 2px;
     height: 500px;
     border: 2px solid #337711;
 }
 
 #c {
     position:absolute;
-    width: 100%;
+    width: 99%;
+    height:99%;
     z-index: 100;
     border:2px solid #0000DD;
     background-color:beige;
