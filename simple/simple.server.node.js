@@ -8,6 +8,46 @@ var path = require('path');
 var ext = /[\w\d_-]+\.[\w\d]+$/;
 var util = require("util");
 
+//bugbug move this all to a wrapFs module
+
+
+var functionExists = function(f) {
+    return (typeof f === 'function');
+};
+
+
+
+var fsExists = function (filePath, callback) {
+    debugger;
+    if ( functionExists( fs.exists ) ) 
+	return fs.exists( filePath, callback );
+    if ( functionExists( fs.access ) )
+	return fs.access(  filePath, fs.R_OK,  function(err){ callback(!err); }  );
+    console.log("err1122i:");
+};
+
+
+
+
+// var fsAccess
+//     fs.access(filePath, fs.R_OK, function (err) {
+// 	if (err) {
+// 	    console.log("condition1923:"+err);
+// 	    callback(false);
+// 	} else {
+// 	    callback(true);
+// 	}
+//     });
+    
+
+// };
+
+
+
+
+
+
+
 
 		 
 
@@ -28,9 +68,7 @@ Object.prototype.removeStart = function (start) {
 
 
 Object.prototype.contains = function (sought) {
-
     return ( (this+"").indexOf(""+sought) >= 0 );
-
 }
 
 
@@ -160,7 +198,7 @@ function doFancyApi(req,res) {    // strip off ?foo=bar so that the file can be 
 
 
 function doStaticBase(filePath, res) {
-    fs.exists(filePath, function (exists) {
+    fsExists(filePath, function (exists) {
 	if (exists) {
 	    console.log("found:"+filePath);
 	    res.writeHead(200, {'Content-Type': getContentType(filePath)});
@@ -200,7 +238,7 @@ function doStaticRedir(req,res) {
 
 
 //     } else if (ext.test(req.url)) {
-//         fs.exists(path.join(__dirname, req.url), function (exists) {
+//         fsExists(path.join(__dirname, req.url), function (exists) {
 //             if (exists) {
 //                 res.writeHead(200, {'Content-Type': 'text/html'});
 //                 fs.createReadStream('index.html').pipe(res);
@@ -227,26 +265,26 @@ http.createServer(function (req, res) {
 
     if (path.startsWith("/api/")) {
 
-		return doApi(req,res);
+	return doApi(req,res);
 
     } else if (path.contains("?")) {
 
-		return doFancyApi(req,res);
+	return doFancyApi(req,res);
 
     } else if (path.startsWith("/web/")) {
 
-		return doStatic(req,res);
+	return doStatic(req,res);
 
     } else if (path=="/favicon.ico") {
 
-		return doStaticRedir(req,res);
-
+	return doStaticRedir(req,res);
+	
     } else {
-		console.log("err320:"+path);  //these tend to become static redir
+	console.log("err320:"+path);  //these tend to become static redir
 
-		res.writeHead(200, {'Content-Type': 'text/plain'});
-		res.end('Hello World---base\n');
-		return;
+	res.writeHead(200, {'Content-Type': 'text/plain'});
+	res.end('Hello World---base\n');
+	return;
     }
 
 }).listen(8081);
