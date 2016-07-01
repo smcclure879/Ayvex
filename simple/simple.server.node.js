@@ -1,49 +1,49 @@
 
 
-
-
 var http = require('http');
 var fs = require('fs');
 var path = require('path');
 var ext = /[\w\d_-]+\.[\w\d]+$/;
 var util = require("util");
 
-//bugbug move this all to a wrapFs module
 
+//todo move this all to a wrapFs module
 
 var functionExists = function(f) {
     return (typeof f === 'function');
 };
 
-
-
-var fsExists = function (filePath, callback) {
-    debugger;
-    if ( functionExists( fs.exists ) ) 
-	return fs.exists( filePath, callback );
-    if ( functionExists( fs.access ) )
-	return fs.access(  filePath, fs.R_OK,  function(err){ callback(!err); }  );
-    console.log("err1122i:");
+var isEmptyObject = function(o) {
+    return ( Object.keys(o).length == 0 );
 };
 
+var noFsCheck = function(typeOfCheck) {
+    if (!isEmptyObject(fs)) return;
+    if (typeOfCheck != 'fatal') return;
 
+    console.log("err:empty fs obj!!");
+    process.exit(-4762);
+};
+noFsCheck('fatal');
 
-
-// var fsAccess
-//     fs.access(filePath, fs.R_OK, function (err) {
-// 	if (err) {
-// 	    console.log("condition1923:"+err);
-// 	    callback(false);
-// 	} else {
-// 	    callback(true);
-// 	}
-//     });
-    
-
-// };
-
-
-
+//this is dumb dumb dumb should be a utility module or something
+var fsExists = (function() {
+    if ( functionExists( fs.exists ) ) 
+	return fs.exists;
+    if ( functionExists( fs.access ) )
+	return function(filePath,callback) {
+	    fs.access(  filePath, fs.R_OK,  function(err){ callback(!err); }  ); 
+	};
+    if ( functionExists( fs.stat ) )
+	return function(filePath,callback) {
+	    fs.stat(  filePath, function (err, stats) { 
+		if (err) 
+		    callback(false);
+		else 
+		    callback(stats.isFile());
+	    });
+	};
+})();
 
 
 
@@ -114,7 +114,7 @@ function doGet(req,res) {
 	if (url=="/api/user/") {
 	    writeNormalHead(res);
 	    var userList = getUserList();
-            console.log(userList);  //bugbug
+            //console.log("users:"+userList);
             res.end(userList);
 	} else if (url.startsWith("/api/user/")) {
 	    var userName = url.removeStart("/api/user/");
@@ -161,7 +161,7 @@ function doPut(req,res) {
 		    users[userName]=body;
                     console.log("wrote user="+userName+" "+dump(users));
 		    writeNormalHead(res);
-		    res.end('{"response":"putOK"}\n');    //bugbug think we need to return id
+		    res.end('{"response":"putOK"}\n');    //todo think we need to return id
 		});
 	} else {
 		res.writeHead(404,  {'Content-Type': 'application/json'});
@@ -256,29 +256,16 @@ function doStaticRedir(req,res) {
 
 http.createServer(function (req, res) {
 
-    debugger;
-
     var path=""+req.url;
 
-
-    //console.log(path);
-
     if (path.startsWith("/api/")) {
-
 	return doApi(req,res);
-
     } else if (path.contains("?")) {
-
 	return doFancyApi(req,res);
-
     } else if (path.startsWith("/web/")) {
-
 	return doStatic(req,res);
-
     } else if (path=="/favicon.ico") {
-
 	return doStaticRedir(req,res);
-	
     } else {
 	console.log("err320:"+path);  //these tend to become static redir
 

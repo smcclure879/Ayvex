@@ -1,4 +1,4 @@
 #!/bin/sh
-nodejs simple.server.node.js &
+nodejs simple.server.node.js 
 
 
