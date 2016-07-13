@@ -60,68 +60,68 @@ function pushAll(ofThese,intoThese)  {
 
 //this works, but the script won't be live until you yield the thread for a while.  call it carefully!
 function addScript(filename) {
-	//a neat trick from  http://www.javascriptkit.com/javatutors/loadjavascriptcss.shtml  
-	var newScriptTag=document.createElement('script')
-	newScriptTag.setAttribute("type","text/javascript")
-	newScriptTag.setAttribute("src", filename)
-	document.getElementsByTagName("head")[0].appendChild(newScriptTag);
+    //a neat trick from  http://www.javascriptkit.com/javatutors/loadjavascriptcss.shtml  
+    var newScriptTag=document.createElement('script')
+    newScriptTag.setAttribute("type","text/javascript")
+    newScriptTag.setAttribute("src", filename)
+    document.getElementsByTagName("head")[0].appendChild(newScriptTag);
 }	
 
 function makeBigMap(data) {
-	var path;
-	var jj=0;  //for the inner loop inside one path
-	var kk=0;  //index into the outputs
-	for(var ii=0, limit=data.length; ii<limit; ++ii) {
-		pt=data[ii];
-		if (ii==0 || pt[3]!='') { //there is text so start a new path
-			if (path) { //store the old path if there is one
-				theDrawings[kk++]=path;
-			}
-			path = new Pre3d.Path();
-			path.starting_point = 0;  //we make this standard
-			path.points = [ ];  
-			path.curves = [ ];
-			jj=0;
-		}
-		
-		//debugAdd(ii);
-		var pt = data[ii];
-		path.points[jj]={x:pt[0],y:pt[1],z:pt[2],t:pt[3]};   
-		path.curves[jj]=new Pre3d.Curve(jj,jj,jj);
-		path.color=darkBrown;
-		path.width=2;
-		jj++;
+    var path;
+    var jj=0;  //for the inner loop inside one path
+    var kk=0;  //index into the outputs
+    for(var ii=0, limit=data.length; ii<limit; ++ii) {
+	pt=data[ii];
+	if (ii==0 || pt[3]!='') { //there is text so start a new path
+	    if (path) { //store the old path if there is one
+		theDrawings[kk++]=path;
+	    }
+	    path = new Pre3d.Path();
+	    path.starting_point = 0;  //we make this standard
+	    path.points = [ ];  
+	    path.curves = [ ];
+	    jj=0;
 	}
 	
-	theDrawings.push(path);  //close it out
+	//debugAdd(ii);
+	var pt = data[ii];
+	path.points[jj]={x:pt[0],y:pt[1],z:pt[2],t:pt[3]};   
+	path.curves[jj]=new Pre3d.Curve(jj,jj,jj);
+	path.color=darkBrown;
+	path.width=2;
+	jj++;
+    }
+    
+    theDrawings.push(path);  //close it out
 }
 
 function addTreesAndWater(paths) {
-	landmarkSpacing=200;  //todo consts throughout
-	abs=Math.abs;
-	for(var xx=-20000; xx<20000; xx+=landmarkSpacing) {
-		for(var zz=-20000; zz<20000; zz+=landmarkSpacing) {
-			var d=abs(xx)+abs(zz) + 5;
-			var h8=Hasher.consistentHash(['tree',xx,zz])%256;
-			if (hRndN(d,h8)<80)   paths.push(new Tree(xx,floor,zz,'calculate'));
-			if (hRndN(d,h8)<200)   paths.push(waterMarker(xx+hRndN(500,h8),zz+hRndN(500,h8)));  //todo consts
-		}
+    landmarkSpacing=200;  //todo consts throughout
+    abs=Math.abs;
+    for(var xx=-20000; xx<20000; xx+=landmarkSpacing) {
+	for(var zz=-20000; zz<20000; zz+=landmarkSpacing) {
+	    var d=abs(xx)+abs(zz) + 5;
+	    var h8=Hasher.consistentHash(['tree',xx,zz])%256;
+	    if (hRndN(d,h8)<80)   paths.push(new Tree(xx,floor,zz,'calculate'));
+	    if (hRndN(d,h8)<200)   paths.push(waterMarker(xx+hRndN(500,h8),zz+hRndN(500,h8)));  //todo consts
 	}
-	return paths;
+    }
+    return paths;
 }
 
 
 function addMarkersAndWater(paths) {
-	landmarkSpacing=200;  //todo consts throughout
-	abs=Math.abs;
-	for( var xx=-20000; xx<20000; xx+=landmarkSpacing ) {
-		for( var zz=-20000; zz<20000; zz+=landmarkSpacing ) {
-			var d=abs(xx)+abs(zz);
-			if ( d>1000 && d<4000 && badRnd(d)<800 )   paths.push(marker(xx,zz));
-			if ( d>2000 && badRnd(d)<2000 )            paths.push(waterMarker(xx+badRnd(500),zz+badRnd(500)));
-		}
+    landmarkSpacing=200;  //todo consts throughout
+    abs=Math.abs;
+    for( var xx=-20000; xx<20000; xx+=landmarkSpacing ) {
+	for( var zz=-20000; zz<20000; zz+=landmarkSpacing ) {
+	    var d=abs(xx)+abs(zz);
+	    if ( d>1000 && d<4000 && badRnd(d)<800 )   paths.push(marker(xx,zz));
+	    if ( d>2000 && badRnd(d)<2000 )            paths.push(waterMarker(xx+badRnd(500),zz+badRnd(500)));
 	}
-	return paths;
+    }
+    return paths;
 }
 
 function addCoordinateVectors(paths) {

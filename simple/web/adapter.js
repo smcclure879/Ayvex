@@ -76,7 +76,7 @@ if (navigator.mozGetUserMedia) {
     return [];
   };
 } else if (navigator.webkitGetUserMedia) {
-  console.log("This appears to be Chrome");
+  //console.log("This appears to be Chrome");
 
   webrtcDetectedBrowser = "chrome";
   webrtcDetectedVersion =
