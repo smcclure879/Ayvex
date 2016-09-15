@@ -1,0 +1,52 @@
+<?xml version="1.0" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" 
+  "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg 
+
+  width="58mm" height="33mm" version="1.1"
+     viewBox="0 0 58 33" xmlns="http://www.w3.org/2000/svg">
+  
+  <!-- The dimensions for this rectange are given in user space, but
+       due to the viewBox attribute having the same values as the
+       document size specified in millimeters, the user units are
+       millimeters. -->
+
+
+
+  <defs>
+    <g id="logo">  <!-- designed to fit more-than-square into the corner and be chopped -->
+      <text fill="black" >
+	<tspan id="sting" y="0.7mm" font-size="2.0mm" font-family="serif" >
+	  Ayvex
+	</tspan>
+	<tspan id="tag"   y="0.6mm" font-size="0.7mm" font-family="serif" >
+	  LIGHT INDUSTRIES LLC
+	</tspan>
+      </text>
+    </g>
+
+
+    <g id="contact">
+      <text>
+	<tspan font-size="0.6mm" x="0mm" font-family="sans-serif">
+	  Contact______________________________ Pass_______________________
+	</tspan>
+      </text>
+    </g>
+
+
+
+    <g id="onecard">
+      <rect x="0" y="0" width="57" height="32" fill-opacity="0.0" stroke-width="0.1px" stroke="blue" stroke-opacity="1" foobarwhatisrightfixeverywhere="?" />
+    </g>
+  
+  </defs>
+
+  
+
+  <use xlink:href="#onecard" x="1" y="0" />
+  <use xlink:href="#logo" x="1" y="0" />
+  <use xlink:href="#contact" x="1" y="31" />
+
+
+</svg>
