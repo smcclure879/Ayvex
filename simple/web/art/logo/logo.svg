@@ -1,52 +1,69 @@
 <?xml version="1.0" standalone="no"?>
 <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" 
   "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
-<svg 
 
-  width="58mm" height="33mm" version="1.1"
-     viewBox="0 0 58 33" xmlns="http://www.w3.org/2000/svg">
+<svg version="1.1" 
+     xmlns="http://www.w3.org/2000/svg" 
+     xmlns:xlink="http://www.w3.org/1999/xlink"
+
+     width="214mm" height="278mm" viewBox="0 0 214 278" >
+  <!-- slightly smaller than the 215.9 by 279.4 mm for letter size paper -->
+
   
-  <!-- The dimensions for this rectange are given in user space, but
-       due to the viewBox attribute having the same values as the
-       document size specified in millimeters, the user units are
-       millimeters. -->
-
-
-
   <defs>
+
+    <g id="lettersize" >
+      <rect x="0" y="0" width="214" height="278" fill-opacity="0" stroke-width="0.1mm" stroke="blue" stroke-opacity="0.5" />
+    </g>
+
+    <g id="blankcard">
+      <rect x="0" y="0" width="89" height="51" fill-opacity="0.0" stroke-width="0.05mm" stroke="blue" stroke-opacity="0.3" />
+    </g>
+
     <g id="logo">  <!-- designed to fit more-than-square into the corner and be chopped -->
-      <text fill="black" >
-	<tspan id="sting" y="0.7mm" font-size="2.0mm" font-family="serif" >
+      <text fill="black" fill-opacity="0.2" >
+	<tspan id="sting" y="1.2mm" font-size="2.7mm" font-family="serif" >
 	  Ayvex
 	</tspan>
-	<tspan id="tag"   y="0.6mm" font-size="0.7mm" font-family="serif" >
+	<tspan id="tag"   y="0.45mm" font-size="1.2mm" font-family="serif" font-stretch="wider">
 	  LIGHT INDUSTRIES LLC
 	</tspan>
       </text>
     </g>
 
-
     <g id="contact">
-      <text>
-	<tspan font-size="0.6mm" x="0mm" font-family="sans-serif">
-	  Contact______________________________ Pass_______________________
+      <text font-size="0.6mm" y="5.1mm" font-family="sans-serif">
+	<tspan x="0">
+	  smcclure879@yahoo.com
+	</tspan>
+        <tspan x="44">
+	  PassCode:
 	</tspan>
       </text>
     </g>
 
-
-
-    <g id="onecard">
-      <rect x="0" y="0" width="57" height="32" fill-opacity="0.0" stroke-width="0.1px" stroke="blue" stroke-opacity="1" foobarwhatisrightfixeverywhere="?" />
-    </g>
   
+    <g id="card" >
+      <use xlink:href="#blankcard" x="0" y="0" />
+      <use xlink:href="#logo" x="1" y="3.5" />
+      <use xlink:href="#contact" x="1" y="31" />
+    </g>
+
+
+    <g id="row" >
+      <use xlink:href="#card" transform="translate(12,0)" />
+      <use xlink:href="#card" transform="translate(112,0)" />
+    </g>
+    
   </defs>
 
-  
 
-  <use xlink:href="#onecard" x="1" y="0" />
-  <use xlink:href="#logo" x="1" y="0" />
-  <use xlink:href="#contact" x="1" y="31" />
 
+  <use xlink:href="#lettersize" x="0" y="0" />
+  <use xlink:href="#row" x="0" y="5" />
+  <use xlink:href="#row" x="0" y="60" />
+  <use xlink:href="#row" x="0" y="115" />
+  <use xlink:href="#row" x="0" y="170" />
+  <use xlink:href="#row" x="0" y="225" />
 
 </svg>
