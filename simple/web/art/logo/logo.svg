@@ -20,7 +20,8 @@
       <rect x="0" y="0" width="89" height="51" fill-opacity="0.0" stroke-width="0.05mm" stroke="blue" stroke-opacity="0.3" />
     </g>
 
-    <g id="logo">  <!-- designed to fit more-than-square into the corner and be chopped -->
+    <g id="logo">  
+      <line x1="1" y1="-1" x2="86" y2="-1" stroke="black" stroke-opacity="0.2" stroke-width="0.2mm" />
       <text fill="black" fill-opacity="0.2" >
 	<tspan id="sting" y="1.2mm" font-size="2.7mm" font-family="serif" >
 	  Ayvex
@@ -32,11 +33,11 @@
     </g>
 
     <g id="contact">
-      <text font-size="0.6mm" y="5.1mm" font-family="sans-serif">
-	<tspan x="0">
+      <text y="5.1mm" font-family="sans-serif">
+	<tspan x="0" font-size="0.8mm">
 	  smcclure879@yahoo.com
 	</tspan>
-        <tspan x="44">
+        <tspan x="56" dy="-0.5" font-size="0.6mm">
 	  PassCode:
 	</tspan>
       </text>
@@ -65,5 +66,10 @@
   <use xlink:href="#row" x="0" y="115" />
   <use xlink:href="#row" x="0" y="170" />
   <use xlink:href="#row" x="0" y="225" />
+
+
+
+
+  <foopath d="M1 2 L40 2z" stroke="black" stroke-width="2"/>
 
 </svg>
