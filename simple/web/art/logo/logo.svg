@@ -8,21 +8,35 @@
 
      width="214mm" height="278mm" viewBox="0 0 214 278" >
   <!-- slightly smaller than the 215.9 by 279.4 mm for letter size paper -->
-
   
+
+  <style> 
+    /* <![CDATA[ */
+    .noprint {
+        fill-opacity: 0.0;
+	stroke: black;
+	stroke-width: 0.05mm;
+	stroke-opacity: 0.2;
+    }
+    /* ]]> */
+  </style>
+
+
+
+
   <defs>
 
     <g id="lettersize" >
-      <rect x="0" y="0" width="214" height="278" fill-opacity="0" stroke-width="0.1mm" stroke="blue" stroke-opacity="0.5" />
+      <rect x="0" y="0" width="214" height="278" class="noprint"/>
     </g>
 
     <g id="blankcard">
-      <rect x="0" y="0" width="89" height="51" fill-opacity="0.0" stroke-width="0.05mm" stroke="blue" stroke-opacity="0.3" />
+      <rect x="0" y="0" width="89" height="51" class="noprint"/>
     </g>
 
     <g id="logo">  
-      <line x1="1" y1="-1" x2="86" y2="-1" stroke="black" stroke-opacity="0.2" stroke-width="0.2mm" />
-      <text fill="black" fill-opacity="0.2" >
+      <line x1="1" y1="-1" x2="86" y2="-1" stroke="black" stroke-opacity="0.45" stroke-width="0.2mm" />
+      <text fill="black" fill-opacity="0.45" >
 	<tspan id="sting" y="1.2mm" font-size="2.7mm" font-family="serif" >
 	  Ayvex
 	</tspan>
@@ -51,25 +65,23 @@
     </g>
 
 
-    <g id="row" >
-      <use xlink:href="#card" transform="translate(12,0)" />
-      <use xlink:href="#card" transform="translate(112,0)" />
+    <g id="row" transform="translate(12,0)">
+      <use xlink:href="#card"  />
+      <use xlink:href="#card" transform="translate(89,0)" />
     </g>
     
   </defs>
 
+ 
+ <use xlink:href="#lettersize" x="0" y="0" />
 
+ <g id="printmargins" transform="translate(0,3)">
+   <use xlink:href="#row" x="0" y="0" />
+   <use xlink:href="#row" x="0" y="51" />
+   <use xlink:href="#row" x="0" y="102" />
+   <use xlink:href="#row" x="0" y="153" />
+   <use xlink:href="#row" x="0" y="204" />
+ </g>
 
-  <use xlink:href="#lettersize" x="0" y="0" />
-  <use xlink:href="#row" x="0" y="5" />
-  <use xlink:href="#row" x="0" y="60" />
-  <use xlink:href="#row" x="0" y="115" />
-  <use xlink:href="#row" x="0" y="170" />
-  <use xlink:href="#row" x="0" y="225" />
-
-
-
-
-  <foopath d="M1 2 L40 2z" stroke="black" stroke-width="2"/>
-
+ 
 </svg>
