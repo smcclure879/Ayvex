@@ -49,16 +49,58 @@
     <g id="contact">
       <text y="5.1mm" font-family="sans-serif">
 	<tspan x="0" font-size="0.8mm">
-	  smcclure879@yahoo.com
+	  ayvexLLC@gmail.com
 	</tspan>
-        <tspan x="56" dy="-0.5" font-size="0.6mm">
+        <tspan dx="10" dy="-0.5" font-size="0.6mm">
 	  PassCode:
 	</tspan>
       </text>
     </g>
 
+    <g id="cloud">
+      <text  font-family="serif" fill="black" fill-opacity="0.15" font-size="1.8mm"  x="0mm" y="0mm">
+	<tspan x="0mm" y="2mm" width="45mm">
+	  machines whispered to, plans made right, disasters averted
+	</tspan>
+	<tspan x="0mm" y="4mm" width="45mm">
+	  Physical protoyping. Mechanical reckoning. 
+	</tspan>
+	<tspan x="0mm" y="6mm" width="45mm">
+	  The big picture.  The details.  Clearing the critical pathway.
+	</tspan>
+	<tspan x="0mm" y="8mm" width="45mm">
+	  Preventing &quot;Ready Player One&quot;. Open Distributed VR infrastructure. 
+	</tspan>
+	<tspan x="0mm" y="10mm" width="45mm"> 
+	  The hard made easy. The impossible made possible. SUPER GENIUS.
+	</tspan>
+	<tspan x="0mm" y="12mm" width="45mm">
+	  Blue sky Envisioneering Services.  Emperor Norton Consulting Solutions.  
+	</tspan>
+	<tspan x="0mm" y="14mm" width="45mm">
+	  Electronics, Math, Physics, Geology, Genetics, Programming.
+	</tspan>
+	<tspan x="0mm" y="16mm" width="45mm">
+	  Geopolitical Upheavals reversed. Time Machines Designed. 
+	</tspan>
+	<tspan x="0mm" y="18mm" width="45mm">
+	  Failure modes identified and placated. Systemantics unravelled.
+	</tspan>
+	<tspan x="0mm" y="20mm" width="45mm">
+	  Parameter spaces explored. Suppository writing specialist.
+	</tspan>
+	<tspan x="0" y="22mm" width="45mm" font-size="4mm" dy="3">
+	  Confusions clarified.
+	</tspan>
+      </text>
+    </g>
+      
+
+
+
   
     <g id="card" >
+      <use xlink:href="#cloud" x="2" y="18" transform="scale(0.44)"/>
       <use xlink:href="#blankcard" x="0" y="0" />
       <use xlink:href="#logo" x="1" y="3.5" />
       <use xlink:href="#contact" x="1" y="31" />
