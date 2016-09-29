@@ -1,6 +1,7 @@
 
 
 var http = require('http');
+var https = require('https');
 var fs = require('fs');
 var path = require('path');
 var ext = /[\w\d_-]+\.[\w\d]+$/;
@@ -252,10 +253,7 @@ function doStaticRedir(req,res) {
 
 
 
-
-
-
-http.createServer(function (req, res) {
+function mainHandler (req, res) {
 
     var path=""+req.url;
 
@@ -274,9 +272,28 @@ http.createServer(function (req, res) {
 	res.end('Hello World---base\n');
 	return;
     }
+}
 
-}).listen(8081);
 
-// Console will print the message
-console.log('Server running at http://127.0.0.1:8081/');
 
+//  new section --  build another server that does same but with encryption
+/*
+ from letsEncrypt.... 
+   All generated keys and issued certificates can be found in
+      /etc/letsencrypt/live/$domain
+   Rather than copying, please point your (web) server 
+   configuration directly to those files (or create symlinks).
+   During the renewal, 
+      /etc/letsencrypt/live is updated with the latest necessary files.
+*/
+
+const tlsOptions = {
+    key:  fs.readFileSync('/etc/letsencrypt/live/ayvexllc.com/privkey.pem'),
+    cert: fs.readFileSync('/etc/letsencrypt/live/ayvexllc.com/fullchain.pem')
+};
+
+  
+http.createServer(mainHandler).listen(80);  //http
+https.createServer(tlsOptions,mainHandler).listen(443);  //https
+
+console.log('Both servers started');
