@@ -777,49 +777,49 @@ function updateServerCallback(camera_state) {
 			alert('err1047u: put bad'+errorThrown)+putUrl+""+data;
 		},
 		complete: function(jqResp) {
-			serverCallbackLocked=false;  //open again one way or another
+		    serverCallbackLocked=false;  //open again one way or another
 		}
 	});
+    
+    // call  http://WHATEVER/api/getCurrentUsers
+    //and put those users into "theDrawings" 
+    //need to get time of each user's writing from server, to show fading-of-color or ??
+    
+    $.ajax({
+	type: "GET",
+	url: getCurrentUsersUrl(),
+	contentType: "application/json",
+	success: function(data) {
+	    updateDynamicObjects(data); //it better be a list of userDocs
+	},
+	error: function(resp) {
+	    if (resp.status==404)
+		theUser._rev=1;  //which = a NEW 
+	    else
+		alert("err523x: do not know how to deal with this error"+resp.status+"  "+JSON.stringify(resp));
+	},
+	complete: function(jqResp) {
+	}
 	
-	// call  http://WHATEVER/api/getCurrentUsers
-	//and put those users into "theDrawings" 
-	//need to get time of each user's writing from server, to show fading-of-color or ??
-		
-	$.ajax({
-		type: "GET",
-		url: getCurrentUsersUrl,
-		contentType: "application/json",
-		success: function(data) {
-			updateDynamicObjects(data); //it better be a list of userDocs
-		},
-		error: function(resp) {
-			if (resp.status==404)
-				theUser._rev=1;  //which = a NEW 
-			else
-				alert("err523x: do not know how to deal with this error"+resp.status+"  "+JSON.stringify(resp));
-		},
-		complete: function(jqResp) {
-		}
-		
-	});	
+    });	
 }
 
 
 function deString(data) {  //might be object, might be dehydrated JSON object
-	var ttt=typeof data;
-	if (ttt=='string') return $.parseJSON(data);
-	if (ttt=='object') return data;
-	return {"badData":"err1115t"};
+    var ttt=typeof data;
+    if (ttt=='string') return $.parseJSON(data);
+    if (ttt=='object') return data;
+    return {"badData":"err1115t"};
 }	
 
 
 var dynamicObjects={};  //eventually needs to be some space partitioning class  kd-dataStructure?  todo
 function updateDynamicObjects(data) {
-	var obj = deString(data);  
-	var count=Object.keys(obj).count;
-	$.each(obj,function(prop,val) {
-		updateDynamicObjectFromServerData(val);
-	});
+    var obj = deString(data);  
+    var count=Object.keys(obj).count;
+    $.each(obj,function(prop,val) {
+	updateDynamicObjectFromServerData(val);
+    });
 }
 
 function isSelf(item) {
@@ -913,17 +913,30 @@ function unquote(x) {
 //}
 
 //todo figure both of these programmatically...find all "localhost" and fix them
-var server=window.location.hostname;  //todo must figure dynamically
-var port = "8081";
+var protocol = window.location.protocol;
+var server=window.location.hostname; //todo must figure dynamically
+var port = ""+window.location.port;
 //var database = "api";
 //var viewLocation = "_design/views/_view";
 //todo all the above from config???
 
-var databaseUrl = "http://"+server+":"+port+"/api";
-var getCurrentUsersUrl = databaseUrl+"/user/";  //like doing a directory query
+
+function getProtocol() {
+    return window.location.protocol;
+}
+
+function getDatabaseUrl () {
+    return getProtocol()+"//"+server+""+port+"/api";  //bugbug simplify
+}
+
+function getCurrentUsersUrl() {
+    var retval = getDatabaseUrl()+"/user/";  //like doing a directory query
+    //alert(retval);  bugbug simplify this function
+    return retval;
+}
 
 function getUserDocUrl(user) {
-	return databaseUrl+"/user/"+user.userId;
+    return getDatabaseUrl()+"/user/"+user.userId;
 }
 
 //this user is probably "theUser"...but maybe we change our mind later?
