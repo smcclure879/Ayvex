@@ -1,4 +1,4 @@
-<?xml version="1.0" standalone="no"?>
+<?xml version="1.0" encoding="utf-8" standalone="no" ?>
 <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" 
   "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
 
@@ -58,9 +58,9 @@
     </g>
 
     <g id="cloud">
-      <text  font-family="serif" fill="black" fill-opacity="0.15" font-size="1.8mm"  x="0mm" y="0mm">
+      <text  font-family="serif" fill="black" fill-opacity="0.15" font-size="1.8mm"  x="0mm" y="0mm" width="45mm" >
 	<tspan x="0mm" y="2mm" width="45mm">
-	  machines whispered to, plans made right, disasters averted
+	  Machines whispered to. Plans made right. Disasters averted.
 	</tspan>
 	<tspan x="0mm" y="4mm" width="45mm">
 	  Physical protoyping. Mechanical reckoning. 
@@ -75,16 +75,16 @@
 	  The hard made easy. The impossible made possible. SUPER GENIUS.
 	</tspan>
 	<tspan x="0mm" y="12mm" width="45mm">
-	  Blue sky Envisioneering Services.  Emperor Norton Consulting Solutions.  
+	  Blue Sky Envisioneering Services.  Emperor Norton Consulting Solutions.  
 	</tspan>
 	<tspan x="0mm" y="14mm" width="45mm">
 	  Electronics, Math, Physics, Geology, Genetics, Programming.
 	</tspan>
 	<tspan x="0mm" y="16mm" width="45mm">
-	  Geopolitical Upheavals reversed. Time Machines Designed. 
+	  Geopolitical Upheavals reversed. Vintage Time Machines Repaired. 
 	</tspan>
 	<tspan x="0mm" y="18mm" width="45mm">
-	  Failure modes identified and placated. Systemantics unravelled.
+	  Failure modes identified and placated. Systemantics tamed.
 	</tspan>
 	<tspan x="0mm" y="20mm" width="45mm">
 	  Parameter spaces explored. Suppository writing specialist.
