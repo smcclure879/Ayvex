@@ -287,13 +287,26 @@ function mainHandler (req, res) {
       /etc/letsencrypt/live is updated with the latest necessary files.
 */
 
-const tlsOptions = {
-    key:  fs.readFileSync('/etc/letsencrypt/live/ayvexllc.com/privkey.pem'),
-    cert: fs.readFileSync('/etc/letsencrypt/live/ayvexllc.com/fullchain.pem')
-};
 
-  
+
 http.createServer(mainHandler).listen(80);  //http
-https.createServer(tlsOptions,mainHandler).listen(443);  //https
+console.log('started http:');
 
-console.log('Both servers started');
+
+var keyPath   = '/etc/letsencrypt/live/ayvexllc.com/privkey.pem';
+var chainPath = '/etc/letsencrypt/live/ayvexllc.com/fullchain.pem';
+
+if (fsExists(keyPath) && fsExists(chainPath)) {
+    const tlsOptions = {
+	key:  fs.readFileSync(keyPath),
+	cert: fs.readFileSync(chainPath)
+    };
+    https.createServer(tlsOptions,mainHandler).listen(443);  //https
+    console.log('started httpSSS');
+} else {
+    console.log('SKIPPING https');
+}  
+
+
+
+
