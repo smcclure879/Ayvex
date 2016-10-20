@@ -35,15 +35,32 @@ var fsExists = (function() {
 	return function(filePath,callback) {
 	    fs.access(  filePath, fs.R_OK,  function(err){ callback(!err); }  ); 
 	};
-    if ( functionExists( fs.stat ) )
-	return function(filePath,callback) {
-	    fs.stat(  filePath, function (err, stats) { 
-		if (err) 
-		    callback(false);
-		else 
-		    callback(stats.isFile());
-	    });
-	};
+    //if ( functionExists( fs.stat )  )  //been causing problems  with stats arg not being passed!
+    //    return function(filePath,callback) {
+    //	    fs.stat(  filePath, function (err, stats) { 
+    //		if (err) 
+    //		    callback(false);
+    //		else 
+    //		    callback(stats.isFile());
+    //	    });
+    //	};
+    return function(filePath,callback) {
+	debugger;
+	fs.open(filePath, 'r', function(err, fd) {
+	    if (err) {
+		callback(false);
+		//if (err.code === "ENOENT") {
+		//    callback(false);
+		//} else {
+		//    callback(true);
+		//}
+	    } else {
+		callback(true);
+	    }
+	});
+
+    }
+    
 })();
 
 
@@ -296,15 +313,15 @@ console.log('started http:');
 var keyPath   = '/etc/letsencrypt/live/ayvexllc.com/privkey.pem';
 var chainPath = '/etc/letsencrypt/live/ayvexllc.com/fullchain.pem';
 
-if (fsExists(keyPath) && fsExists(chainPath)) {
+try {
     const tlsOptions = {
 	key:  fs.readFileSync(keyPath),
 	cert: fs.readFileSync(chainPath)
     };
     https.createServer(tlsOptions,mainHandler).listen(443);  //https
     console.log('started httpSSS');
-} else {
-    console.log('SKIPPING https');
+} catch (ex) {
+    console.log('SKIPPING https-->'+ex);
 }  
 
 
