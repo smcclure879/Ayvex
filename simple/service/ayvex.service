@@ -1,0 +1,11 @@
+[Unit]
+Description=Ayvex Free VR web server
+After=multi-user.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/nodejs /home/pi/gitstuff/ayvex/simple/simple.service.node.js
+Restart=on-abort
+
+[Install]
+WantedBy=multi-user.target
