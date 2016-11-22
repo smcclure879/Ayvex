@@ -167,31 +167,31 @@ function unknownMethod(req,res) {
 	
 	
 function doPut(req,res) {
-	var url = ""+req.url;
-	
-	if (url.startsWith("/api/user/")) {
-		var userName = url.removeStart("/api/user/");
-		var body='';
-		req.on('data',function(data){
-		    body+=data;
-		});
-		req.on('end',function(){
-		    console.log("body="+body);
-		    users[userName]=body;
-                    console.log("wrote user="+userName+" "+dump(users));
-		    writeNormalHead(res);
-		    res.end('{"response":"putOK"}\n');    //todo think we need to return id
-		});
-	} else {
-		res.writeHead(404,  {'Content-Type': 'application/json'});
-		res.end('{response:"err328s:cannot PUT '+url+'"}');
-	}
+    var url = ""+req.url;
+    
+    if (url.startsWith("/api/user/")) {
+	var userName = url.removeStart("/api/user/");
+	var body='';
+	req.on('data',function(data){
+	    body+=data;
+	});
+	req.on('end',function(){
+	    console.log("body="+body);
+	    users[userName]=body;
+            console.log("wrote user="+userName+" "+dump(users));
+	    writeNormalHead(res);
+	    res.end('{"response":"putOK"}\n');    //todo think we need to return id
+	});
+    } else {
+	res.writeHead(404,  {'Content-Type': 'application/json'});
+	res.end('{response:"err328s:cannot PUT '+url+'"}');
+    }
 }
 
 
 
 function writeNormalHead(res)  {   //response; 
-	res.writeHead(200, {'Content-Type': 'application/json'});
+    res.writeHead(200, {'Content-Type': 'application/json'});
 }
 
 
@@ -202,16 +202,15 @@ function writeNormalHead(res)  {   //response;
 
 function doFancyApi(req,res) {    // strip off ?foo=bar so that the file can be served statically //
 
-    console.log('fancy req-'+req.url);
-
+    console.log('-------fancy req-'+req.url);
+    console.log('  ip:'+dump(req.connection.remoteAddress));
     var filePath = ""+req.url;
-    filePath = filePath.substr(0,filePath.lastIndexOf("?"));
+    filePath = filePath.substr(0,filePath.indexOf("?"));
     filePath = path.join(__dirname, filePath);
     return doStaticBase(filePath,res);
 
     //res.writeHead(200, {'Content-Type': 'application/json'});
-    //res.end('Hello World - fancyApi\n');    
-
+    //res.end('Hello World - fancyApi\n');
 }
 
 
@@ -234,7 +233,7 @@ function doStaticBase(filePath, res) {
 function doStatic(req,res) {
 
     if (!ext.test(req.url))  {
-	res.end("err257a---api no longer supported under /web");
+	res.end("err257a");
 	return;
     }
 
