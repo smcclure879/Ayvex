@@ -282,7 +282,7 @@ function mainHandler (req, res) {
     } else if (path=="/favicon.ico") {
 	return doStaticRedir(req,res);
     } else {
-	console.log("err320:"+path);  //these tend to become static redir
+	console.log("err320:"+req.connection.remoteAddress+" "+path);  //these tend to become static redir
 
 	res.writeHead(200, {'Content-Type': 'text/plain'});
 	res.end('Hello World---base\n');
@@ -292,7 +292,7 @@ function mainHandler (req, res) {
 
 
 
-//  new section --  build another server that does same but with encryption
+
 /*
  from letsEncrypt.... 
    All generated keys and issued certificates can be found in
