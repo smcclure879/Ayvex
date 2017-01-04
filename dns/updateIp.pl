@@ -89,11 +89,12 @@ if (!$ipAddr)
 
 
 print "ipAddr:   actual=$ipAddr  ...  dns=$dnsAddress\n";
-if ($ipAddr eq $dnsAddress)
+my $updating = ($ipAddr ne $dnsAddress);
+if (!$updating)
 {
     print $fhw "not updating: no need\n";
-    close $fhw;
-    exit;
+    #close $fhw;
+    #exit;
 }
 else
 {
@@ -106,7 +107,7 @@ else
 
 
 
-close $fhw;
+#close $fhw;
 
 
 
@@ -128,25 +129,87 @@ my $mcGuideFile = 'guide.htm';
 
 
 
+#print $fhw "direct connect IP address is:   $ipAddr:25565\n\n";
+#print $fhw "timestamp=".$timeStr;
+#print $fhw "\nbookmark this page!";
+#print $fhw "\n\nThere is also a creative-mode server if you use 25566 instead\n";
 
-
-
-print $fhw "direct connect IP address is:   $ipAddr:25565\n\n";
-print $fhw "timestamp=".$timeStr;
-print $fhw "\nbookmark this page!";
-print $fhw "\n\nThere is also a creative-mode server if you use 25566 instead\n";
 
 
 
 #work with dyn.org
+if ($force || $updating) 
+{
+    print "working with dyn.org\n";
+    my $url="http://ayvex:$pazzword\@members.dyndns.org/nic/update?hostname=$dnsName&myip=$ipAddr&wildcard=NOCHG&mx=NOCHG&backmx=NOCHG";
+    #http://username:password@members.dyndns.org/nic/update?hostname=yourhostname&myip=ipaddress&wildcard=NOCHG&mx=NOCHG&backmx=NOCHG
+    print $url;
+    my $output=`curl \"$url\"`;
+    print $output,"\n";
+    print $fhw "output from curl:::".$output;
+    if ($output =~ /good/) 
+    {
+	print $fhw "update ip worked\n";
+    }
+    else
+    {
+	print $fhw "update ip did not work\n";
+	die "err838ax";
+    }
+}
 
-my $url="http://ayvex:$pazzword\@members.dyndns.org/nic/update?hostname=$dnsName&myip=$ipAddr&wildcard=NOCHG&mx=NOCHG&backmx=NOCHG";
-#       http://username:password@members.dyndns.org/nic/update?hostname=yourhostname&myip=ipaddress&wildcard=NOCHG&mx=NOCHG&backmx=NOCHG
-print $url;
-my $output=`curl \"$url\"`;
-print $output,"\n";
-print $fhw "output from curl:::".$output;
-($output =~ /good/) or die ;
+
+
+
+
+
+#see if web server is running
+sub checkWebServer
+{
+    my $host = shift;
+
+    print $fhw "checking web server:$host  ...";
+    my $url = "http://$host/";
+    my $output = `curl \"$url\"`;
+    print "outputr:",$output,"\n";
+    print $fhw "output from curl::: $output \n";
+    my $success = (($output =~ /hello\ world/i) &&  ($output =~ /base/i));
+    if ($success)
+    {
+	print $fhw "web server is running\n";
+    }
+    else
+    {
+	print $fhw  "die noBase-823pg, output=$output\n";
+	#die "noBase-823pg\n";
+    }
+}
+
+checkWebServer("localhost");
+checkWebServer("ayvexllc.com");
+checkWebServer("ayvex.dnsalias.com");
+
+#see if can hit web server as ayvexllc.com:whatver AND ayvex.dnsalias.com:whatever
+
+#see if web server is running
+print $fhw "checking web server\n";
+my $url = "http://localhost/";
+my $output = `curl \"$url\"`;
+print "checking own web server:",$output,"\n";
+print $fhw "output from curl::: $output \n";
+my $success = (($output =~ /hello\ world/i) &&  ($output =~ /base/i));
+if ($success)
+{
+    print $fhw "web server is running\n";
+}
+else
+{
+    print $fhw  "die noBase-823pg, output=$output\n";
+    die "noBase-823pg\n";
+}
+
+
+
 
 
 
