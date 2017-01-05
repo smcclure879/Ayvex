@@ -189,26 +189,6 @@ checkWebServer("localhost");
 checkWebServer("ayvexllc.com");
 checkWebServer("ayvex.dnsalias.com");
 
-#see if can hit web server as ayvexllc.com:whatver AND ayvex.dnsalias.com:whatever
-
-#see if web server is running
-print $fhw "checking web server\n";
-my $url = "http://localhost/";
-my $output = `curl \"$url\"`;
-print "checking own web server:",$output,"\n";
-print $fhw "output from curl::: $output \n";
-my $success = (($output =~ /hello\ world/i) &&  ($output =~ /base/i));
-if ($success)
-{
-    print $fhw "web server is running\n";
-}
-else
-{
-    print $fhw  "die noBase-823pg, output=$output\n";
-    die "noBase-823pg\n";
-}
-
-
 
 
 
