@@ -54,7 +54,7 @@ sub regGoogle
     my $url="https://$user:$pazz\@domains.google.com/nic/update?hostname=$dnsName";
 
     #POST recommended but GET allowed 
-    #bugbug log and output need cleanup
+    #bugbug todo log and output need cleanup
     print "trying url=$url\n";
     my $output=`curl -s -A "ayvexGoogleUpdateScript" \"$url\"`;
     print $output,"\n";
@@ -85,14 +85,16 @@ sub performDnsRegistration {
 # my $dnsRegInfoExample = << 'EOREG';
 # {
 #   { 
+#     reg:"dnsalias",
 #     dns:"ayvex.dnsalias.com",
 #     user:"",
 #     pazz:"yeahbub";
 #   },
 #   {
+#      reg:"google",
 #     dns:"ayvexllc.com",
-#     user:"bugbugUser",
-#     pazz:"bugbugPazz"
+#     user:"yeahUser",
+#     pazz:"yeahPazz"
 #   }
 # }    
 # EOREG
@@ -114,10 +116,10 @@ sub performDnsRegistration {
 #keeping these older for now as failsafes
 #...for dnsalias registration   #bugbug factor better need a pwd store
 my $dnsName="ayvex.dnsalias.com";
-my $pazzword="yeahbub";
+my $pazzword="readElsewhere204r";
 
 print "remember this sleeps 5 minutes in case internet is just down for a while after power out\n";
-#bugbug!!!!!   sleep 5 * $MINUTES; 
+sleep 5 * $MINUTES; 
 print "sleep is done\n";
 
 
@@ -214,7 +216,7 @@ my $mcGuideFile = 'guide.htm';
 
 
 if ( $force || $updating ) {
-    my $stuff = read_file("passwordsNotCheckedIn.pazz"); #bugbug rename to "config" or similar
+    my $stuff = read_file("passwordsNotCheckedIn.pazz"); #bugbug todo rename to "config" or similar
     my $registrations = decode_json($stuff);
     for my $reg (@$registrations) {
 	performDnsRegistration($reg);
