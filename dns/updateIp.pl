@@ -4,32 +4,126 @@ use LWP::Simple;
 use Socket;
 use Cwd 'abs_path';
 use File::Basename;
-
+use JSON;
+use File::Slurp;
 
 my $MINUTES = 60;
+my $ipAddr;
+my $fhw;
 
+#work with dyn.org
+sub regDnsAlias {
+
+    my $regObj = shift;
+
+    print "working with dyn.org\n";
+    
+    my $dnsName = $regObj->{'dns'};
+    my $user = $regObj->{'user'};
+    my $pazz = $regObj->{'pazz'};
+    
+
+    my $url="http://$user:$pazz\@members.dyndns.org/nic/update?hostname=$dnsName&myip=$ipAddr&wildcard=NOCHG&mx=NOCHG&backmx=NOCHG";
+    #http://username:password@members.dyndns.org/nic/update?hostname=yourhostname&myip=ipaddress&wildcard=NOCHG&mx=NOCHG&backmx=NOCHG
+    print $url;
+    my $output=`curl \"$url\"`;
+    print $output,"\n";
+    print $fhw "output from curl:::".$output;
+    if ($output =~ /good/) {
+	print $fhw "update ip worked\n";
+    } else {
+	print $fhw "update ip did not work\n";
+	die "err838ax";
+    }
+    
+    
+}
+
+
+sub regGoogle
+{
+
+    my $regObj = shift;
+
+    print "working with goog\n";
+    
+    my $dnsName = $regObj->{'dns'};
+    my $user = $regObj->{'user'};
+    my $pazz = $regObj->{'pazz'};
+
+    my $url="https://$user:$pazz\@domains.google.com/nic/update?hostname=$dnsName";
+
+    #POST recommended but GET allowed 
+    #bugbug log and output need cleanup
+    print "trying url=$url\n";
+    my $output=`curl -s -A "ayvexGoogleUpdateScript" \"$url\"`;
+    print $output,"\n";
+    print $fhw "output from curl:::".$output;
+    ($output =~ /good/) or ($output =~ /nochg/) or die "err9834p\n";
+}
+
+
+
+
+
+
+sub performDnsRegistration {
+    my $regObj = shift;
+
+    print "foo$regObj","llll";
+
+    
+    my $reg = $regObj->{'reg'};
+
+    
+    regDnsAlias($regObj) if $reg eq 'dnsalias';
+    regGoogle($regObj) if $reg eq 'google';
+}
+
+
+
+# my $dnsRegInfoExample = << 'EOREG';
+# {
+#   { 
+#     dns:"ayvex.dnsalias.com",
+#     user:"",
+#     pazz:"yeahbub";
+#   },
+#   {
+#     dns:"ayvexllc.com",
+#     user:"bugbugUser",
+#     pazz:"bugbugPazz"
+#   }
+# }    
+# EOREG
+# ;
+
+
+
+
+
+
+
+
+
+
+
+
+######START########
+
+#keeping these older for now as failsafes
+#...for dnsalias registration   #bugbug factor better need a pwd store
 my $dnsName="ayvex.dnsalias.com";
-
-my $pazzword="20abd9bc512f11e4814ccd0e1d232429";
-#  updater client key = 20abd9bc512f11e4814ccd0e1d232429
-
+my $pazzword="yeahbub";
 
 print "remember this sleeps 5 minutes in case internet is just down for a while after power out\n";
-sleep 5 * $MINUTES; 
+#bugbug!!!!!   sleep 5 * $MINUTES; 
 print "sleep is done\n";
-
-
-
-
 
 
 
 my $correctTime = get "http://www.timeapi.org/utc/now"  || print "ERROR: where is the internet1???\n";
 print $correctTime;
-
-
-
-
 
 
 my $logDir = dirname(abs_path($0))."/logs";
@@ -39,7 +133,7 @@ print "opening log in $logFile\n";
 
 
 #start logging
-open my $fhw, ">", $logFile  || die "$!\n";
+open $fhw, ">", $logFile  || die "$!\n";
 
 
 
@@ -68,7 +162,6 @@ print $fhw "dns address $dnsAddress\n";
 
 # get IP addr
 my $content = get "http://checkip.dyndns.org/" || print "ERROR: where is the internet2 ???\n";
-my $ipAddr;
 if ($content =~ /(\d{1,3}\.){3}\d{1,3}/gio )
 {
     $ipAddr = $&;
@@ -93,13 +186,10 @@ my $updating = ($ipAddr ne $dnsAddress);
 if (!$updating)
 {
     print $fhw "not updating: no need\n";
-    #close $fhw;
-    #exit;
 }
 else
 {
     print $fhw "need to update\n";
-    #and keep going...
 }
 
 
@@ -107,13 +197,7 @@ else
 
 
 
-#close $fhw;
 
-
-
-
-
-chomp $pazzword;  
 
 
 
@@ -129,32 +213,11 @@ my $mcGuideFile = 'guide.htm';
 
 
 
-#print $fhw "direct connect IP address is:   $ipAddr:25565\n\n";
-#print $fhw "timestamp=".$timeStr;
-#print $fhw "\nbookmark this page!";
-#print $fhw "\n\nThere is also a creative-mode server if you use 25566 instead\n";
-
-
-
-
-#work with dyn.org
-if ($force || $updating) 
-{
-    print "working with dyn.org\n";
-    my $url="http://ayvex:$pazzword\@members.dyndns.org/nic/update?hostname=$dnsName&myip=$ipAddr&wildcard=NOCHG&mx=NOCHG&backmx=NOCHG";
-    #http://username:password@members.dyndns.org/nic/update?hostname=yourhostname&myip=ipaddress&wildcard=NOCHG&mx=NOCHG&backmx=NOCHG
-    print $url;
-    my $output=`curl \"$url\"`;
-    print $output,"\n";
-    print $fhw "output from curl:::".$output;
-    if ($output =~ /good/) 
-    {
-	print $fhw "update ip worked\n";
-    }
-    else
-    {
-	print $fhw "update ip did not work\n";
-	die "err838ax";
+if ( $force || $updating ) {
+    my $stuff = read_file("passwordsNotCheckedIn.pazz"); #bugbug rename to "config" or similar
+    my $registrations = decode_json($stuff);
+    for my $reg (@$registrations) {
+	performDnsRegistration($reg);
     }
 }
 
@@ -188,9 +251,6 @@ sub checkWebServer
 checkWebServer("localhost");
 checkWebServer("ayvexllc.com");
 checkWebServer("ayvex.dnsalias.com");
-
-
-
 
 
 close $fhw;
