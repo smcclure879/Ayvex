@@ -208,8 +208,8 @@ else
 
 my $force = $ARGV[0] || 0;
 
-my $mcLocalFolder = "../../web/mc/";
-my $mcGuideFile = 'guide.htm';
+#my $mcLocalFolder = "../../web/mc/";
+#my $mcGuideFile = 'guide.htm';
 
 
 
@@ -228,7 +228,7 @@ if ( $force || $updating ) {
 
 
 
-#see if web server is running
+#more advanced checks to see if web server is running various ways
 sub checkWebServer
 {
     my $host = shift;
