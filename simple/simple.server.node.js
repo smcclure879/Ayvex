@@ -8,6 +8,29 @@ var ext = /[\w\d_-]+\.[\w\d]+$/;
 var util = require("util");
 
 
+var myNow = function() {
+    return new Date().toISOString();
+};
+var metalog = function(x) {
+    process.stdout.write(x);
+    //log to a file here
+}
+var startIt = function(x) {
+    metalog(myNow()+" "+x+" ");
+}
+var logIt = function(x) {
+    metalog(x+" ");
+}
+var doneIt = function(x) {
+    if (!x) { 
+	x='';
+    }
+    metalog(x+"\n");
+}
+
+
+
+
 //todo move this all to a wrapFs module
 
 var functionExists = function(f) {
@@ -22,7 +45,7 @@ var noFsCheck = function(typeOfCheck) {
     if (!isEmptyObject(fs)) return;
     if (typeOfCheck != 'fatal') return;
 
-    console.log("err:empty fs obj!!");
+    logIt("err:empty fs obj!!");
     process.exit(-4762);
 };
 noFsCheck('fatal');
@@ -115,7 +138,7 @@ function getUserList() {
 }
 
 function doApi(req,res) {
-    console.log('api-' + req.method + "   " + req.url);
+    logIt('api-' + req.method );
 
     if (req.method=='GET') {
 		return doGet(req,res);
@@ -176,9 +199,9 @@ function doPut(req,res) {
 	    body+=data;
 	});
 	req.on('end',function(){
-	    console.log("body="+body);
+	    logIt("body="+body);
 	    users[userName]=body;
-            console.log("wrote user="+userName+" "+dump(users));
+            //logIt("wrote user="+userName+" "+dump(users));
 	    writeNormalHead(res);
 	    res.end('{"response":"putOK"}\n');    //todo think we need to return id
 	});
@@ -202,8 +225,8 @@ function writeNormalHead(res)  {   //response;
 
 function doFancyApi(req,res) {    // strip off ?foo=bar so that the file can be served statically //
 
-    console.log('-------fancy req-'+req.url);
-    console.log('  ip:'+dump(req.connection.remoteAddress));
+    logIt('fancy');
+    //console.log('  ip:'+dump(req.connection.remoteAddress));
     var filePath = ""+req.url;
     filePath = filePath.substr(0,filePath.indexOf("?"));
     filePath = path.join(__dirname, filePath);
@@ -218,11 +241,11 @@ function doFancyApi(req,res) {    // strip off ?foo=bar so that the file can be 
 function doStaticBase(filePath, res) {
     fsExists(filePath, function (exists) {
 	if (exists) {
-	    console.log("found:"+filePath);
+	    logIt("found");
 	    res.writeHead(200, {'Content-Type': getContentType(filePath)});
             fs.createReadStream(filePath).pipe(res);
         } else {
-	    console.log("lost:"+filePath);
+	    logIt("lost");
             res.writeHead(404, {'Content-Type': 'text/html'});
 	    res.end("404 error:"+filePath);
         }
@@ -271,23 +294,29 @@ function doStaticRedir(req,res) {
 
 function mainHandler (req, res) {
 
-    var path=""+req.url;
+    var path=""+req.url; 
+    startIt(req.connection.remoteAddress+" "+path);
 
-    if (path.startsWith("/api/")) {
-	return doApi(req,res);
-    } else if (path.contains("?")) {
-	return doFancyApi(req,res);
-    } else if (path.startsWith("/web/")) {
-	return doStatic(req,res);
-    } else if (path=="/favicon.ico") {
-	return doStaticRedir(req,res);
-    } else {
-	console.log("err320:"+req.connection.remoteAddress+" "+path);  //these tend to become static redir
-
-	res.writeHead(200, {'Content-Type': 'text/plain'});
-	res.end('Hello World---base\n');
-	return;
-    }
+    var retval = (function() {
+	if (path.startsWith("/api/")) {
+	    return doApi(req,res);
+	} else if (path.contains("?")) {
+	    return doFancyApi(req,res);
+	} else if (path.startsWith("/web/")) {
+	    logIt('did we get here bugbug703');
+	    return doStatic(req,res);
+	} else if (path=="/favicon.ico") {
+	    return doStaticRedir(req,res);
+	} else {
+	    logIt("err320");  //these tend to become static redir
+	    
+	    res.writeHead(200, {'Content-Type': 'text/plain'});
+	    res.end('Hello World---base\n');
+	    return;
+	}
+    })();
+    doneIt();
+    return retval;
 }
 
 
@@ -306,8 +335,8 @@ function mainHandler (req, res) {
 
 
 http.createServer(mainHandler).listen(80);  //http
-console.log('started http:');
-
+startIt('started http:');
+doneIt();
 
 var keyPath   = '/etc/letsencrypt/live/ayvexllc.com/privkey.pem';
 var chainPath = '/etc/letsencrypt/live/ayvexllc.com/fullchain.pem';
@@ -318,9 +347,11 @@ try {
 	cert: fs.readFileSync(chainPath)
     };
     https.createServer(tlsOptions,mainHandler).listen(443);  //https
-    console.log('started httpSSS');
+    startIt('started httpSSS');
+    doneIt();
 } catch (ex) {
-    console.log('SKIPPING https-->'+ex);
+    startIt('SKIPPING https-->'+ex);
+    doneIt();
 }  
 
 
