@@ -1,0 +1,36 @@
+<html>
+<head>
+  <script src="https://aframe.io/releases/0.4.0/aframe.min.js"></script>
+</head>
+
+<body>
+  <a-scene>
+  
+  
+
+    <a-entity id="viewer" position="0 1.0 500" wasd-controls="fly:true" look-controls>
+      <a-entity camera="userHeight: 1.6" ></a-entity>
+    </a-entity>
+  
+    <a-sphere position="0 1.25 -5" radius="1.25" color="#EF2D5E"></a-sphere>
+    <a-box position="-1 0.5 -3" rotation="0 45 0" width="1" height="1" depth="1" color="#4CC3D9"></a-box>
+    <a-cylinder position="1 0.75 -3" radius="0.5" height="1.5" color="#FFC65D"></a-cylinder>
+    <a-plane position="0 0 -4" rotation="-90 0 0" width="4" height="4" color="#7BC8A4"></a-plane>
+    <a-sky color="#ECECEC"></a-sky>
+    
+  </a-scene>
+  <script>
+    var z=200;
+    document.addEventListener("DOMContentLoaded", function(event) {
+      window.setInterval(function(){
+        z--;
+        if (z<4) return;
+        //if (!document.viewer)
+        //alert("!!!"); //bugbug
+        document.querySelector("#viewer").setAttribute('position',{'x':0,'y':1.7,'z':z});
+        //document.viewer.setAttribute('position',"0 1.7 "+z);
+      },20);
+    });
+  </script>
+</body>
+</html>
