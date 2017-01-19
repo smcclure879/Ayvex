@@ -51,7 +51,8 @@ var noFsCheck = function(typeOfCheck) {
 noFsCheck('fatal');
 
 //this is dumb dumb dumb should be a utility module or something
-var fsExists = (function() {
+//even the INTENT is wrong,  it's really "exists and is a readable file".  probably best to just read it (bugbug you are here)
+var fsExists = (function() { 
     if ( functionExists( fs.exists ) ) 
 	return fs.exists;
     if ( functionExists( fs.access ) )
@@ -230,6 +231,12 @@ function doFancyApi(req,res) {    // strip off ?foo=bar so that the file can be 
     var filePath = ""+req.url;
     filePath = filePath.substr(0,filePath.indexOf("?"));
     filePath = path.join(__dirname, filePath);
+
+    if (!ext.test(filePath))  {
+	res.end("err257c");  //bugbug todo consolidate these 3 checks into doStaticBase
+	return;
+    }
+
     return doStaticBase(filePath,res);
 
     //res.writeHead(200, {'Content-Type': 'application/json'});
@@ -239,15 +246,18 @@ function doFancyApi(req,res) {    // strip off ?foo=bar so that the file can be 
 
 
 function doStaticBase(filePath, res) {
+    if (filePath.endsWith("/")) {
+	filePath = filePath + "index.html";
+    }
     fsExists(filePath, function (exists) {
 	if (exists) {
-	    logIt("found");
+	    logIt("found"+filePath);
 	    res.writeHead(200, {'Content-Type': getContentType(filePath)});
             fs.createReadStream(filePath).pipe(res);
         } else {
 	    logIt("lost");
-            res.writeHead(404, {'Content-Type': 'text/html'});
-	    res.end("404 error:"+filePath);
+	    res.writeHead(404, {'Content-Type': 'text/html'});
+	    res.end("404");
         }
     });
 }
@@ -303,12 +313,11 @@ function mainHandler (req, res) {
 	} else if (path.contains("?")) {
 	    return doFancyApi(req,res);
 	} else if (path.startsWith("/web/")) {
-	    logIt('did we get here bugbug703');
 	    return doStatic(req,res);
 	} else if (path=="/favicon.ico") {
 	    return doStaticRedir(req,res);
 	} else {
-	    logIt("err320");  //these tend to become static redir
+	    logIt("err320-fallthru-why?");
 	    
 	    res.writeHead(200, {'Content-Type': 'text/plain'});
 	    res.end('Hello World---base\n');
