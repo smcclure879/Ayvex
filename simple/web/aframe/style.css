@@ -1,0 +1,15 @@
+body {
+    margin-top: 0px;
+    margin-left:0px;
+    margin-right:0px;
+    margin-bottom:0px;
+    background-color: lightblue;
+}
+
+#copyright {
+    float:right;
+    font-family:Times;
+    color: yellow;
+    notused-border:2px solid #FF7700;
+}
+

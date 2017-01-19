@@ -1,7 +1,30 @@
 <html>
 <head>
+
+  <title>aframe experiment</title>
+
+  <link rel="stylesheet" type="text/css" href="style.css">
+
+  <script src="jquery-1.10.2.js"></script>
+  <script src="jquery-ui-1.10.4.js"></script>
   <script src="aframe.js"></script>
-  <bugbug foo="https://aframe.io/releases/0.4.0/aframe.min.js" />
+  
+  
+  <script>
+    var z=150;
+    $("document").ready(
+      function(event) {
+        window.setInterval(function(){
+        z--;
+        if (z<4) return;
+        //if (!document.viewer)
+        //alert("!!!"); //bugbug
+        document.querySelector("#viewer").setAttribute('position',{'x':0,'y':1.7,'z':z});
+        //document.viewer.setAttribute('position',"0 1.7 "+z);
+      },20);
+    });
+  </script>
+  
 </head>
 
 <body>
@@ -18,18 +41,8 @@
     <a-sky color="#BCBCEC"></a-sky>
     
   </a-scene>
-  <script>
-    var z=150;
-    document.addEventListener("DOMContentLoaded", function(event) {
-      window.setInterval(function(){
-        z--;
-        if (z<4) return;
-        //if (!document.viewer)
-        //alert("!!!"); //bugbug
-        document.querySelector("#viewer").setAttribute('position',{'x':0,'y':1.7,'z':z});
-        //document.viewer.setAttribute('position',"0 1.7 "+z);
-      },20);
-    });
-  </script>
+
 </body>
 </html>
+
+
