@@ -152,3 +152,7 @@ if (navigator.mozGetUserMedia) {
 } else {
   console.log("Browser does not appear to be WebRTC-capable");
 }
+
+
+//end of file
+
