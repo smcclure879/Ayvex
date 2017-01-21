@@ -21,17 +21,26 @@
   <a-scene>
 
     <a-entity id="viewer" position="0 1.0 200" wasd-controls="fly:true" look-controls>
-      <a-entity camera="userHeight: 1.6" ></a-entity>
+      <a-entity camera="userHeight: 1.6" >
+        <a-entity cursor="fuse: true; fuseTimeout: 500"
+            position="0 0 -1"
+            geometry="primitive: plane; width: 0.1; height: 0.1"
+            material="color: red; opacity: 0.4;  ">
+        </a-entity>
+      </a-entity>
     </a-entity>
   
     <a-sphere id="sphere" position="0 1.25 -5" radius="1.25" color="#EF2D5E"></a-sphere>
     <a-box position="-1 0.5 -3" rotation="0 45 0" width="1" height="1" depth="1" color="#4CC3D9"></a-box>
-    <a-cylinder position="1 0.75 -3" radius="0.5" height="1.5" color="#FFC65D"></a-cylinder>
+    <a-cylinder position="1 0.75 -3" radius="0.5" height="1.5" color="#FFC65D" ></a-cylinder>
+
+    <a-entity id="box" cursor-listener geometry="primitive: box" material="color: blue"></a-entity>
+
     <a-plane position="0 0 -4" rotation="-90 0 0" width="470" height="470" color="#7BC8A4"></a-plane>
 
 
-    <a-video id="localVideo" position="-8 8 -8" rotation="10 15 0" width="8" height="4.5" bugbugcolor="#005588"></a-video>
-    <a-video id="remoteVideo" position="4 4 -8" rotation="0 0 0" width="16" height="9" bugbugcolor="#0011aa"></a-video>
+    <a-video id="localVideo" position="-8 8 -8" rotation="10 15 0" width="8" height="4.5" ></a-video>
+    <a-video id="remoteVideo" position="4 4 -8" rotation="0 0 0" width="16" height="9" ></a-video>
       
 
     <a-sky color="#BCBCEC"></a-sky>
