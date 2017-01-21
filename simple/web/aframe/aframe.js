@@ -30102,7 +30102,7 @@ module.exports.normalize = normalize;
 
 						case 'arraybuffer':
 						case 'blob':
-
+					                debugger;
 						 	response = new ArrayBuffer( data.length );
 							var view = new Uint8Array( response );
 							for ( var i = 0; i < data.length; i ++ ) {
