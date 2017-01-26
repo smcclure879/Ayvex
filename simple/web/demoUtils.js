@@ -297,8 +297,8 @@ var DemoUtils = (function() {
       e.preventDefault();
       return false;
     }, false);
-  }
 
+  }
   // Register and translate mouse wheel messages across browsers.
   function registerMouseWheelListener(canvas, listener) {
     function handler(e) {
