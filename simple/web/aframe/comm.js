@@ -93,10 +93,20 @@ var theUser = {
 //two locks...one to not run more than once per 2s, one to keep 2 copies from running at same time
 var lastCalled=Date.now();
 var serverCallbackLocked=false;  //open it  -- like a semaphore??  todo revisit
-function updateServerCallback() {
-    theUser.cam=camera_state;  //always gotta update this one!
-    if (theUser.userId==null || theUser.userId=='') 
+var fakeServer=1; //bugbug
+
+function updateServerCallback(myState) {
+    theUser.cam=myState;  //always gotta update this one!
+
+    
+    var reason = null;
+    if (!myState) {
+	log("bugbugmyState is missing");
 	return;
+    }
+    
+
+
 
     //lock 1
     var thisCall=Date.now();
@@ -125,59 +135,92 @@ function updateServerCallback() {
     //}	
 
 
-    theUser.mostRecentQuote=userQuote;
+    theUser.myState=myState;
+
+
+    //theUser.mostRecentQuote=userQuote;
     theUser.telecInfo=telecInfo;  //global local user's telecInfo goes into the local user being persisted
     theUser.saveTime=getOfficialTime();  //ideally the protocol would save a serverSaveTime as well and other clients will see cheating.
     if (theUser.saveTime<1400000000) { //1B, roughly 2001
 	console.log('cannot get official time');  //can't do much yet  ...wait for next callback...continue anyway with bad time...
     }
     
+
     
-    var data = JSON.stringify(theUser);
-    var putUrl=getUserDocUrl(theUser);  //+revString(theUser._rev);
-    
-    $.ajax({
-	type:"PUT",
-	headers: { 
-	    'Accept': 'application/json',
-	    'Content-Type': 'application/json'
-	},
-	url: putUrl,
-	data: data,
-	//contentType: "application/json",
-	//dataType: "json",
-	success: function( data, textStatus, jqXHR ) {
-	    //no _rev for now....   theUser._rev = unquote(jqXHR.getResponseHeader("ETAG"));  //so we can save next time
-	},
-	error: function( jqXHR, textStatus, errorThrown ) {
-	    alert('err1047u: put bad'+errorThrown)+putUrl+""+data;
-	},
-	complete: function(jqResp) {
-	    serverCallbackLocked=false;  //open again one way or another
+    if (theUser.userId==null || theUser.userId=='')  {
+	log("missing user id");
+    } else { 
+	if (fakeServer) {
+	    console.log("skipping server write");
+	} else {
+	    var data = JSON.stringify(theUser);
+	    var putUrl=getUserDocUrl(theUser);  //+revString(theUser._rev);
+	    
+	    $.ajax({
+		type:"PUT",
+		headers: { 
+		    'Accept': 'application/json',
+		    'Content-Type': 'application/json'
+		},
+		url: putUrl,
+		data: data,
+		//contentType: "application/json",	    //dataType: "json",
+		success: function( data, textStatus, jqXHR ) {
+		    //no _rev for now....   theUser._rev = unquote(jqXHR.getResponseHeader("ETAG"));  //so we can save next time
+		},
+		error: function( jqXHR, textStatus, errorThrown ) {
+		    alert('err1047u: put bad'+errorThrown)+putUrl+""+data;
+		},
+		complete: function(jqResp) {
+		    serverCallbackLocked=false;  //open again one way or another
+		}
+	    });
 	}
-    });
-    
+    }//end of SEND PORTION!!!
+
+    // START RECEIVE PORTION
     // call  http://WHATEVER/api/getCurrentUsers
     //and put those users into "theDrawings" 
     //need to get time of each user's writing from server, to show fading-of-color or ??
     
-    $.ajax({
-	type: "GET",
-	url: getCurrentUsersUrl(),
-	contentType: "application/json",
-	success: function(data) {
-	    updateDynamicObjects(data); //it better be a list of userDocs
-	},
-	error: function(resp) {
-	    if (resp.status==404)
-		theUser._rev=1;  //which = a NEW 
-	    else
-		alert("err523x: do not know how to deal with this error"+resp.status+"  "+JSON.stringify(resp));
-	},
-	complete: function(jqResp) {
-	}
-	
-    });	
+
+
+    //bugbug FAKE RECEIVE  until running on the real server
+    if (fakeServer) {  //use this fake data
+	var fakeData = {
+	    'user_mikey':{type:'Gamer',id:'mikey',
+			  cam: {x: 10, y:10, z:10,rotate_x:0,rotate_y:0,rotate_z:0},
+			  saveTime: '2016-1-1Z13:01:19', mostRecentQuote:'myquotefake'
+			 },
+	    'column_skyPortal':{type:'Feature',id:'skyPortal'} //bugbug
+	};
+
+	setTimeout(function(){
+	    updateDynamicObjects(fakeData);
+	},300);
+	return;
+    } else {  //---- else really do the receive-----
+
+	//receive after we send is a good check of our write??
+	$.ajax({
+	    type: "GET",
+	    url: getCurrentUsersUrl(),
+	    contentType: "application/json",
+	    success: function(data) {
+		updateDynamicObjects(data); //it better be a list of userDocs
+	    },
+	    error: function(resp) {
+		if (resp.status==404)
+		    theUser._rev=1;  //which = a NEW 
+		else
+		    alert("err523x: do not know how to deal with this error"+resp.status+"  "+JSON.stringify(resp));
+	    },
+	    complete: function(jqResp) {
+		//cb(); //needed later bugbug??
+	    }
+	    
+	});	
+    }
 }
 
 
@@ -217,20 +260,21 @@ function updateDynamicObjectFromServerData(item) {   //item is the data from ser
     case "Gamer":	
 	if (!dynObj) {
 	    dynObj=new Gamer();  
-	    dynObj.name(item.userId);
+	    //wtf  bugbugb   dynObj.name(item.userId);
 	    dynamicObjects[item.userId]=dynObj;
 	}
 	dynObj.updateFromData(item);
 	maybeDoTeleconf(dynObj,item);  //item is from server  //users can do teleconf but probably no other types
 	break;
 	
-    case "DrawnObject":
-	if (!dynObj) {
-	    dynObj=new DrawnObject();
-	    dynamicObjects[item.id]=dynObj; 
-	}
-	dynObj.updateFromData(item);  //todo consider not updating unless "changed" e.g. a timestamp?
-	break;
+    case "Feature":
+	//bugbug todo later
+	// if (!dynObj) {
+	//     dynObj=new DrawnObject();
+	//     dynamicObjects[item.id]=dynObj; 
+	// }
+	// dynObj.updateFromData(item);  //todo consider not updating unless "changed" e.g. a timestamp?
+	// break;
 	
     default:	//todo what other kinds of dynObjs do we have for now tho??
 	trace("unknown type from db:"+dumps(item));

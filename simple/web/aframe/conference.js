@@ -156,7 +156,7 @@ function maybeDoTeleconfInternal(localCopyOfItem,itemFromServer)  {
 	if (!localCopyOfItem) //bugbugSoon do we even need this here?  maybe to mark who is calling us, e.g. to paint larger or something.
 		return;	
 	
-	var otherParty=itemFromServer.value;
+	var otherParty=itemFromServer;  //bugbugOK??  .value;
 	if (!otherParty || !otherParty.telecInfo)
 		return;
 		
