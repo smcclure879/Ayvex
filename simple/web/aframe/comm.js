@@ -95,8 +95,20 @@ var lastCalled=Date.now();
 var serverCallbackLocked=false;  //open it  -- like a semaphore??  todo revisit
 var fakeServer=1; //bugbug
 
-function updateServerCallback(myState) {
-    theUser.cam=myState;  //always gotta update this one!
+function updateServerCallback(myState,cb) {  
+    //myState is "input" and cb gets output of "other users and stuff" (dynamic objects)
+
+    var reason=null;
+    if (!cb) reason= "cb is missing";
+    if (!myState) reason="myState is missing";
+
+    if (reason) {
+	log(reason);
+	return;
+    }
+
+
+    theUser.cam=myState;  //try to squeeze it all in here!  bugbug rename "cam"?
 
     
     var reason = null;
@@ -175,6 +187,7 @@ function updateServerCallback(myState) {
 		    serverCallbackLocked=false;  //open again one way or another
 		}
 	    });
+	    //notice that was a best-effort send!
 	}
     }//end of SEND PORTION!!!
 
@@ -189,14 +202,15 @@ function updateServerCallback(myState) {
     if (fakeServer) {  //use this fake data
 	var fakeData = {
 	    'user_mikey':{type:'Gamer',id:'mikey',
-			  cam: {x: 10, y:10, z:10,rotate_x:0,rotate_y:0,rotate_z:0},
-			  saveTime: '2016-1-1Z13:01:19', mostRecentQuote:'myquotefake'
+			  pos: {x: 0, y:0, z:0},
+			  rot: {x:0,y:0,z:0},
+			  saveTime: '2016-01-01Z13:01:19', mostRecentQuote:'myquotefake'
 			 },
-	    'column_skyPortal':{type:'Feature',id:'skyPortal'} //bugbug
+	    'column_skyPortal':{type:'Feature',id:'skyPortal',pos:{x:-3,y:50,z:-50}} //bugbug
 	};
 
 	setTimeout(function(){
-	    updateDynamicObjects(fakeData);
+	    cb(fakeData);  
 	},300);
 	return;
     } else {  //---- else really do the receive-----
@@ -207,7 +221,8 @@ function updateServerCallback(myState) {
 	    url: getCurrentUsersUrl(),
 	    contentType: "application/json",
 	    success: function(data) {
-		updateDynamicObjects(data); //it better be a list of userDocs
+		var obj = deString(data);  
+		cb(obj);  //previously 	updateDynamicObjects(data); //see below
 	    },
 	    error: function(resp) {
 		if (resp.status==404)
@@ -216,7 +231,7 @@ function updateServerCallback(myState) {
 		    alert("err523x: do not know how to deal with this error"+resp.status+"  "+JSON.stringify(resp));
 	    },
 	    complete: function(jqResp) {
-		//cb(); //needed later bugbug??
+		//not needed now
 	    }
 	    
 	});	
@@ -232,78 +247,79 @@ function deString(data) {  //might be object, might be dehydrated JSON object
 }	
 
 
-var dynamicObjects={};  //eventually needs to be some space partitioning class  kd-dataStructure?  todo
-function updateDynamicObjects(data) {
-    var obj = deString(data);  
-    var count=Object.keys(obj).count;
-    $.each(obj,function(prop,val) {
-	updateDynamicObjectFromServerData(val);
-    });
-}
+//keep this as an example how to handle the output
+//var dynamicObjects={};  //eventually needs to be some space partitioning class  kd-dataStructure?  todo
+// function updateDynamicObjects(data) {
+//     var obj = deString(data);  
+//     var count=Object.keys(obj).count;
+//     $.each(obj,function(prop,val) {
+// 	updateDynamicObjectFromServerData(val);
+//     });
+// }
 
-function isSelf(item) {
-    return (item.userId==theUser.userId);
-}
+// function isSelf(item) {
+//     return (item.userId==theUser.userId);
+// }
 
 
-function updateDynamicObjectFromServerData(item) {   //item is the data from server
+// function updateDynamicObjectFromServerData(item) {   //item is the data from server
 
-    item = deString(item);
+//     item = deString(item);
 
-    if (isSelf(item)) //todo revisit... for now disallow drawing self (strict first person for demo, can change later)
-	return; 
+//     if (isSelf(item)) //todo revisit... for now disallow drawing self (strict first person for demo, can change later)
+// 	return; 
 
-    var dynObj=dynamicObjects[item.id];
+//     var dynObj=dynamicObjects[item.id];
     
-    //todo: apply factory pattern here instead.
-    switch(item.type)	{
-    case "Gamer":	
-	if (!dynObj) {
-	    dynObj=new Gamer();  
-	    //wtf  bugbugb   dynObj.name(item.userId);
-	    dynamicObjects[item.userId]=dynObj;
-	}
-	dynObj.updateFromData(item);
-	maybeDoTeleconf(dynObj,item);  //item is from server  //users can do teleconf but probably no other types
-	break;
+//     //todo: apply factory pattern here instead.
+//     switch(item.type)	{
+//     case "Gamer":	
+// 	if (!dynObj) {
+// 	    dynObj=new Gamer();  
+// 	    //wtf  bugbugb   dynObj.name(item.userId);
+// 	    dynamicObjects[item.userId]=dynObj;
+// 	}
+// 	dynObj.updateFromData(item);
+// 	maybeDoTeleconf(dynObj,item);  //item is from server  //users can do teleconf but probably no other types
+// 	break;
 	
-    case "Feature":
-	//bugbug todo later
-	// if (!dynObj) {
-	//     dynObj=new DrawnObject();
-	//     dynamicObjects[item.id]=dynObj; 
-	// }
-	// dynObj.updateFromData(item);  //todo consider not updating unless "changed" e.g. a timestamp?
-	// break;
+//     case "Feature":
+// 	//bugbug todo later
+// 	// if (!dynObj) {
+// 	//     dynObj=new DrawnObject();
+// 	//     dynamicObjects[item.id]=dynObj; 
+// 	// }
+// 	// dynObj.updateFromData(item);  //todo consider not updating unless "changed" e.g. a timestamp?
+// 	// break;
 	
-    default:	//todo what other kinds of dynObjs do we have for now tho??
-	trace("unknown type from db:"+dumps(item));
-	break;
-    }
+//     default:	//todo what other kinds of dynObjs do we have for now tho??
+// 	trace("unknown type from db:"+dumps(item));
+// 	break;
+//     }
     
     
 
-}
+// }
 
 
-function theyAreWhoWeCalled() {
-    return true; //bugbugNOW what should this be?  check callee or something
-}
-
-
-
-
-function isMe(someKey) {
-    return (someKey==theUser._id);
-}
+// function theyAreWhoWeCalled() {
+//     return true; //bugbugNOW what should this be?  check callee or something
+// }
 
 
 
-function unquote(x) {
-    for(ii=0, il=x.length; ii<il && x.substring(ii,1)=="\""; ii++);
-    for(      jj=x.length; jj>=0 && x.substring(jj,1)=="\""; --jj); 
-    return x.substring(ii,jj-ii);
-}
+
+// function isMe(someKey) {
+//     return (someKey==theUser._id);
+// }
+
+
+
+// function unquote(x) {
+//     for(ii=0, il=x.length; ii<il && x.substring(ii,1)=="\""; ii++);
+//     for(      jj=x.length; jj>=0 && x.substring(jj,1)=="\""; --jj); 
+//     return x.substring(ii,jj-ii);
+// }
 
 //bugbug needed??
 //function initServerCallback(theUser)

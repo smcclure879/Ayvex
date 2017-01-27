@@ -308,7 +308,7 @@ function sendMyOffer(){
     //trace("sending the following offer from localPeerConnection: \n" + offer);
     var offer=pc.localDescription;
     telecInfo.currentOffer=offer;  
-    telecInfo.callee=getSelectedItem().key;  //bugbug we should have done this sooner--almost right after "v" is pushed!!!
+    telecInfo.callee=getSelectedItem().id;
     telecInfo._otherParty=stripUserPrefix(telecInfo.callee);  //bugbug better way than new function, maybe a fix to line before this one?
     trace("pc state while postOfferSend:"+dumps(pc));
     

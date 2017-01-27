@@ -1,4 +1,5 @@
-
+//most of this info will now be store in aframe object (it's mostly for drawing anyway, right?)
+//..inside $otherUsers
 
 function Gamer()
 {

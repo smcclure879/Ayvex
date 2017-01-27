@@ -64,12 +64,13 @@ $("document").ready( function(event) {
 		select(this);
 
 		//bugbug need to unselect old item (visually) !!!  TODO
-		log("selected="+selectedItem.tagName+" "+selectedItem.key+" "+selectedItem.id);
+		log("selected="+selectedItem.tagName+" "+selectedItem.id);
             });
 	}
     });
     
 
+    //bugbug you are here this didn't seem to register  (probably need to commitpush next tho)
     $(this).keydown(function(evt) {
 	if (evt.key=='v')
 	    requestConference();
@@ -95,7 +96,7 @@ $("document").ready( function(event) {
     //},2000);
     
     window.setInterval(function(){
-	updateServerCallback(myState);
+	updateServerCallback(myState,updateOtherUsers);
     },2000);
     
 });
@@ -105,7 +106,51 @@ function getSelectedItem() { return selectedItem; }
 
 function requestConference() {
     if (!selectedItem) return;
-    if (!selectedItem.key) return;  //selectedItem (req for a call) gets to other user when they are drawing me!!
+    if (!selectedItem.id) return;  //selectedItem (req for a call) gets to other user when they are drawing me!!
     conferenceJsHook();
 }
 
+
+
+function saveMyFeatures() {  //parallels below function updateOtherUsers (serialization/deserialization pair)
+    //bugbug not yet called but should be 2017  !!
+
+
+
+}
+
+
+function updateOtherUsers(newUserDataFromServer) {
+    //bring code here from commented out code in comm.js
+    $.each(newUserDataFromServer,function(id,details) {
+	//bugbug here should be code that lets anything be reconstituted,but instead just make gross assumptions...
+	var user = document.querySelector('#otherUsers a-entity[id="' + id + '"'); //bugbug better way?
+	if (!user) {
+	    user = createBlankUser();
+	    user.setAttribute('id',id);
+	    $otherUsers.appendChild(user);
+	}
+
+	user.setAttribute('position',details.pos);
+	user.setAttribute('rotation',details.rot);
+	//bugbug todo user.setAttribute(geometry.scale  ....etc  etc)
+
+    });
+}
+
+
+
+
+function createBlankUser() {
+    var retval=document.createElement('a-entity');
+    retval.setAttribute('geometry','primitive: cone; height:5; radiusTop:0, radiusBottom:0.25');
+    retval.setAttribute('material','color','orange');
+    retval.setAttribute('cursor-listener',{});
+    return retval;
+}
+
+
+
+
+
+    
