@@ -82,43 +82,46 @@
 
 
 //bugbug needed?  persist?
-var theUser = {
-    type: "Gamer",
-    userId:"",  //later set right value in a sub sub sub of doc.ready()
-    _rev:-1,
-    cam:null, //todo better sentinel value?
-    _id:""
-};
+// var theUser =  {
+//     type: "Gamer",
+//     userId:"",  //later set right value in a sub sub sub of doc.ready()
+//     _rev:-1,
+//     cam:null, //todo better sentinel value?
+//     _id:""
+// };
 
 //two locks...one to not run more than once per 2s, one to keep 2 copies from running at same time
 var lastCalled=Date.now();
 var serverCallbackLocked=false;  //open it  -- like a semaphore??  todo revisit
-var fakeServer=1; //bugbug
+var fakeServer=0; //bugbug
 
-function updateServerCallback(myState,cb) {  
+//bugbug rename globally to "doAllServerComm" or similar
+function updateServerCallback(me,cb) {  //me is "the user"  
     //myState is "input" and cb gets output of "other users and stuff" (dynamic objects)
-
-    var reason=null;
-    if (!cb) reason= "cb is missing";
-    if (!myState) reason="myState is missing";
+    
+    var reason = (function checkArgs() {
+	if ( !cb )    return "err240p: cb is missing";
+	if ( !me )    return "err241p: var.me is missing";
+	if ( typeof me.getAttribute !='function' )    return "err250p: bad var.me needs to be a-frame entity";
+	if ( !me.getAttribute('id') || me.getAttribute('id')!='user' )   return "err242p: bad var.me";
+	if ( !userId ) /*globalbugbug*/  return "err1123y: no userId";
+	return null;
+    })();
 
     if (reason) {
 	log(reason);
 	return;
     }
 
-
-    theUser.cam=myState;  //try to squeeze it all in here!  bugbug rename "cam"?
+    var theUser={
+	type:"user",
+	userId:userId,  //bugbug global
+	pos:me.getAttribute('position'),
+	rot:me.getAttribute('rotation'),
+	//bugbug others
+    };
 
     
-    var reason = null;
-    if (!myState) {
-	log("bugbugmyState is missing");
-	return;
-    }
-    
-
-
 
     //lock 1
     var thisCall=Date.now();
@@ -147,8 +150,6 @@ function updateServerCallback(myState,cb) {
     //}	
 
 
-    theUser.myState=myState;
-
 
     //theUser.mostRecentQuote=userQuote;
     theUser.telecInfo=telecInfo;  //global local user's telecInfo goes into the local user being persisted
@@ -158,37 +159,33 @@ function updateServerCallback(myState,cb) {
     }
     
 
+    if (fakeServer) {
+	console.log("skipping server write");
+    } else {
+	var data = JSON.stringify(theUser);
+	var putUrl=getUserDocUrl(theUser);  //+revString(theUser._rev);
+	
+	$.ajax({
+	    type:"PUT",
+	    headers: { 
+		'Accept': 'application/json',
+		'Content-Type': 'application/json'
+	    },
+	    url: putUrl,
+	    data: data,
+	    //contentType: "application/json",	    //dataType: "json",
+	    success: function( data, textStatus, jqXHR ) {
+		//no _rev for now....   theUser._rev = unquote(jqXHR.getResponseHeader("ETAG"));  //so we can save next time
+	    },
+	    error: function( jqXHR, textStatus, errorThrown ) {
+		alert('err1047u: put bad'+errorThrown)+putUrl+""+data;
+	    },
+	    complete: function(jqResp) {
+		serverCallbackLocked=false;  //open again one way or another
+	    }
+	});
+	//notice that was a best-effort send!
     
-    if (theUser.userId==null || theUser.userId=='')  {
-	log("missing user id");
-    } else { 
-	if (fakeServer) {
-	    console.log("skipping server write");
-	} else {
-	    var data = JSON.stringify(theUser);
-	    var putUrl=getUserDocUrl(theUser);  //+revString(theUser._rev);
-	    
-	    $.ajax({
-		type:"PUT",
-		headers: { 
-		    'Accept': 'application/json',
-		    'Content-Type': 'application/json'
-		},
-		url: putUrl,
-		data: data,
-		//contentType: "application/json",	    //dataType: "json",
-		success: function( data, textStatus, jqXHR ) {
-		    //no _rev for now....   theUser._rev = unquote(jqXHR.getResponseHeader("ETAG"));  //so we can save next time
-		},
-		error: function( jqXHR, textStatus, errorThrown ) {
-		    alert('err1047u: put bad'+errorThrown)+putUrl+""+data;
-		},
-		complete: function(jqResp) {
-		    serverCallbackLocked=false;  //open again one way or another
-		}
-	    });
-	    //notice that was a best-effort send!
-	}
     }//end of SEND PORTION!!!
 
     // START RECEIVE PORTION

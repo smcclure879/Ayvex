@@ -1,10 +1,9 @@
 var z=150;
 var disp,sphere;
-var $localVideo,$remoteVideo,$otherUsers;
+var $localVideo,$remoteVideo,$otherUsers,$user;
 var selectedItem = null;
 
-var otherUsers = {};
-var myState = {};
+
 
 
 function log(x) {
@@ -15,15 +14,13 @@ function select(x) {
     if (selectedItem==x)
 	return unselect(x);
 
-    x.setAttribute('normalColor', x.getAttribute('material','color'));
-    x.setAttribute('material', 'color', "#995599");
     x.setAttribute('material', 'wireframe', true);
     selectedItem = x;  //global
 }
 
 function unselect(x) {
-    if (!x) return;
-    x.setAttribute('material', 'color', x.getAttribute('material','normalColor'));
+    if (!x) 
+	return;
     x.setAttribute('material', 'wireframe', false);
 }
 
@@ -34,20 +31,29 @@ $("document").ready( function(event) {
     var urlParams = new URLSearchParams(window.location.search);
 
     //"login"
+    //debugger;
     if (!urlParams.has('user'))
-	alert("no login");
+	alert("no user in URL querystring");
     else 
-	user={key:urlParams['user']};
+	userId=urlParams.get('user');
 
 
 
+
+    //all the conference stuff in one place for now
+    //bugbug here should really switch to $("#remoteVideo    etc etc
+    $remoteVideo=document.querySelector("#remoteVideo");  //bugbug probably wait until a user being conferenced with??
+    $localVideo=document.querySelector("#localVideo");
+    $otherUsers = document.querySelector("#otherUsers");
+    $user = document.querySelector("#user");
     disp= document.querySelector("#readout");
     sphere = document.querySelector("#sphere");
-    viewer = document.querySelector("#viewer");
+
+
     window.setInterval(function(){
         z-=3;
         if (z<4) return;
-        viewer.setAttribute('position',{'x':0,'y':1.7,'z':z});
+        $user.setAttribute('position',{'x':0,'y':1.7,'z':z});
         log("sphere: pos3d="+sphere.attributes.position.value);  //+"  pos2d="+sphere.position.left);
     },20);
     
@@ -70,7 +76,7 @@ $("document").ready( function(event) {
     });
     
 
-    //bugbug you are here this didn't seem to register  (probably need to commitpush next tho)
+
     $(this).keydown(function(evt) {
 	if (evt.key=='v')
 	    requestConference();
@@ -78,25 +84,15 @@ $("document").ready( function(event) {
 
 
     
-
-    //all the conference stuff in one place for now
-    $remoteVideo=document.querySelector("#remoteVideo");  //bugbug probably wait until a user being conferenced with??
-    $localVideo=document.querySelector("#localVideo");
-    $otherUsers = document.querySelector("#otherUsers");
-
     if (!$remoteVideo)
       alert("wtfbugbug1236");
     if (!$localVideo)
       alert("wtfbugbug224");
     
     
-    //autocall on startup
-    //window.setTimeout(function(){
-    //    conferenceJsHook();
-    //},2000);
-    
+    //this should ideally be based on something besides a timer...like user movement or inactivity    
     window.setInterval(function(){
-	updateServerCallback(myState,updateOtherUsers);
+	updateServerCallback($user,updateOtherUsers);
     },2000);
     
 });
@@ -114,7 +110,7 @@ function requestConference() {
 
 function saveMyFeatures() {  //parallels below function updateOtherUsers (serialization/deserialization pair)
     //bugbug not yet called but should be 2017  !!
-
+    
 
 
 }
@@ -123,18 +119,28 @@ function saveMyFeatures() {  //parallels below function updateOtherUsers (serial
 function updateOtherUsers(newUserDataFromServer) {
     //bring code here from commented out code in comm.js
     $.each(newUserDataFromServer,function(id,details) {
-	//bugbug here should be code that lets anything be reconstituted,but instead just make gross assumptions...
-	var user = document.querySelector('#otherUsers a-entity[id="' + id + '"'); //bugbug better way?
-	if (!user) {
-	    user = createBlankUser();
-	    user.setAttribute('id',id);
-	    $otherUsers.appendChild(user);
-	}
 
-	user.setAttribute('position',details.pos);
-	user.setAttribute('rotation',details.rot);
-	//bugbug todo user.setAttribute(geometry.scale  ....etc  etc)
+	details = $.parseJSON(details);
 
+	//don't build an icon for "self"  
+	if (id==userId) {
+	    //bugbug todo check returned version of self (is my last write up to date? etc)
+	    //alert("found self bugbug"); 
+	} else {
+
+	    //bugbug here should be code that lets anything be reconstituted,but instead just make gross assumptions...
+	    var user = document.querySelector('#otherUsers a-entity[id="' + id + '"'); //bugbug better way?
+	    if (!user) {
+		user = createBlankUser();
+		user.setAttribute('id',id);
+		$otherUsers.appendChild(user);
+	    }
+
+	    user.setAttribute('position',details.pos);
+	    user.setAttribute('rotation',details.rot);
+	    //debugger;
+	    //bugbug todo user.setAttribute(geometry.scale  ....etc  etc)
+	} 
     });
 }
 
@@ -143,7 +149,7 @@ function updateOtherUsers(newUserDataFromServer) {
 
 function createBlankUser() {
     var retval=document.createElement('a-entity');
-    retval.setAttribute('geometry','primitive: cone; height:5; radiusTop:0, radiusBottom:0.25');
+    retval.setAttribute('geometry','primitive: cone; height:7; radiusTop:0, radiusBottom:0.25');
     retval.setAttribute('material','color','orange');
     retval.setAttribute('cursor-listener',{});
     return retval;
