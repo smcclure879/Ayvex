@@ -136,10 +136,14 @@ function updateOtherUsers(newUserDataFromServer) {
 		$otherUsers.appendChild(user);
 	    }
 
+	    //update our representation of other person based on the details from server 
 	    user.setAttribute('position',details.pos);
 	    user.setAttribute('rotation',details.rot);
-	    //debugger;
 	    //bugbug todo user.setAttribute(geometry.scale  ....etc  etc)
+
+
+	    //debugger;
+	    maybeDoTeleconf(user,details); //bugbug dynObj,item);  //item is from server  //users can do teleconf but probably no other types
 	} 
     });
 }

@@ -58,13 +58,11 @@ var telecInfo={};  //global for now bugbug
 
 
 ////////     "PUBLIC INTERFACE"     ////////
-function conferenceJsHook()  //don't change this name
-{
-	initiateTheCall();
+function conferenceJsHook()  {  //don't change this name
+    initiateTheCall();
 }
 
-function maybeDoTeleconf(localCopyOfItem,itemFromServer)  
-{
+function maybeDoTeleconf(localCopyOfItem,itemFromServer)  {
 	maybeDoTeleconfInternal(localCopyOfItem,itemFromServer);
 }
 
@@ -153,68 +151,92 @@ function useLocalOffer(offer)
 
 //hook to maybe receive a call...
 function maybeDoTeleconfInternal(localCopyOfItem,itemFromServer)  {
-	if (!localCopyOfItem) //bugbugSoon do we even need this here?  maybe to mark who is calling us, e.g. to paint larger or something.
-		return;	
-	
-	var otherParty=itemFromServer;  //bugbugOK??  .value;
-	if (!otherParty || !otherParty.telecInfo)
-		return;
-		
-	//explicitly already tested to make sure this is not us, but maybe do it again???
-	var calleeKey = otherParty.telecInfo.callee;
-	if (!inCall && calleeKey && isMe(calleeKey) )  	{
-		processAsIncomingCall(otherParty);
-	} else if (inCall===true && otherParty.telecInfo.answer) { //might be in THIS call, so can't use that bit!!!
-		if (theyAreWhoWeCalled(otherParty))	{
-			finalizeOfferCycle(otherParty);  //sets inCall to 2
-		}
-	} else	{
-		//passthru: got a telecInfo, but it's not for us
-		if (typeof debug !== 'undefined' && debug)  {
-			alert("bugbug115p: unknown state:"+inCall+" "+dumps(pc));
-			alert("otherParty="+dumps(otherParty));
-		}
+    if (!localCopyOfItem) //bugbugSoon do we even need this here?  maybe to mark who is calling us, e.g. to paint larger or something.
+	return;	
+    
+    var otherParty=itemFromServer;  //bugbugOK??  .value;
+    if (!otherParty || !otherParty.telecInfo)
+	return;
+    
+    //explicitly already tested to make sure this is not us, but maybe do it again???
+    var calleeKey = otherParty.telecInfo.callee;
+    if (!calleeKey) 
+	return;
+    //debugger;
+    if (!inCall && isOK(calleeKey) && !isMe(calleeKey) )  	{
+	processAsIncomingCall(otherParty);
+    } else if (inCall===true && otherParty.telecInfo.answer) { //might be in THIS call, so can't use that bit!!!
+	if (theyAreWhoWeCalled(otherParty))	{
+	    finalizeOfferCycle(otherParty);  //sets inCall to 2
+	} else {
+	    //bugbug anything?
 	}
-	
+    } else	{
+	//passthru: got a telecInfo, but it's not for us
+	if (typeof debug !== 'undefined' && debug)  {
+	    alert("bugbug115p: unknown state:"+inCall+" "+dumps(pc));
+	    alert("otherParty="+dumps(otherParty));
+	}
+    }
+    
+}
+
+
+
+function isMe(x) {
+    return (x=='userId');  //bugbug const
+}
+
+function isOK(x) {
+
+    if (typeof x == 'undefined') return false;
+    if (!x) return false;
+    return true; //bugbug whatelse, consolidate?	
 }
 
 
 
 ////////  RECEIVER CODE  ////////
 
-function processAsIncomingCall(callee){
-	var currentOffer = callee.telecInfo.currentOffer;
-	if (!currentOffer)
-		return;
-	
-	if (!confirm("accept call from "+callee.userId+"?"))  //bugbug just the key??
-		return; //ignoring it  //prolly need to record this somehow?bugbug
+function processAsIncomingCall(callee) {
 
-	telecInfo._otherParty=callee.userId;    //this one already has user_ stripped
-			
-	if (inCall) 
-		return; //busy
-	inCall=true;
-		
-	pc=new RTCPeerConnection(servers);  
-	pc.oniceconnectionstatechange = showIceConnectionStateChange; 
-	
-	//bugbug try without ice candidates on this side as well...
-	pc.onicecandidate = gotIceCandidateForReceiver;  //function(ev) { gotIceCandidate(ev,blah); } ;  
-	pc.onaddstream = function(event) { gotRemoteStream(event,createAnswer); } ;  //bugbug WHY did this make it go farther....why did I have to do this
-	//bugbug doesn't seem to work  pc.ongatheringchange = showGatheringStateChange;
-	
-	getUserMedia(
-			{video:true},
-			function(stream){acknowledgeConnection(stream,currentOffer);},
-			errorHandler
-		);
+    var currentOffer = callee.telecInfo.currentOffer;
+
+
+
+    if (!currentOffer)
+	return;
+    
+    if (!confirm("accept call from "+callee.userId+"?"))  //bugbug just the key??
+	return; //ignoring it  //prolly need to record this somehow?bugbug
+    
+    telecInfo._otherParty=callee.userId;    //this one already has user_ stripped
+    
+    if (inCall) 
+	return; //busy
+    inCall=true;
+    
+    pc=new RTCPeerConnection(servers);  
+    pc.oniceconnectionstatechange = showIceConnectionStateChange; 
+    
+    //bugbug try without ice candidates on this side as well...
+    pc.onicecandidate = gotIceCandidateForReceiver;  //function(ev) { gotIceCandidate(ev,blah); } ;  
+    pc.onaddstream = function(event) { gotRemoteStream(event,createAnswer); } ;  //bugbug WHY did this make it go farther....why did I have to do this
+    //bugbug doesn't seem to work  pc.ongatheringchange = showGatheringStateChange;
+    
+    getUserMedia(
+	{video:true},
+	function(stream){acknowledgeConnection(stream,currentOffer);},
+	errorHandler
+    );
 }
+
 // THENTO
 function acknowledgeConnection(localStream,currentOffer) {
 	//pc.onaddstream({stream: localStream});  //calling gotRemoteStream with local???
 	//show it locally
-	$localVideo.prop( 'src', URL.createObjectURL(localStream) ).change(); 
+    debugger;  //bugbug you are here shower 855
+	$localVideo.src = URL.createObjectURL(localStream);
 	
 	//send it to originator  (bugbug is this too early, move to createAnswer??)
 	pc.addStream(localStream);
@@ -261,6 +283,7 @@ function handleIceCandidateMessage(iceCandidate) {
 /////////  ANSWER TO THE ANSWER  ////////////
 function finalizeOfferCycle(otherParty){
 	//alert("finalizeConn..."+dumps(pc))	
+    debugger;
 	pc.setRemoteDescription(new RTCSessionDescription(otherParty.telecInfo.answer),endOfFinalize,errorHandler);
 	inCall=2;
 }
@@ -343,7 +366,7 @@ function gotRemoteStream(ev,then)  {  //note similar function elsewhere in this 
 	var remoteStreamUrl = window.URL.createObjectURL(remoteStream);  //bugbug release all of these on hangup
 	//alert("remote stream url="+remoteStreamUrl);
 	
-	$remoteVideo.prop('src',remoteStreamUrl).change();  
+	$remoteVideo.src=remoteStreamUrl;
 	//$remoteVideo.get().play();  //bugbug needed???
 	
 	if (then) 
