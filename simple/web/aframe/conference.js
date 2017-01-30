@@ -114,9 +114,8 @@ function initiateConnection(localStream)
 {
 	//bugbug still needed??? 
 	//window.stream = localStream; // stream available to console
-	
-	//$localVideo.prop('muted',true).change();
-	$localVideo.setAttribute('src', window.URL.createObjectURL(localStream));
+
+	$localVideo.src = window.URL.createObjectURL(localStream);
 		
 	if (localStream.getVideoTracks().length > 0) 
 	{
@@ -151,18 +150,22 @@ function useLocalOffer(offer)
 
 //hook to maybe receive a call...
 function maybeDoTeleconfInternal(localCopyOfItem,itemFromServer)  {
+
+    if (inCall) //?? what if other party hung up?  bugbug
+	return;
+
     if (!localCopyOfItem) //bugbugSoon do we even need this here?  maybe to mark who is calling us, e.g. to paint larger or something.
 	return;	
     
     var otherParty=itemFromServer;  //bugbugOK??  .value;
     if (!otherParty || !otherParty.telecInfo)
 	return;
-    
+
     //explicitly already tested to make sure this is not us, but maybe do it again???
     var calleeKey = otherParty.telecInfo.callee;
     if (!calleeKey) 
 	return;
-    //debugger;
+
     if (!inCall && isOK(calleeKey) && !isMe(calleeKey) )  	{
 	processAsIncomingCall(otherParty);
     } else if (inCall===true && otherParty.telecInfo.answer) { //might be in THIS call, so can't use that bit!!!
@@ -171,7 +174,7 @@ function maybeDoTeleconfInternal(localCopyOfItem,itemFromServer)  {
 	} else {
 	    //bugbug anything?
 	}
-    } else	{
+    } else {
 	//passthru: got a telecInfo, but it's not for us
 	if (typeof debug !== 'undefined' && debug)  {
 	    alert("bugbug115p: unknown state:"+inCall+" "+dumps(pc));
@@ -181,6 +184,10 @@ function maybeDoTeleconfInternal(localCopyOfItem,itemFromServer)  {
     
 }
 
+function theyAreWhoWeCalled(otherParty) {
+    debugger;  //bugbug you are here
+    return true;
+}
 
 
 function isMe(x) {
@@ -202,8 +209,6 @@ function processAsIncomingCall(callee) {
 
     var currentOffer = callee.telecInfo.currentOffer;
 
-
-
     if (!currentOffer)
 	return;
     
@@ -221,7 +226,10 @@ function processAsIncomingCall(callee) {
     
     //bugbug try without ice candidates on this side as well...
     pc.onicecandidate = gotIceCandidateForReceiver;  //function(ev) { gotIceCandidate(ev,blah); } ;  
-    pc.onaddstream = function(event) { gotRemoteStream(event,createAnswer); } ;  //bugbug WHY did this make it go farther....why did I have to do this
+    pc.onaddstream = function(event) { 
+	debugger; 
+	gotRemoteStream(event,createAnswer); 
+    } ;  //bugbug WHY did this make it go farther....why did I have to do this
     //bugbug doesn't seem to work  pc.ongatheringchange = showGatheringStateChange;
     
     getUserMedia(
@@ -235,7 +243,7 @@ function processAsIncomingCall(callee) {
 function acknowledgeConnection(localStream,currentOffer) {
 	//pc.onaddstream({stream: localStream});  //calling gotRemoteStream with local???
 	//show it locally
-    debugger;  //bugbug you are here shower 855
+    alert("setting video source during ack");
 	$localVideo.src = URL.createObjectURL(localStream);
 	
 	//send it to originator  (bugbug is this too early, move to createAnswer??)
@@ -243,12 +251,12 @@ function acknowledgeConnection(localStream,currentOffer) {
 	
 	
 	var description=new RTCSessionDescription(currentOffer);
-	//alert("about to set description to:"+dumps(description)+dumps(pc));
+	alert("about to set description to:"+dumps(description)+dumps(pc));
 	pc.setRemoteDescription(description,createAnswer,errorHandler);
 }
 // THENTO
 function createAnswer() {
-	//alert("creatingAnswer"+dumps(pc));
+	alert("creatingAnswer"+dumps(pc));
 	pc.createAnswer(useAnswer,errorHandler);
 }
 // THENTO
@@ -283,13 +291,14 @@ function handleIceCandidateMessage(iceCandidate) {
 /////////  ANSWER TO THE ANSWER  ////////////
 function finalizeOfferCycle(otherParty){
 	//alert("finalizeConn..."+dumps(pc))	
-    debugger;
+        debugger;
 	pc.setRemoteDescription(new RTCSessionDescription(otherParty.telecInfo.answer),endOfFinalize,errorHandler);
 	inCall=2;
 }
 
 function endOfFinalize() {
 	//nothing
+    debugger;
 }
 
 
@@ -349,6 +358,7 @@ function sendAnswer() {
 	var answer = pc.localDescription;
 	telecInfo.answer=answer;
 
+    debugger;
 	if (typeof postOfferSend=='function')
 		postOfferSend(dumps(answer));
 	

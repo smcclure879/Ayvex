@@ -299,9 +299,6 @@ function deString(data) {  //might be object, might be dehydrated JSON object
 // }
 
 
-// function theyAreWhoWeCalled() {
-//     return true; //bugbugNOW what should this be?  check callee or something
-// }
 
 
 

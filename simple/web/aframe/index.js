@@ -2,7 +2,7 @@ var z=150;
 var disp,sphere;
 var $localVideo,$remoteVideo,$otherUsers,$user;
 var selectedItem = null;
-
+var MINUTES = 60;
 
 
 
@@ -93,6 +93,12 @@ $("document").ready( function(event) {
     //this should ideally be based on something besides a timer...like user movement or inactivity    
     window.setInterval(function(){
 	updateServerCallback($user,updateOtherUsers);
+
+	//bugbug todo implement thusly later
+	// function saveMyFeatures() {  //parallels below function updateOtherUsers (serialization/deserialization pair)
+	//     //bugbug not yet called but should be 2017  !!
+	// }
+
     },2000);
     
 });
@@ -108,11 +114,18 @@ function requestConference() {
 
 
 
-function saveMyFeatures() {  //parallels below function updateOtherUsers (serialization/deserialization pair)
-    //bugbug not yet called but should be 2017  !!
-    
 
 
+function timedOut(item) {
+    //bugbug compact this logic (this is optimized for debugging) 
+    //  ( it would be smart to have this logic in the server, tho it could be a nightly reboot for a fix ha  :-)   )
+    var secondsDiff = getOfficialTime()-item.saveTime;
+    //debugger;
+    if (secondsDiff > 15*MINUTES) {
+	return true;
+    }
+
+    return false;
 }
 
 
@@ -124,27 +137,32 @@ function updateOtherUsers(newUserDataFromServer) {
 
 	//don't build an icon for "self"  
 	if (id==userId) {
+	    return true; //next-each
 	    //bugbug todo check returned version of self (is my last write up to date? etc)
 	    //alert("found self bugbug"); 
-	} else {
+	}
 
-	    //bugbug here should be code that lets anything be reconstituted,but instead just make gross assumptions...
-	    var user = document.querySelector('#otherUsers a-entity[id="' + id + '"'); //bugbug better way?
-	    if (!user) {
-		user = createBlankUser();
-		user.setAttribute('id',id);
-		$otherUsers.appendChild(user);
-	    }
+	//debugger; //bugbug  you are here do we ever get PAST this???
+	if (timedOut(details))
+	    return true;  //next-each
 
-	    //update our representation of other person based on the details from server 
-	    user.setAttribute('position',details.pos);
-	    user.setAttribute('rotation',details.rot);
-	    //bugbug todo user.setAttribute(geometry.scale  ....etc  etc)
-
-
-	    //debugger;
-	    maybeDoTeleconf(user,details); //bugbug dynObj,item);  //item is from server  //users can do teleconf but probably no other types
-	} 
+	
+	//bugbug here should be code that lets anything be reconstituted,but instead just make gross assumptions...
+	var user = document.querySelector('#otherUsers a-entity[id="' + id + '"'); //bugbug better way?
+	if (!user) {
+	    user = createBlankUser();
+	    user.setAttribute('id',id);
+	    $otherUsers.appendChild(user);
+	}
+	
+	//update our representation of other person based on the details from server 
+	user.setAttribute('position',details.pos);
+	user.setAttribute('rotation',details.rot);
+	//bugbug todo user.setAttribute(geometry.scale  ....etc  etc)
+	
+	
+	maybeDoTeleconf(user,details); //bugbug dynObj,item);  //item is from server  //users can do teleconf but probably no other types
+	
     });
 }
 
