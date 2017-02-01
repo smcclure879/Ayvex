@@ -53,7 +53,7 @@ var dumps = JSON.stringify;
 
 
 
-var telecInfo={};  //global for now bugbug
+var telecInfo={};  //global for now bugbug todo
 
 
 
@@ -78,8 +78,8 @@ function hangup()
 	pc.close(); 
 	pc=null;
 	inCall=false;
-	//bugbug video controls off, etc.
-	//bugbug event driven hangup for both parties...
+	//bugbug todo video controls off, etc.
+	//bugbug todo event driven hangup for both parties...
 }
 
 
@@ -97,7 +97,7 @@ function hangup()
 function initiateTheCall() 
 {	
 	pc=new RTCPeerConnection(servers);
-	//bugbug  doesn't fire...why?pc.onconnection = function() { alert("you are here onConnection fired"); };
+	//bugbug  doesn't fire...why?pc.onconnection = function() { alert("bugbug onConnection fired"); };
 	pc.oniceconnectionstatechange = showIceConnectionStateChange;
 	//bugbug doesn't seem to work   pc.ongatheringchange = showGatheringStateChange;
 	
@@ -112,8 +112,8 @@ function initiateTheCall()
 //THENTO
 function initiateConnection(localStream) 
 {
-	//bugbug still needed??? 
-	//window.stream = localStream; // stream available to console
+    //it's a good idea to make the local stream available globally -- bugbug todo global variable?
+    window.stream = localStream; // stream available to console
 
 	$localVideo.src = window.URL.createObjectURL(localStream);
 		
@@ -157,7 +157,7 @@ function maybeDoTeleconfInternal(localCopyOfItem,itemFromServer)  {
     if (!localCopyOfItem) //bugbugSoon do we even need this here?  maybe to mark who is calling us, e.g. to paint larger or something.
 	return;	
     
-    var otherParty=itemFromServer;  //bugbugOK??  .value;
+    var otherParty=itemFromServer;  
     if (!otherParty || !otherParty.telecInfo)
 	return;
 
@@ -172,12 +172,12 @@ function maybeDoTeleconfInternal(localCopyOfItem,itemFromServer)  {
 	if (theyAreWhoWeCalled(otherParty))	{
 	    finalizeOfferCycle(otherParty);  //sets inCall to 2
 	} else {
-	    //bugbug anything?
+	    //nothing
 	}
     } else {
 	//passthru: got a telecInfo, but it's not for us
 	if (typeof debug !== 'undefined' && debug)  {
-	    alert("bugbug115p: unknown state:"+inCall+" "+dumps(pc));
+	    alert("err115p: unknown state:"+inCall+" "+dumps(pc));
 	    alert("otherParty="+dumps(otherParty));
 	}
     }
@@ -191,7 +191,8 @@ function theyAreWhoWeCalled(otherParty) {
 
 
 function isMe(x) {
-    return (x=='userId');  //bugbug const
+    debugger;
+    return (x==userId);  //bugbug const
 }
 
 function isOK(x) {

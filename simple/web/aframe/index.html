@@ -10,7 +10,6 @@
   <script src="jquery-ui-1.10.4.js"></script>
   <script src="aframe.js"></script>
   <script src="util.js"></script>
-  <script src="gamer.js"></script>
   <script src="adapter.js"></script>
   <script src="conference.js"></script>
   <script src="comm.js"></script>
@@ -19,11 +18,18 @@
 </head>
 
 <body>
+
   <div id="readout">----</div>
+  
   <a-scene id="scene">
 
     <a-entity id="user" position="0 1.0 200" wasd-controls="fly:true" look-controls>
       <a-entity camera="userHeight: 1.6" >
+	
+	<a-entity material="color:black" position="0 0 0" 
+		  text="bugbug this should be the terminator overlay described in issue 112">
+	</a-entity>
+
         <a-entity cursor="fuse: true; fuseTimeout: 500"
             position="0 0 -1"
             geometry="primitive: ring; radius-inner: 0.1; radius-outer: 0.11"

@@ -31,18 +31,14 @@ $("document").ready( function(event) {
     var urlParams = new URLSearchParams(window.location.search);
 
     //"login"
-    //debugger;
     if (!urlParams.has('user'))
 	alert("no user in URL querystring");
     else 
 	userId=urlParams.get('user');
 
 
-
-
     //all the conference stuff in one place for now
-    //bugbug here should really switch to $("#remoteVideo    etc etc
-    $remoteVideo=document.querySelector("#remoteVideo");  //bugbug probably wait until a user being conferenced with??
+    $remoteVideo=document.querySelector("#remoteVideo");
     $localVideo=document.querySelector("#localVideo");
     $otherUsers = document.querySelector("#otherUsers");
     $user = document.querySelector("#user");
@@ -85,9 +81,9 @@ $("document").ready( function(event) {
 
     
     if (!$remoteVideo)
-      alert("wtfbugbug1236");
+      alert("err1236t");
     if (!$localVideo)
-      alert("wtfbugbug224");
+      alert("err224t");
     
 
 
@@ -96,11 +92,10 @@ $("document").ready( function(event) {
 	    {video:true,audio:true},
 	    function(mirrorStream){
 		var blobUrl = URL.createObjectURL(mirrorStream);
-		$localVideo.setAttribute('src',blobUrl);  //bugbug NOTE: $localVideo.src DOES NOT WORK
-		debugger;
+		$localVideo.setAttribute('src',blobUrl);  // NOTE: $localVideo.src DOES NOT WORK
 	    },
-	    function(x){
-		alert(x);
+	    function(err){
+		alert(err);
 	    }
 	);
     }
@@ -109,20 +104,13 @@ $("document").ready( function(event) {
 
     //autocall on startup
     window.setTimeout(function(){
-        alert("bugbug617");
 	doMirror1();
-    },3000);
+    },500);
 
     
     //this should ideally be based on something besides a timer...like user movement or inactivity    
     window.setInterval(function(){
-	updateServerCallback($user,updateOtherUsers);
-
-	//bugbug todo implement thusly later
-	// function saveMyFeatures() {  //parallels below function updateOtherUsers (serialization/deserialization pair)
-	//     //bugbug not yet called but should be 2017  !!
-	// }
-
+	updateServerCallback($user,updateOtherUsers);  //saves $user then calls updateOtherUsers as our cb()
     },2000);
     
 });
@@ -163,15 +151,13 @@ function updateOtherUsers(newUserDataFromServer) {
 	if (id==userId) {
 	    return true; //next-each
 	    //bugbug todo check returned version of self (is my last write up to date? etc)
-	    //alert("found self bugbug"); 
 	}
 
-	//debugger; //bugbug  you are here do we ever get PAST this???
 	if (timedOut(details))
 	    return true;  //next-each
 
-	
-	//bugbug here should be code that lets anything be reconstituted,but instead just make gross assumptions...
+	//bugbug todo: here should be code that lets anything be reconstituted,
+        //     but instead just make gross assumptions...
 	var user = document.querySelector('#otherUsers a-entity[id="' + id + '"'); //bugbug better way?
 	if (!user) {
 	    user = createBlankUser();
