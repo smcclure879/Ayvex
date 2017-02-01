@@ -89,6 +89,12 @@ $("document").ready( function(event) {
     if (!$localVideo)
       alert("wtfbugbug224");
     
+
+    //autocall on startup
+    window.setTimeout(function(){
+        conferenceJsHook();
+    },2000);
+
     
     //this should ideally be based on something besides a timer...like user movement or inactivity    
     window.setInterval(function(){
