@@ -151,10 +151,19 @@ function doApi(req,res) {
 		return unknownMethod(req,res);
 	}
 }
+
+function doBonk(res){
+    writeNormalHead(res);
+    users = {};
+    res.end("OK");
+    return;
+}
 	
 function doGet(req,res) {
 	var url = ""+req.url;
-	if (url=="/api/user/") {
+        if (url=="/api/bonk/") {
+	    return doBonk(res);
+	} else if (url=="/api/user/") {
 	    writeNormalHead(res);
 	    var userList = getUserList();
             //console.log("users:"+userList);
