@@ -131,13 +131,13 @@ function requestConference() {
 function timedOut(item) {
     //bugbug compact this logic (this is optimized for debugging) 
     //  ( it would be smart to have this logic in the server, tho it could be a nightly reboot for a fix ha  :-)   )
-    var secondsDiff = getOfficialTime()-item.saveTime;
+    var secondsDiff = (getOfficialTime()-item.saveTime)/1000;
     //debugger;
-    if (secondsDiff > 15*MINUTES) {
-	return true;
+    if (secondsDiff > 1*MINUTES) {
+	return secondsDiff;
     }
 
-    return false;
+    return 0;
 }
 
 
@@ -147,16 +147,24 @@ function updateOtherUsers(newUserDataFromServer) {
     $.each(newUserDataFromServer,function(id,details) {
 
 	details = $.parseJSON(details);
-	logStr += (","+id);
+	logStr += ( ',' + id + '-' );
+	
 	//don't build an icon for "self"  
 	if (id==userId) {
-	    logStr+='[s]';
+	    logStr+='s';
 	    return true; //next-each
 	    //bugbug todo check returned version of self (is my last write up to date? etc)
 	}
 
-	if (timedOut(details)) {
-	    logStr+='[x]';
+	if (details.telecInfo) {
+	    logStr+=JSON.stringify(details.telecInfo);
+	}
+
+
+	var secondsAge=timedOut(details);
+	if (secondsAge) {
+	    logStr+=('o='+secondsAge);
+	    //bugbug todo delete child in #otherUsers!!
 	    return true;  //next-each
 	}
 

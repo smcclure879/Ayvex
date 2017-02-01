@@ -151,20 +151,27 @@ function useLocalOffer(offer)
 //hook to maybe receive a call...
 function maybeDoTeleconfInternal(localCopyOfItem,itemFromServer)  {
 
-    if (inCall) //?? what if other party hung up?  bugbug
+    if (inCall) {  //?? what if other party hung up?  bugbug
+	log("incall");
 	return;
+    }
 
-    if (!localCopyOfItem) //bugbugSoon do we even need this here?  maybe to mark who is calling us, e.g. to paint larger or something.
+    if (!localCopyOfItem) { //bugbugSoon do we even need this here?  maybe to mark who is calling us, e.g. to paint larger or something.
+	log("missing localCopy err1203");
 	return;	
-    
+    }
     var otherParty=itemFromServer;  
-    if (!otherParty || !otherParty.telecInfo)
+    if (!otherParty || !otherParty.telecInfo) {
+	log("missing or bad otherParty");
 	return;
+    }
 
     //explicitly already tested to make sure this is not us, but maybe do it again???
     var calleeKey = otherParty.telecInfo.callee;
-    if (!calleeKey) 
+    if (!calleeKey) {
+	log("bad calleeKey");
 	return;
+    }
 
     if (!inCall && isOK(calleeKey) && !isMe(calleeKey) )  	{
 	processAsIncomingCall(otherParty);
