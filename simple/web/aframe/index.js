@@ -110,7 +110,7 @@ $("document").ready( function(event) {
     
     //this should ideally be based on something besides a timer...like user movement or inactivity    
     window.setInterval(function(){
-	updateServerCallback($user,updateOtherUsers);  //saves $user then calls updateOtherUsers as our cb()
+	updateServerCallback($user,log,updateOtherUsers);  //saves $user then calls updateOtherUsers as our cb()
     },2000);
     
 });
@@ -143,18 +143,22 @@ function timedOut(item) {
 
 function updateOtherUsers(newUserDataFromServer) {
     //bring code here from commented out code in comm.js
+    var logStr="--";
     $.each(newUserDataFromServer,function(id,details) {
 
 	details = $.parseJSON(details);
-
+	logStr += (","+id);
 	//don't build an icon for "self"  
 	if (id==userId) {
+	    logStr+='[s]';
 	    return true; //next-each
 	    //bugbug todo check returned version of self (is my last write up to date? etc)
 	}
 
-	if (timedOut(details))
+	if (timedOut(details)) {
+	    logStr+='[x]';
 	    return true;  //next-each
+	}
 
 	//bugbug todo: here should be code that lets anything be reconstituted,
         //     but instead just make gross assumptions...
@@ -164,7 +168,7 @@ function updateOtherUsers(newUserDataFromServer) {
 	    user.setAttribute('id',id);
 	    $otherUsers.appendChild(user);
 	}
-	
+
 	//update our representation of other person based on the details from server 
 	user.setAttribute('position',details.pos);
 	user.setAttribute('rotation',details.rot);
@@ -174,6 +178,8 @@ function updateOtherUsers(newUserDataFromServer) {
 	maybeDoTeleconf(user,details); //bugbug dynObj,item);  //item is from server  //users can do teleconf but probably no other types
 	
     });
+
+    log(logStr);
 }
 
 

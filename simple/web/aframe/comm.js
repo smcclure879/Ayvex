@@ -96,9 +96,11 @@ var serverCallbackLocked=false;  //open it  -- like a semaphore??  todo revisit
 var fakeServer=0; //bugbug
 
 //bugbug rename globally to "doAllServerComm" or similar
-function updateServerCallback(me,cb) {  //me is "the user"  
+function updateServerCallback(me,notifier,cb) {  //me is "the user"  
     //myState is "input" and cb gets output of "other users and stuff" (dynamic objects)
     
+    notifier("starting");
+
     var reason = (function checkArgs() {
 	if ( !cb )    return "err240p: cb is missing";
 	if ( !me )    return "err241p: var.me is missing";
@@ -164,7 +166,7 @@ function updateServerCallback(me,cb) {  //me is "the user"
     } else {
 	var data = JSON.stringify(theUser);
 	var putUrl=getUserDocUrl(theUser);  //+revString(theUser._rev);
-	
+	notifier("ajax put");
 	$.ajax({
 	    type:"PUT",
 	    headers: { 
@@ -211,7 +213,7 @@ function updateServerCallback(me,cb) {  //me is "the user"
 	},300);
 	return;
     } else {  //---- else really do the receive-----
-
+	notifier("ajax get");
 	//receive after we send is a good check of our write??
 	$.ajax({
 	    type: "GET",
@@ -219,6 +221,7 @@ function updateServerCallback(me,cb) {  //me is "the user"
 	    contentType: "application/json",
 	    success: function(data) {
 		var obj = deString(data);  
+		log("cb");//bugbug
 		cb(obj);  //previously 	updateDynamicObjects(data); //see below
 	    },
 	    error: function(resp) {
