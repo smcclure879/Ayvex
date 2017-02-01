@@ -244,7 +244,7 @@ function acknowledgeConnection(localStream,currentOffer) {
 	//pc.onaddstream({stream: localStream});  //calling gotRemoteStream with local???
 	//show it locally
     alert("setting video source during ack");
-	$localVideo.src = URL.createObjectURL(localStream);
+	$localVideo.setAttribute('src', URL.createObjectURL(localStream));
 	
 	//send it to originator  (bugbug is this too early, move to createAnswer??)
 	pc.addStream(localStream);
@@ -337,10 +337,14 @@ function stripPrefix(prefix,s){
 
 
 function sendMyOffer(){
+    var sel = getSelectedItem();
+    if (!sel) 
+	return;
+
     //trace("sending the following offer from localPeerConnection: \n" + offer);
     var offer=pc.localDescription;
     telecInfo.currentOffer=offer;  
-    telecInfo.callee=getSelectedItem().id;
+    telecInfo.callee=sel.id;
     telecInfo._otherParty=stripUserPrefix(telecInfo.callee);  //bugbug better way than new function, maybe a fix to line before this one?
     trace("pc state while postOfferSend:"+dumps(pc));
     

@@ -90,10 +90,28 @@ $("document").ready( function(event) {
       alert("wtfbugbug224");
     
 
+
+    function doMirror1() {
+	getUserMedia(
+	    {video:true,audio:true},
+	    function(mirrorStream){
+		var blobUrl = URL.createObjectURL(mirrorStream);
+		$localVideo.setAttribute('src',blobUrl);  //bugbug NOTE: $localVideo.src DOES NOT WORK
+		debugger;
+	    },
+	    function(x){
+		alert(x);
+	    }
+	);
+    }
+
+
+
     //autocall on startup
     window.setTimeout(function(){
-        conferenceJsHook();
-    },2000);
+        alert("bugbug617");
+	doMirror1();
+    },3000);
 
     
     //this should ideally be based on something besides a timer...like user movement or inactivity    
