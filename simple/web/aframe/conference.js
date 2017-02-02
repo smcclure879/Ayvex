@@ -45,7 +45,7 @@ var servers = {
 
 
 var pc = null;	//the peer connection (RTCPeerConnection)  (webrtc)
-
+var answer = null;
 var inCall=false;  //state bit
 
 var dumps = JSON.stringify;
@@ -283,7 +283,7 @@ function processAsIncomingCall(callee) {
 function acknowledgeConnection(localStream,currentOffer) {
     //pc.onaddstream({stream: localStream});  //calling gotRemoteStream with local???
     //show it locally
-    alert("setting video source during ack");
+    alert("bugbug setting video source during ack");
     $localVideo.setAttribute('src', URL.createObjectURL(localStream));
     
     //send it to originator  (bugbug is this too early, move to createAnswer??)
@@ -291,7 +291,7 @@ function acknowledgeConnection(localStream,currentOffer) {
     
     
     var description=new RTCSessionDescription(currentOffer);
-    alert("about to set description to:"+dumps(description)+dumps(pc));
+    alert("bugbug about to set description to:"+dumps(description)+dumps(pc));
     pc.setRemoteDescription(description,createAnswer,errorHandler);
 }
 // THENTO
@@ -400,7 +400,7 @@ function sendMyOffer(){
 function sendAnswer() {
     alert("setting global answer--state while postOfferSend from receiver: "+pc.iceConnectionState);
     //alert("bugbugCHECK: localDescription --pc state in sendAnswer="+dumps(pc));
-    var answer = pc.localDescription;
+    answer = pc.localDescription;
     telecInfo.answer=answer;
     debugger; //does this have callee to pass thru the other code with???
     if (typeof postOfferSend=='function')
@@ -420,7 +420,7 @@ function gotRemoteStream(ev,then)  {  //note similar function elsewhere in this 
     var remoteStreamUrl = window.URL.createObjectURL(remoteStream);  //bugbug release all of these on hangup
     //alert("remote stream url="+remoteStreamUrl);
     
-    $remoteVideo.src=remoteStreamUrl;
+    $remoteVideo.setAttribute('src',remoteStreamUrl);
     $remoteVideo.play();  //bugbug needed???
     
     if (then) 
