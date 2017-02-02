@@ -141,6 +141,11 @@ function timedOut(item) {
 }
 
 
+
+
+
+
+
 function updateOtherUsers(newUserDataFromServer) {
     //bring code here from commented out code in comm.js
     var logStr="--";
@@ -155,11 +160,12 @@ function updateOtherUsers(newUserDataFromServer) {
 	    return true; //next-each
 	    //bugbug todo check returned version of self (is my last write up to date? etc)
 	}
-
-	if (details.telecInfo) {
-	    logStr+=JSON.stringify(details.telecInfo);
+	
+	if (details.telecInfo && details.telecInfo.callee) {
+	    logStr+=details.telecInfo.callee;
 	}
-
+	
+	
 
 	var secondsAge=timedOut(details);
 	if (secondsAge) {
