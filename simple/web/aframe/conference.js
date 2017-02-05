@@ -222,21 +222,18 @@ function theyAreWhoWeCalled(otherParty) {
 
 
     if (otherParty.userId==initialConferenceTarget) {
-	alert("bugbug you are here");
+	log("got the bounceback state1203v"); 
 	return true;
     }
-    debugger;
-    alert("bugbug you are here 2222");
     return false;
 }
 
 
 function isMe(x) {
-    return (x==userId);	 //bugbug const
+    return (x==userId);	
 }
 
 function isOK(x) {
-
     if (typeof x == 'undefined') return false;
     if (!x) return false;
     return true; //bugbug whatelse, consolidate?	
@@ -283,7 +280,7 @@ function processAsIncomingCall(callee) {
 function acknowledgeConnection(localStream,currentOffer) {
     //pc.onaddstream({stream: localStream});  //calling gotRemoteStream with local???
     //show it locally
-    alert("bugbug setting video source during ack");
+    log("acknowledgingConnection");
     $localVideo.setAttribute('src', URL.createObjectURL(localStream));
     
     //send it to originator  (bugbug is this too early, move to createAnswer??)
@@ -291,12 +288,12 @@ function acknowledgeConnection(localStream,currentOffer) {
     
     
     var description=new RTCSessionDescription(currentOffer);
-    alert("bugbug about to set description to:"+dumps(description)+dumps(pc));
+    //detailLog("bugbug about to set description to:"+dumps(description)+dumps(pc));
     pc.setRemoteDescription(description,createAnswer,errorHandler);
 }
 // THENTO
 function createAnswer() {
-    alert("creatingAnswer"+dumps(pc));
+    log("creatingAnswer");  //+dumps(pc));
     pc.createAnswer(useAnswer,errorHandler);
 }
 // THENTO
@@ -331,14 +328,14 @@ function handleIceCandidateMessage(iceCandidate) {
 /////////  ANSWER TO THE ANSWER	 ////////////
 function finalizeOfferCycle(otherParty){
     //alert("finalizeConn..."+dumps(pc))	
-    debugger;
+    //debugger;
     pc.setRemoteDescription(new RTCSessionDescription(otherParty.telecInfo.answer),endOfFinalize,errorHandler);
     inCall=2;
 }
 
 function endOfFinalize() {
     //nothing
-    debugger;
+    //debugger;
 }
 
 
@@ -385,7 +382,7 @@ function sendMyOffer(){
     var offer=pc.localDescription;
     telecInfo.currentOffer=offer;  
     telecInfo.callee=sel.id;
-    alert("sel.id="+sel.id);
+    //alert("sel.id="+sel.id);
     initialConferenceTarget=sel.id;  //a global for now ugh
     telecInfo._otherParty=stripUserPrefix(telecInfo.callee);  //bugbug better way than new function, maybe a fix to line before this one?
     trace("pc state while postOfferSend:"+dumps(pc));
@@ -398,7 +395,7 @@ function sendMyOffer(){
 
 //below is for call receiver, above is for the initiator  
 function sendAnswer() {
-    alert("setting global answer--state while postOfferSend from receiver: "+pc.iceConnectionState);
+    log("setting global answer");   //"--state while postOfferSend from receiver: "+pc.iceConnectionState);
     //alert("bugbugCHECK: localDescription --pc state in sendAnswer="+dumps(pc));
     answer = pc.localDescription;
     telecInfo.answer=answer;
