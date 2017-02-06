@@ -6,6 +6,8 @@ use Cwd 'abs_path';
 use File::Basename;
 use JSON;
 use File::Slurp;
+use POSIX qw(strftime);
+
 
 my $MINUTES = 60;
 my $ipAddr;
@@ -29,7 +31,7 @@ sub regDnsAlias {
     my $output=`curl \"$url\"`;
     print $output,"\n";
     print $fhw "output from curl:::".$output;
-    if ($output =~ /good/) {
+    if ($output =~ /good|nochg/) {
 	print $fhw "update ip worked\n";
     } else {
 	print $fhw "update ip did not work\n";
@@ -81,6 +83,19 @@ sub performDnsRegistration {
 }
 
 
+sub quidgen {
+    my $retval = `uuidgen`;
+    chomp $retval;
+    $retval = substr $retval,0,8;
+    return $retval;
+}
+
+sub internalDateTimeString {
+    my $p = strftime "%FT%R:%S",gmtime();
+    return "$p.".quidgen();
+}
+
+
 
 # my $dnsRegInfoExample = << 'EOREG';
 # {
@@ -119,12 +134,17 @@ my $dnsName="ayvex.dnsalias.com";
 my $pazzword="readElsewhere204r";
 
 print "remember this sleeps 5 minutes in case internet is just down for a while after power out\n";
-sleep 5 * $MINUTES; 
+sleep 5 * $MINUTES;
 print "sleep is done\n";
 
 
 
 my $correctTime = get "http://www.timeapi.org/utc/now"  || print "ERROR: where is the internet1???\n";
+if ($correctTime =~ /Hello\s*World/i) {
+    print "cannot get correct time...got our own address instead of timeapi!";
+    #die "horrible bugbug1535t\n";
+    $correctTime='int'.internalDateTimeString();
+}
 print $correctTime;
 
 
@@ -252,6 +272,7 @@ sub checkWebServer
 
 checkWebServer("localhost");
 checkWebServer("ayvexllc.com");
+checkWebServer("dev.ayvexllc.com");
 checkWebServer("ayvex.dnsalias.com");
 
 
