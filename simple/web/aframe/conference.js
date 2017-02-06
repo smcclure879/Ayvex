@@ -174,7 +174,7 @@ function maybeDoTeleconfInternal(localCopyOfItem,itemFromServer)  {
 	return;
     }
 
-    //bugbug trying something...does the callee being set fix everything???
+    //bugbug trying something...does the callee being set fix everything???  seems yes
     if (!otherParty.telecInfo.callee) {
 	if (otherParty.telecInfo._otherParty) {
 	    otherParty.telecInfo.callee=otherParty.telecInfo._otherParty;
@@ -206,7 +206,7 @@ function maybeDoTeleconfInternal(localCopyOfItem,itemFromServer)  {
 	    //nothing
 	}
     } else {
-	localCopyOfItem.setAttribute('material','color','black');  //bugbug for debugging
+	//bugbug restore color localCopyOfItem.setAttribute('material','color','black');  //bugbug for debugging
 	//passthru: got a telecInfo, but it's not for us or we already answered!
 	if (typeof debug !== 'undefined' && debug)  {
 	    alert("err115p: unknown state:"+inCall+" "+dumps(pc));
@@ -409,6 +409,26 @@ function sendAnswer() {
 
 
 //////	EVERYBODY //////
+function otherParty() {
+    debugger;
+    var otherPartyId = null;
+    if (initialConferenceTarget) 
+	otherPartyId = initialConferenceTarget;
+
+    if (telecInfo && telecInfo._otherParty) 
+	otherPartyId = telecInfo._otherParty;
+
+    if (!otherPartyId) 
+	return otherPartyId;
+
+    //bugbug start from $otherUsers which would be faster??  dedup with index.js code that is similar
+    var retval = document.querySelector('#otherUsers a-entity[id="' + otherPartyId + '"'); //bugbug better way?
+
+    return retval;
+}
+
+
+
 function gotRemoteStream(ev,then)  {  //note similar function elsewhere in this file  _mine
     var remoteStream=ev.stream; //bugbug
     //alert("gotRemoteStream"+dumps(remoteStream));
@@ -417,8 +437,23 @@ function gotRemoteStream(ev,then)  {  //note similar function elsewhere in this 
     var remoteStreamUrl = window.URL.createObjectURL(remoteStream);  //bugbug release all of these on hangup
     //alert("remote stream url="+remoteStreamUrl);
     
+    var other=otherParty();
+    if (!other) {
+	alert("err751p should be fatal bugbug");
+	return;
+    }
+
+    //bugbug you are here...set this to be a child of the other user's node....how???
+    $remoteVideo.setAttribute('scale',"0.2 0.2 0.2");  
+    $remoteVideo.parentNode.removeChild($remoteVideo);
+    other.appendChild($remoteVideo);
+    $remoteVideo.setAttribute('position','0 1.7 -0.5');
+  //didn't work bugbug  $remoteVideo.removeAttribute('pos'); //other.getAttribute('pos'));  //bugbug worked? "0 0 0");
+    
+
     $remoteVideo.setAttribute('src',remoteStreamUrl);
     $remoteVideo.play();  //bugbug needed???
+
     
     if (then) 
 	then();
@@ -446,6 +481,10 @@ function getStackTrace() {
     return obj.stack;
 }
 
+
+
+
+//logging with strong time sense
 function trace(text) {
     console.log((performance.now() / 1000).toFixed(3) + ": " + text);
 }
