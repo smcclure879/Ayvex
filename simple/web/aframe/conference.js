@@ -116,7 +116,8 @@ function initiateConnection(localStream)
     window.stream = localStream; // stream available to console
 
     $localVideo.src = window.URL.createObjectURL(localStream);
-    
+    $localVideo.muted = true;  //bugbug needed? works?  see code in index.js
+
     if (localStream.getVideoTracks().length > 0) 
     {
 	trace('Using video device: ' + localStream.getVideoTracks()[0].label);
@@ -126,6 +127,7 @@ function initiateConnection(localStream)
 	trace('Using audio device: ' + localStream.getAudioTracks()[0].label);
     }
 
+    
     pc.addStream(localStream);
     trace("Added localStream to connection");
     //createAndUseOffer called by the last (null) ice candidate (see gotIceCandidate)??bugbug

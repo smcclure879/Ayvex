@@ -93,6 +93,13 @@ $("document").ready( function(event) {
 	    function(mirrorStream){
 		var blobUrl = URL.createObjectURL(mirrorStream);
 		$localVideo.setAttribute('src',blobUrl);  // NOTE: $localVideo.src DOES NOT WORK
+		
+
+		//bugbug you are here, which of these will work to mute local audio stream, but only for me?
+		//no $localVideo.setAttribute('muted','true');
+		//no $localVideo.muted='true';
+		mirrorStream.getAudioTracks()[0].enabled = false;
+
 	    },
 	    function(err){
 		alert(err);
