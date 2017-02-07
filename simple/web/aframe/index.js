@@ -187,6 +187,16 @@ function updateOtherUsers(newUserDataFromServer) {
 	if (!user) {
 	    user = createBlankUser();
 	    user.setAttribute('id',id);
+
+	    //and label the user visually
+	    var label = document.createElement('a-entity');
+	    label.setAttribute('material','color','red');
+	    label.setAttribute('text','text',id);
+	    label.setAttribute('position','0 1.8 0.5');
+	    label.setAttribute('rotation','0 0 45');
+	    label.setAttribute('scale','0.3 0.3 0.3');
+	    user.appendChild(label);
+
 	    $otherUsers.appendChild(user);
 	}
 
