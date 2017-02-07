@@ -295,12 +295,12 @@ function acknowledgeConnection(localStream,currentOffer) {
 }
 // THENTO
 function createAnswer() {
-    log("creatingAnswer");  //+dumps(pc));
+    term("creatingAnswer");  //+dumps(pc));
     pc.createAnswer(useAnswer,errorHandler);
 }
 // THENTO
 function useAnswer(answer) {
-    alert("connection going thru now");
+    term("connection going thru now");
     //alert("pc state="+dumps(pc));
     pc.setLocalDescription(new RTCSessionDescription(answer));
     //, function(){/* sendAnswer(answer) */}, minorErrorHandler);

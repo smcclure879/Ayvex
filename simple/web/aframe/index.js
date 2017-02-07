@@ -1,14 +1,17 @@
 var z=150;
 var disp,sphere;
-var $localVideo,$remoteVideo,$otherUsers,$user;
+var $localVideo,$remoteVideo,$otherUsers,$user,$terminator;
 var selectedItem = null;
 var MINUTES = 60;
 
 
 
-function log(x) {
-    disp.textContent=(""+x);
+function term(x) {
+    x=""+x;
+    disp.textContent=x;
+    $terminator.setAttribute("text","text",x);
 }
+var log = term;  
 
 function select(x) {
     if (selectedItem==x)
@@ -42,8 +45,10 @@ $("document").ready( function(event) {
     $localVideo=document.querySelector("#localVideo");
     $otherUsers = document.querySelector("#otherUsers");
     $user = document.querySelector("#user");
+    $terminator = document.querySelector("#terminator");
     disp= document.querySelector("#readout");
     sphere = document.querySelector("#sphere");
+
 
 
     window.setInterval(function(){
