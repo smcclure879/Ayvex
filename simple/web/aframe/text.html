@@ -1,0 +1,29 @@
+<html>
+  <head>
+    <title>My text experiment</title>
+    <script src="aframe.js"></script>
+    <script src="aframe-text-component.js"></script>
+  </head>
+  
+  <body>
+    <a-scene>
+      <a-assets>
+	<a-asset-item id="optimerBoldFont" 
+		      src="optimer_bold.typeface.json">
+	</a-asset-item>
+      </a-assets>
+
+
+      <a-entity camera="userHeight: 1.6" position="0 1.0 20" wasd-controls="fly:true" look-controls></a-entity>
+
+      <a-sphere id="sphere" position="0 1.25 -5" radius="1.25" color="#EF2D5E"></a-sphere>
+      
+      <a-entity text="text: What's up" position="0 5 1"></a-entity>
+      <a-entity text="text: Dog?; font: #optimerBoldFont" position="0 4 1"></a-entity>
+
+      <a-plane position="0 0 -4" rotation="-90 0 0" width="470" height="470" color="#7BC8A4"></a-plane>
+
+    </a-scene>
+  </body>
+<html>
+  
