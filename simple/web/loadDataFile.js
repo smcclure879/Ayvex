@@ -104,6 +104,7 @@ function addTextData(drawables,text,columns,options,transformFunction)
 	}
 }
 
+//bugbug needed???  who is calling?
 function loadFileRemoteSync(url,options)
 {
   // strUrl is whatever URL you need to call
