@@ -22,69 +22,100 @@
 
   <div id="readout">----</div>
   
-  <a-scene id="scene">
+  <a-scene id="scene" fog="type: linear; color: #aaa">
 
 
 
     <a-assets>
+
       <a-asset-item id="optimerBoldFont" 
 		    src="optimer_bold.typeface.json">
       </a-asset-item>
+
+
+      <a-mixin id="platform"
+	       geometry="primitive:cylinder" height="0.1"
+	       material="side:double color:#C1A; opacity:0.2; "
+	       rotation="0 0 0" position="0 0 0" scale="100 1 100">
+      </a-mixin>
+
+
+
+      <a-mixin id="teleport"
+	       geometry="primitive:box" scale="0.2 10 0.2" cursor-listener  material="color:magenta"
+	       >
+      </a-mixin>
+
+
+
     </a-assets>
+
+      
+    
     
 
-
-
-
-
-
-
-
-    <a-entity id="user" position="0 1.0 200" wasd-controls="fly:true" look-controls>
-      <a-entity camera="userHeight: 1.6" >
+    
+    <a-entity light="type: ambient; color: #ccc"></a-entity>
+    <a-entity light="type: point; color: #666" position="10000 10000 -10000"></a-entity>
+    
+    
+    <a-entity id="user" position="0 1.0 20" wasd-controls="fly:true" look-controls>
+      <a-entity camera="userHeight: 0.0016; far: 100000" >
 	
-
-	<a-entity id="terminator" material="color:red" position="-0.1 0.1 -1" scale="0.04 0.04 0.04"  
+	
+	<a-entity id="terminator" material="color:red" position="-0.1 0.1 -1" scale="0.05 0.05 0.05"  
 		  text="text: selector;  font: #optimerBoldFont">
 	</a-entity>
-
+	
         <a-entity cursor="fuse: true; fuseTimeout: 500"
-            position="0 0 -1"
-            geometry="primitive: ring; radius-inner: 0.1; radius-outer: 0.11"
-            material="color: pink; opacity: 0.3;  ">
+		  position="0 0 -1"
+		  geometry="primitive: ring; radius-inner: 0.1; radius-outer: 0.11"
+		  material="color: pink; opacity: 0.3;  ">
         </a-entity>
       </a-entity>
     </a-entity>
-  
-
+    
+    
     <a-sphere id="sphere" position="0 1.25 -5" radius="1.25" color="#EF2D5E"></a-sphere>
     <a-box position="-1 0.5 -3" rotation="0 45 0" width="1" height="1" depth="1" color="#4CC3D9"></a-box>
     <a-cylinder position="1 0.75 -3" radius="0.5" height="1.5" color="#FFC65D" ></a-cylinder>
-
+    
     <a-entity id="box" cursor-listener position="5 5 0" geometry="primitive: box" material="color: blue"></a-entity>
-
-    <a-plane position="0 0 -4" rotation="-90 0 0" width="470" height="470" color="#7BC8A4"></a-plane>
-
-
+    
+    
+    <a-plane id="homePlane" position="0 0 -4" material="opacity:0.9; metalness:0.0"  rotation="-90 0 0" width="470" height="470" 
+	     color="#907050" colorcomment="dirt"></a-plane>
+    
+    
     <a-entity position="-8 8 -8" rotation="10 15 0">
-      <a-entity text="text: -MIRROR-; font: #optimerBoldFont" position="-1 2.5 0"></a-entity>
+      <a-entity text="text: -MIRROR-; font: #optimerBoldFont" position="-1 2.5 0" material="color:pink"></a-entity>
       <a-video id="localVideo" width="8" height="4.5" scale="-1 1 1"></a-video>
     </a-entity>
-  
-    <a-video id="remoteVideo" position="4 4 -8" rotation="0 0 0" width="16" height="9" ></a-video>
-
-
-
-    <a-entity id="otherUsers"></a-entity>
-
-
-      
-
-    <a-sky color="#BCBCEC"></a-sky>
     
-  </a-scene>
+    <a-video id="remoteVideo" position="-40 4 -8" rotation="0 0 0" width="16" height="9" ></a-video>
+    
+    
+    
+    <a-entity id="otherUsers"></a-entity>
+    
+    
+    <a-entity id="satellite" position="120 120 -500" >
+      <a-entity material="color:green" 
+		mixin="platform"></a-entity>
+      
+      <a-entity text="text: -SATELLITE-; font: #optimerBoldFont" position="0 0 -5" material="color:red" rotation="90 90 -45"></a-entity>
+    </a-entity>
 
+
+    <a-entity id="telep-satellite" mixin="teleport" destination="bugbugsatellite" position="2 4 -40"></a-entity>
+
+
+    <a-sky color="#54A" dusk-bugbugoldcolor="#BCBCEC"></a-sky>
+   
+  </a-scene>
+  
 </body>
 </html>
+
 
 
