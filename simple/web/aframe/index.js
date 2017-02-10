@@ -131,6 +131,15 @@ function prepSkyhooks() {
 
 $("document").ready( function(event) {
 
+    if (window.location.protocol!='https:' 
+	&& window.location.host!='localhost') {
+
+	alert("you should be using https...conferencing won't work without it!");
+    }
+
+
+
+
     var urlParams = new URLSearchParams(window.location.search);
 
     //"login"
