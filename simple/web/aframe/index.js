@@ -53,24 +53,57 @@ function copyAttribute(trg,src,name) {
 }
 
 
-function teleport() {
-    var destObj = document.querySelector("#"+this.getAttribute('destination'));
-
-    //note user is the target of this copy
-    copyAttribute($user,destObj,'position');
-     //bugbug should be a loop so user flies...an animate added to user object then removed???
+function tween(numer,denom,init,fin){
+    var inv = denom-numer;
+    return {
+	x:(init.x*inv+fin.x*numer)/denom,
+	y:(init.y*inv+fin.y*numer)/denom,
+	z:(init.z*inv+fin.z*numer)/denom
+    };
 }
 
 
-function prepTeleporters() {
-    var teleporters = document.querySelectorAll("[id^='telep-']");
-    if (!teleporters || teleporters.length<1) {
-	debugger;
-    }
+function doSkyhook() {
+    var destObj = document.querySelector("#"+this.getAttribute('destination'));
 
-    for(var ii=0,il=teleporters.length; ii<il; ii++) {
-	var t = teleporters[ii];
-	t.doMainAction=teleport;
+    //note user is the target of this copy
+    //bugbug the old way...instant but jarring....
+    // //  copyAttribute($user,destObj,'position');
+    
+
+    //bugbug should be a loop so user flies...an animate added to user object then removed???
+    //anim(1second,10steps,$user.positionV=targ, $user.positionV=init, $destObj.positionV=final)
+
+    //bugbug you are here...and it looks like "let" might work?  or use THREE.js vectors? tween class?
+
+    var firstPos = $user.getAttribute('position');
+    var lastPos = destObj.getAttribute('position');
+    var tickCount = 0;
+    var maxTickCount = 10;
+
+    lastPos.y += 4; 
+    lastPos.x += 20;
+
+
+    var skyhookAnim=setInterval(function(){
+
+	var newPos = tween(tickCount, maxTickCount, firstPos, lastPos);
+	$user.setAttribute('position',newPos);
+
+	if (++tickCount>maxTickCount) {
+	    clearInterval(skyhookAnim);
+	}
+
+    },100);
+}
+
+
+function prepSkyhooks() {
+    var skyhooks = document.querySelectorAll("[id^='skyhook-']");
+
+    for(var ii=0,il=skyhooks.length; ii<il; ii++) {
+	var sh = skyhooks[ii];
+	sh.doMainAction=doSkyhook;
     }
 }
 
@@ -163,7 +196,7 @@ $("document").ready( function(event) {
     //autocall on startup
     window.setTimeout(function(){
 	doMirror1();
-	prepTeleporters();
+	prepSkyhooks();
     },500);
 
     
@@ -183,13 +216,7 @@ function onSpaceKey(evt) {
     if (!selectedItem.doMainAction)   return;
     if ( typeof selectedItem.doMainAction != 'function' )   return;
     return selectedItem.doMainAction(evt);  //which should be conferenceJsHook() for a user
-    // e.g.  
-    // if (isUserObject(selectedItem)) 
-    // 	conferenceJsHook();
-    // else if (isTeleportObject(selectedItem))
-    // 	teleportNow(selectedItem).
 }
-
 
 
 
