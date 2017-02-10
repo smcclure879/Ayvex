@@ -29,13 +29,80 @@ function unselect(x) {
 
 
 
+function doMirror1() {
+    getUserMedia(
+	{video:true,audio:true},
+	function doMirror2(mirrorStream){
+	    var blobUrl = URL.createObjectURL(mirrorStream);
+	    $localVideo.setAttribute('src',blobUrl);  // NOTE: $localVideo.src DOES NOT WORK
+	    
+	    //mute to avoid local echo and squeal
+	    mirrorStream.getAudioTracks()[0].enabled = false;  //bugbug does audio still go to the remote stream????
+	    
+	},
+	function(err){
+	    alert(err);
+	}
+    );
+}
+
+
+function copyAttribute(trg,src,name) {
+    var val=src.getAttribute(name);
+    trg.setAttribute(name,val);
+}
+
+
+function teleport() {
+    var destObj = document.querySelector("#"+this.getAttribute('destination'));
+
+    //note user is the target of this copy
+    copyAttribute($user,destObj,'position');
+     //bugbug should be a loop so user flies...an animate added to user object then removed???
+}
+
+
+function prepTeleporters() {
+    var teleporters = document.querySelectorAll("[id^='telep-']");
+    if (!teleporters || teleporters.length<1) {
+	debugger;
+    }
+
+    for(var ii=0,il=teleporters.length; ii<il; ii++) {
+	var t = teleporters[ii];
+	t.doMainAction=teleport;
+    }
+}
+
+
+
+
+//bugbug instead of "anon" below in .ready(),,,maybe this code to retain anon id between sessions??
+//function anonUserHandler() {  //bugbug insure you aren't calling this twice from anywhere
+
+    //userId="anon"+getIpAddr();
+
+    //and/or 
+
+    // // Build the expiration date string:
+    // var expiration_date = new Date();
+    // var cookie_string = '';
+    // expiration_date.setFullYear(expiration_date.getFullYear() + 1);
+    // // Build the set-cookie string:
+    // cookie_string = "test_cookies=true; path=/; expires=" + expiration_date.toUTCString();
+    // // Create or update the cookie:
+    // document.cookie = cookie_string;
+//}
+
+
+
 $("document").ready( function(event) {
 
     var urlParams = new URLSearchParams(window.location.search);
 
     //"login"
     if (!urlParams.has('user'))
-	alert("no user in URL querystring");
+	userId="anon"+Date.now()%10000;
     else 
 	userId=urlParams.get('user');
 
@@ -52,10 +119,10 @@ $("document").ready( function(event) {
 
 
     window.setInterval(function(){
-        z-=3;
+        z-=4;
         if (z<4) return;
         $user.setAttribute('position',{'x':0,'y':1.7,'z':z});
-        log("sphere: pos3d="+sphere.attributes.position.value);  //+"  pos2d="+sphere.position.left);
+        //log("sphere: pos3d="+sphere.attributes.position.value);  //+"  pos2d="+sphere.position.left);
     },20);
     
     
@@ -80,7 +147,7 @@ $("document").ready( function(event) {
 
     $(this).keydown(function(evt) {
 	if (evt.key=='v')
-	    requestConference();
+	    onSpaceKey(evt);
     });
 
 
@@ -92,31 +159,11 @@ $("document").ready( function(event) {
     
 
 
-    function doMirror1() {
-	getUserMedia(
-	    {video:true,audio:true},
-	    function(mirrorStream){
-		var blobUrl = URL.createObjectURL(mirrorStream);
-		$localVideo.setAttribute('src',blobUrl);  // NOTE: $localVideo.src DOES NOT WORK
-		
-
-		//bugbug you are here, which of these will work to mute local audio stream, but only for me?
-		//no $localVideo.setAttribute('muted','true');
-		//no $localVideo.muted='true';
-		mirrorStream.getAudioTracks()[0].enabled = false;
-
-	    },
-	    function(err){
-		alert(err);
-	    }
-	);
-    }
-
-
 
     //autocall on startup
     window.setTimeout(function(){
 	doMirror1();
+	prepTeleporters();
     },500);
 
     
@@ -130,10 +177,17 @@ $("document").ready( function(event) {
 function getSelectedItem() { return selectedItem; }
 
 
-function requestConference() {
-    if (!selectedItem) return;
-    if (!selectedItem.id) return;  //selectedItem (req for a call) gets to other user when they are drawing me!!
-    conferenceJsHook();
+function onSpaceKey(evt) {
+    if (!selectedItem)   return;
+    if (!selectedItem.id)   return;  //selectedItem (req for a call) gets to other user when they are drawing me!!
+    if (!selectedItem.doMainAction)   return;
+    if ( typeof selectedItem.doMainAction != 'function' )   return;
+    return selectedItem.doMainAction(evt);  //which should be conferenceJsHook() for a user
+    // e.g.  
+    // if (isUserObject(selectedItem)) 
+    // 	conferenceJsHook();
+    // else if (isTeleportObject(selectedItem))
+    // 	teleportNow(selectedItem).
 }
 
 
@@ -226,6 +280,7 @@ function createBlankUser() {
     retval.setAttribute('geometry','primitive: cone; height:7; radiusTop:0, radiusBottom:0.25');
     retval.setAttribute('material','color','orange');
     retval.setAttribute('cursor-listener',{});
+    retval.doMainAction=conferenceJsHook;//bugbug should just take user as argument now!
     return retval;
 }
 
