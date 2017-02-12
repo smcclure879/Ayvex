@@ -1,5 +1,5 @@
 var z=150;
-var disp,sphere;
+var sphere;
 var $localVideo,$remoteVideo,$otherUsers,$user,$terminator;
 var selectedItem = null;
 var MINUTES = 60;
@@ -8,7 +8,6 @@ var MINUTES = 60;
 
 function term(x) {
     x=""+x;
-    disp.textContent=x;
     $terminator.setAttribute("text","text",x);
 }
 var log = term;  
@@ -155,7 +154,6 @@ $("document").ready( function(event) {
     $otherUsers = document.querySelector("#otherUsers");
     $user = document.querySelector("#user");
     $terminator = document.querySelector("#terminator");
-    disp= document.querySelector("#readout");
     sphere = document.querySelector("#sphere");
 
 

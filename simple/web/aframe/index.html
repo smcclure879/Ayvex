@@ -6,10 +6,11 @@
   <link rel="stylesheet" type="text/css" href="style.css">
 
   <script src="index-early.js"></script>
-  <script src="jquery-1.10.2.js"></script>
-  <script src="jquery-ui-1.10.4.js"></script>
-  <script src="aframe.js"></script>
-  <script src="aframe-text-component.js"></script>
+  <script src="../lib/jquery-1.10.2.js"></script>
+  <script src="../lib/jquery-ui-1.10.4.js"></script>
+  <script src="../lib/aframe.js"></script>
+  <script src="../lib/aframe-text-component.js"></script>
+<!-- bugbug some more of these might get moved into libs or better shared with old prototype???-->
   <script src="util.js"></script>
   <script src="adapter.js"></script>
   <script src="conference.js"></script>
@@ -20,11 +21,9 @@
 
 <body>
 
-  <div id="readout">----</div>
+  <div id="readout" style="visible:false" bugbug>----</div>
   
   <a-scene id="scene" fog="type: linear; color: #aaa">
-
-
 
     <a-assets>
 
