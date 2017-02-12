@@ -158,12 +158,15 @@ $("document").ready( function(event) {
 
 
 
-    window.setInterval(function(){
-        z-=4;
-        if (z<4) return;
+    var initAnim=window.setInterval(function(){
+        z-=6;
+        if (z<4) {
+	    clearInterval(initAnim);
+	    return;
+	}
         $user.setAttribute('position',{'x':0,'y':1.7,'z':z});
-        //log("sphere: pos3d="+sphere.attributes.position.value);  //+"  pos2d="+sphere.position.left);
-    },20);
+        log("sphere: pos3d="+sphere.attributes.position.value);  //+"  pos2d="+sphere.position.left);
+    },60);
     
     
     
@@ -204,7 +207,7 @@ $("document").ready( function(event) {
     window.setTimeout(function(){
 	doMirror1();
 	prepSkyhooks();
-    },500);
+    },3000);
 
     
     //this should ideally be based on something besides a timer...like user movement or inactivity    
