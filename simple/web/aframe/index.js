@@ -3,6 +3,8 @@ var sphere;
 var $localVideo,$remoteVideo,$otherUsers,$user,$terminator;
 var selectedItem = null;
 var MINUTES = 60;
+var weAreResing=0;
+var userScaleFactor = -3;  //bugbug make member of user
 
 
 
@@ -52,57 +54,173 @@ function copyAttribute(trg,src,name) {
 }
 
 
+
 function tween(numer,denom,init,fin){
-    var inv = denom-numer;
+    var inver = denom-numer;
     return {
-	x:(init.x*inv+fin.x*numer)/denom,
-	y:(init.y*inv+fin.y*numer)/denom,
-	z:(init.z*inv+fin.z*numer)/denom
+	x:(init.x * inver + fin.x * numer) / denom,
+	y:(init.y * inver + fin.y * numer) / denom,
+	z:(init.z * inver + fin.z * numer) / denom
     };
 }
 
 
-function doSkyhook() {
-    var destObj = document.querySelector("#"+this.getAttribute('destination'));
+function signedInt(y) {
+    var x=Math.floor(y);
+    if (x!=y) 
+	alert("why--bugbug723n");
 
-    //note user is the target of this copy
-    //bugbug the old way...instant but jarring....
-    // //  copyAttribute($user,destObj,'position');
+    if (x<0) return x;
+    if (x==0) return "+0";
+    if (x>0) return "+"+x;
     
-
-    //bugbug should be a loop so user flies...an animate added to user object then removed???
-    //anim(1second,10steps,$user.positionV=targ, $user.positionV=init, $destObj.positionV=final)
-
-    //bugbug you are here...and it looks like "let" might work?  or use THREE.js vectors? tween class?
-
-    var firstPos = $user.getAttribute('position');
-    var lastPos = destObj.getAttribute('position');
-    var tickCount = 0;
-    var maxTickCount = 10;
-
-    lastPos.y += 4; 
-    lastPos.x += 20;
-
-
-    var skyhookAnim=setInterval(function(){
-
-	var newPos = tween(tickCount, maxTickCount, firstPos, lastPos);
-	$user.setAttribute('position',newPos);
-
-	if (++tickCount>maxTickCount) {
-	    clearInterval(skyhookAnim);
-	}
-
-    },100);
+    alert("why---bugbug726v");
+    return "+0";
 }
 
 
+function runIfFunction(f,arg) {
+    if (typeof f != 'function') 
+	return null;
+    
+    return f(arg);
+}
+
+
+function loadJS(url, implementationCode){
+    //url is URL of external file, implementationCode is the code
+    //to be called from the file, location is the location to 
+    //insert the <script> element
+    
+    var scriptTag = document.createElement('script');
+    scriptTag.src = url;
+    
+    scriptTag.onload = implementationCode;
+    scriptTag.onreadystatechange = implementationCode;
+    
+    document.head.appendChild(scriptTag);
+};
+
+    
+
+
+
+//notes on multi-resolution loading
+//all permanent world changes are thru master copy at github
+// resLevel 0 = 1m and up
+//         -2 = 1cm and up
+//    remember user is scale -3 !! millimeter!
+// resLevel +2 = 100m and up, so maybe like a mountain
+//file  mountWannaHockaLoogi+2.chunk.js  would be at much coarser level than mountBlahBlahWestFaceLowerSide4-2.chunk.js
+
+function loadNewChunk(chunkId,newRes,cbGood,cbBad) {
+    //bugbug for now the newRes should be coming from the skyHook entry.  so the file better exist.
+
+    var path = "/web/aframe/chunks/" + chunkId + signedInt(newRes) + ".chunk.js";
+    //bugbug sanitize the id!!
+
+    loadJS(path, function(scriptContents) {
+	if (typeof chunkHandle == 'function') {
+	    if (typeof cbGood == 'function') {
+		var chunk = chunkHandle();
+		if (typeof chunk.init == 'function') {
+		    var obj = chunk.init();
+		    cbGood(obj);                          //   <------- THE GOAL of this function
+		} else {
+		    alert("bugbug139x:"+dumps(chunk.init));
+		}
+	    } else {
+		alert("bugbug746e:"+dumps(cbGood));
+	    }
+	} else {
+	    alert("bugbug746ff:"+dumps(chunkHandle));
+	}
+    });
+	// .fail(function(reason) {
+    // 	runIfFunction(cbBad,"bugbug713m:"+dumps(reason));
+    // });
+
+
+    
+}
+
+
+function removeObject(oo)  {  //and return the parent it was under
+    var parent = oo.parentElement;
+    parent.removeChild(oo);
+    return parent;
+}
+
+
+function loadToRes(obj,newRes,cb) {
+    if (!weAreResing) {
+	cb();
+	return;
+    }
+
+    if (obj.getAttribute('res') == newRes) 
+	return;  //already done
+    var chunkId=obj.id;
+    //loadNewChunk(chunkId,newRes,cbGood,cbBad) {
+    loadNewChunk(
+	chunkId,newRes,  //<----two real "input params"
+	function(newObj){  //cbGood, successFn, etc
+	    var parentObj=removeObject(obj);
+	    parentObj.appendChild(newObj);
+	    cb(newObj);
+	},function(reasonForError){  //cbBad
+	    var msg="bugbug803w:"+reasonForError;
+	    alert(msg);
+	    log(msg);
+	}
+    );
+}
+
+
+
+
+function doSkyhook(activator) {
+    
+    var destObj = document.querySelector("#"+activator.getAttribute('destination'));
+    
+    //load enough levels of destination
+    loadToRes(destObj,userScaleFactor,function(newObj) {
+	
+	if (newObj)
+	    destObj=newObj;
+
+	var firstPos = $user.getAttribute('position');
+	var lastPos = destObj.getAttribute('position');
+	var tickCount = 0;
+	var maxTickCount = 10;
+	
+	//don't jump RIGHT to the center...
+	lastPos.y += 4; 
+	lastPos.x += 20;
+	
+	
+	var skyhookAnim=setInterval(function(){
+	    
+	    var newPos = tween(tickCount, maxTickCount, firstPos, lastPos);
+	    $user.setAttribute('position',newPos);
+	    
+	    if (++tickCount>maxTickCount) {
+		clearInterval(skyhookAnim);
+	    }
+
+	},100);
+    });
+
+}
+
+//bugbug some of this should happen when you prep a skyhook
 function prepSkyhooks() {
     var skyhooks = document.querySelectorAll("[id^='skyhook-']");
 
     for(var ii=0,il=skyhooks.length; ii<il; ii++) {
 	var sh = skyhooks[ii];
-	sh.doMainAction=doSkyhook;
+	//crappy lambda per object way to do this...
+	sh.doMainAction=function() { doSkyhook(sh); };  //kinda a "this" being passed...objectify better later
     }
 }
 
@@ -112,9 +230,21 @@ function prepSkyhooks() {
 //bugbug instead of "anon" below in .ready(),,,maybe this code to retain anon id between sessions??
 //function anonUserHandler() {  //bugbug insure you aren't calling this twice from anywhere
 
-    //userId="anon"+getIpAddr();
+    //userId="anon"+getIpAddr();  //here is how to get the IP
+// window.RTCPeerConnection = window.RTCPeerConnection || window.mozRTCPeerConnection || window.webkitRTCPeerConnection;   //compatibility for firefox and chrome
+//     var pc = new RTCPeerConnection({iceServers:[]}), noop = function(){};      
+//     pc.createDataChannel("");    //create a bogus data channel
+//     pc.createOffer(pc.setLocalDescription.bind(pc), noop);    // create offer and set local description
+//     pc.onicecandidate = function(ice){  //listen for candidate events
+//         if(!ice || !ice.candidate || !ice.candidate.candidate)  return;
+//         var myIP = /([0-9]{1,3}(\.[0-9]{1,3}){3}|[a-f0-9]{1,4}(:[a-f0-9]{1,4}){7})/.exec(ice.candidate.candidate)[1];
+//         console.log('my IP: ', myIP);   
+//         pc.onicecandidate = noop;
+//     };
 
-    //and/or 
+
+
+    // --- and/or ---
 
     // // Build the expiration date string:
     // var expiration_date = new Date();
@@ -180,7 +310,6 @@ $("document").ready( function(event) {
 
 		select(this);
 
-		//bugbug need to unselect old item (visually) !!!  TODO
 		log("selected="+selectedItem.tagName+" "+selectedItem.id);
             });
 	}
@@ -323,6 +452,44 @@ function createBlankUser() {
 
 
 
+
+///bugbug need a separate file for drawing helpers...
+function createBlank() {
+    return document.createElement("a-entity");
+}
+
+function makeBigText(size) {
+    var label = createBlank();
+    label.setAttribute('text','text',""+size);
+    
+    //bugbug todo fix these (needed?)
+    label.setAttribute('material','color','red');
+    label.setAttribute('position','0 1.8 0.5');
+    //label.setAttribute('rotation','0 0 45');
+    //label.setAttribute('scale','0.3 0.3 0.3');
+
+    return label;
+}
+
+//function drawCityBlock(size)  ....etc etc
+
+    
+// ---------------
+
+
+// var chunkHandle = "47";  //which is clearly NOT a type function
+// $.getScript(path, function(scriptContents) { //success??bugbug  did it exec?
+//     if (typeof chunkHandle == 'function') {
+// 	if (typeof cbGood == 'function') {
+// 	    var chunk = chunkHandle();
+// 	    cbGood(chunk);                          //   <------- THE GOAL of this function
+// 	} else {
+// 	    alert("bugbug746e");
+// 	}
+//     } else {
+// 	alert("bugbug746ff:"+dumps(chunkHandle));
+//     }
+    
 
 
     
