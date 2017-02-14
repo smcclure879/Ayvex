@@ -3,7 +3,7 @@ var sphere;
 var $localVideo,$remoteVideo,$otherUsers,$user,$terminator;
 var selectedItem = null;
 var MINUTES = 60;
-var weAreResing=0;
+var weAreResing=1;
 var userScaleFactor = -3;  //bugbug make member of user
 
 
@@ -87,6 +87,30 @@ function runIfFunction(f,arg) {
 }
 
 
+
+var allowedAttribs=['position','rotation','scale','id','visible'];
+function purify(obj) {
+    
+    //obj.removeAllChildren();
+    while (obj.hasChildNodes()) {
+    obj.removeChild(obj.lastChild);
+    }
+    
+    //obj.removeAllNonAllowedAttributes()...
+    for (var ii = 0; ii < obj.attributes.length; ii++) {
+	var attrib = obj.attributes[ii];
+	if (!attrib.specified) continue;
+	if (allowedAttribs.indexOf(attrib.name)<0) continue;
+	if (attrib.name.startsWith('_')) continue;
+
+	obj.attributes.removeNamedItem(attrib.name);
+        //console.log(attrib.name + " = " + attrib.value);
+    }
+
+}
+
+
+
 function loadJS(url, implementationCode){
     //url is URL of external file, implementationCode is the code
     //to be called from the file, location is the location to 
@@ -104,7 +128,6 @@ function loadJS(url, implementationCode){
     
 
 
-
 //notes on multi-resolution loading
 //all permanent world changes are thru master copy at github
 // resLevel 0 = 1m and up
@@ -113,69 +136,64 @@ function loadJS(url, implementationCode){
 // resLevel +2 = 100m and up, so maybe like a mountain
 //file  mountWannaHockaLoogi+2.chunk.js  would be at much coarser level than mountBlahBlahWestFaceLowerSide4-2.chunk.js
 
-function loadNewChunk(chunkId,newRes,cbGood,cbBad) {
+//    loadNewChunk(containerObj, newRes, cbGood, cbBad)
+function loadNewChunk(containerObj,newRes,cbGood,cbBad) {
+    //reasons to leave early
+    if ( ! weAreResing ) 
+	return cbGood();
+    if (containerObj.getAttribute('res') == newRes) 
+	return cbGood();
+    var chunkId=containerObj.id;
+    if (!allWord(chunkId))     //bugbug todo write this function to sanitize the id!!  bugbug already wrote this somewhere...
+	return cbBad("err1034d");
+  
     //bugbug for now the newRes should be coming from the skyHook entry.  so the file better exist.
-
     var path = "/web/aframe/chunks/" + chunkId + signedInt(newRes) + ".chunk.js";
-    //bugbug sanitize the id!!
+
 
     loadJS(path, function(scriptContents) {
-	if (typeof chunkHandle == 'function') {
+	if (typeof chunkHandle == 'function') {  
 	    if (typeof cbGood == 'function') {
 		var chunk = chunkHandle();
-		if (typeof chunk.init == 'function') {
-		    var obj = chunk.init();
-		    cbGood(obj);                          //   <------- THE GOAL of this function
+		if (typeof chunk.hydrate == 'function') {
+		    purify(containerObj);
+		    var obj = chunk.hydrate(containerObj,newRes);
+		    cbGood(obj);                          //   <------- THE GOAL of this function  (bugbug invert logic??)
 		} else {
-		    alert("bugbug139x:"+dumps(chunk.init));
+		    cbBad("bugbug139x:"+dumps(chunk.hydrate));
 		}
 	    } else {
-		alert("bugbug746e:"+dumps(cbGood));
+		cbBad("bugbug746e:"+dumps(cbGood));
 	    }
 	} else {
-	    alert("bugbug746ff:"+dumps(chunkHandle));
+	    cbBad("bugbug746ff:"+dumps(chunkHandle));
 	}
     });
-	// .fail(function(reason) {
-    // 	runIfFunction(cbBad,"bugbug713m:"+dumps(reason));
-    // });
-
 
     
 }
 
 
-function removeObject(oo)  {  //and return the parent it was under
-    var parent = oo.parentElement;
-    parent.removeChild(oo);
-    return parent;
-}
+// function removeObject(oo)  {  //and return the parent it was under
+//     var parent = oo.parentElement;
+//     parent.removeChild(oo);
+//     return parent;
+// }
 
 
-function loadToRes(obj,newRes,cb) {
-    if (!weAreResing) {
-	cb();
-	return;
-    }
-
-    if (obj.getAttribute('res') == newRes) 
-	return;  //already done
-    var chunkId=obj.id;
-    //loadNewChunk(chunkId,newRes,cbGood,cbBad) {
+function loadToRes(containerObj,newRes,cb) {
     loadNewChunk(
-	chunkId,newRes,  //<----two real "input params"
-	function(newObj){  //cbGood, successFn, etc
-	    var parentObj=removeObject(obj);
-	    parentObj.appendChild(newObj);
-	    cb(newObj);
-	},function(reasonForError){  //cbBad
+	containerObj,
+	newRes,  //<----two real "input params"
+	cb,  //cbGood
+	function(reasonForError) {  //cbBad
 	    var msg="bugbug803w:"+reasonForError;
 	    alert(msg);
 	    log(msg);
+	    cb();
 	}
     );
 }
-
 
 
 
@@ -183,12 +201,9 @@ function doSkyhook(activator) {
     
     var destObj = document.querySelector("#"+activator.getAttribute('destination'));
     
-    //load enough levels of destination
-    loadToRes(destObj,userScaleFactor,function(newObj) {
+    //load enough levels of destination (newRes = userScaleFactor, which might change over time)
+    loadToRes(destObj,userScaleFactor, function() {  // "then..."
 	
-	if (newObj)
-	    destObj=newObj;
-
 	var firstPos = $user.getAttribute('position');
 	var lastPos = destObj.getAttribute('position');
 	var tickCount = 0;
@@ -200,18 +215,25 @@ function doSkyhook(activator) {
 	
 	
 	var skyhookAnim=setInterval(function(){
-	    
 	    var newPos = tween(tickCount, maxTickCount, firstPos, lastPos);
 	    $user.setAttribute('position',newPos);
 	    
-	    if (++tickCount>maxTickCount) {
+	    if (++tickCount>maxTickCount) 
 		clearInterval(skyhookAnim);
-	    }
-
 	},100);
+
     });
 
 }
+
+
+ // function(reasonForError){  //cbBad
+ // 	    var msg="bugbug803w:"+reasonForError;
+ // 	    alert(msg);
+ // 	    log(msg);
+ // 	    cb();
+ // 	}
+
 
 //bugbug some of this should happen when you prep a skyhook
 function prepSkyhooks() {
@@ -454,41 +476,39 @@ function createBlankUser() {
 
 
 ///bugbug need a separate file for drawing helpers...
-function createBlank() {
-    return document.createElement("a-entity");
+
+
+var steve = {
+    
+    // needThisForSomethingBugbug:function(){
+    // 	label.setAttribute('material','color','red');
+    // 	label.setAttribute('text','text',id);
+    // 	label.setAttribute('position','0 1.8 0.5');
+    // 	label.setAttribute('rotation','0 0 45');
+    // 	label.setAttribute('scale','0.3 0.3 0.3');
+    // 	user.appendChild(label);
+    // },
+
+    createBlank:function() {
+	return document.createElement("a-entity");
+    },
+
+    makeBigText:function(size) {
+	var label = steve.createBlank();
+	label.setAttribute('text','text',""+size);
+	label.setAttribute('material','color','red');
+	label.setAttribute('position','0 0 0');
+	label.setAttribute('scale','1 1 1');
+	return label;
+    },
+
+    //function drawCityBlock(size,pos)  ....etc etc
+
 }
 
-function makeBigText(size) {
-    var label = createBlank();
-    label.setAttribute('text','text',""+size);
-    
-    //bugbug todo fix these (needed?)
-    label.setAttribute('material','color','red');
-    label.setAttribute('position','0 1.8 0.5');
-    //label.setAttribute('rotation','0 0 45');
-    //label.setAttribute('scale','0.3 0.3 0.3');
-
-    return label;
-}
-
-//function drawCityBlock(size)  ....etc etc
-
-    
-// ---------------
 
 
-// var chunkHandle = "47";  //which is clearly NOT a type function
-// $.getScript(path, function(scriptContents) { //success??bugbug  did it exec?
-//     if (typeof chunkHandle == 'function') {
-// 	if (typeof cbGood == 'function') {
-// 	    var chunk = chunkHandle();
-// 	    cbGood(chunk);                          //   <------- THE GOAL of this function
-// 	} else {
-// 	    alert("bugbug746e");
-// 	}
-//     } else {
-// 	alert("bugbug746ff:"+dumps(chunkHandle));
-//     }
+
     
 
 

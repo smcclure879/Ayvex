@@ -14,6 +14,7 @@ String.prototype.splitCommas=function ()
 	return this.split(",");
 }
 
+//bugbug needed???
 function convertAndScale(columnInfo,chunk)
 {
 	return columnInfo.scale * (convertToNumber(columnInfo,chunk) -  columnInfo.offset);
@@ -29,6 +30,16 @@ function convertToNumber(columnInfo,chunk)
 		default: 		return 0;
 	}
 }
+
+
+
+
+var allWord = function(x) {
+	return /^\w[\w\d]+$/.test(x);
+};
+
+
+
 
 
 function zip2(arrayA,arrayB)
@@ -62,7 +73,6 @@ String.prototype.replaceStart = function (prefix,newText)
 	else
 		return url;
 }
-
 
 
 
