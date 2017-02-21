@@ -4,8 +4,10 @@
     <link rel="stylesheet" type="text/css" href="bstyle.css" />
     <script src="../lib/jquery-1.10.2.js"></script>
     <script src="../lib/jquery-ui-1.10.4.js"></script>
-    <script src="../lib/aframe.js"></script>
-    <script src="../lib/aframe-text-component.js"></script>
+    <xscript src="aframe-mod.js"></xscript>
+    <xscript src="https://aframe.io/releases/0.5.0/aframe.js"></xscript>
+    <script src="aframe.0.5.0.js"></script>
+    <xscript src="../lib/aframe-text-component.js"></xscript>
     <script src="bfr.js"></script>
   </head>
   <body>
@@ -15,7 +17,7 @@
         <a-mixin id="platform" geometry="primitive:cylinder" height="0.1"
                  material="side:double color:#C1A; opacity:0.8; "  
                  rotation="0 0 0" position="0 0 0" scale="100 1 100"></a-mixin>
-        <a-mixin id="skyhook" cursor-listener geometry="primitive:box" scale="0.3 20 0.3"
+        <a-mixin id="skyhook" geometry="primitive:box" scale="0.3 20 0.3"
                  material="color:magenta"></a-mixin>
       </a-assets>
       
@@ -31,7 +33,12 @@
       <a-box position="-10 0.5 -3" rotation="0 45 0" width="1" height="1" depth="1" color="#4CC3D9"></a-box>
       <a-cylinder id="cylinder" position="-11 0.75 -3" radius="0.5" height="1.5" color="#FFC65D" ></a-cylinder>
 
-      <a-entity id="foo"></a-entity>
+
+
+      <a-entity position="10 10 -10" geometry="primitive:box" material="wireframe:true" id="foo" steveSez="appendChild to this entity tag">    
+      </a-entity>
+
+
       
       <a-plane id="homePlane" position="0 0 -4" material="opacity:0.9; metalness:0.0"  rotation="-90 0 0" width="470" height="470" 
                color="#907050" colorcomment="dirt"></a-plane>
