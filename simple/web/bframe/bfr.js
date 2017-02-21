@@ -1,13 +1,3 @@
-// class Model {
-//   constructor(properties) {
-//     this.properties = properties;
-//   }
-
-//   toObject() {
-//     return this.properties;
-//   }
-// }
-
 
 // typical usage.....
 //     ja.blank.green().platform().mixin("something").color('blue')
@@ -38,10 +28,10 @@ class ja {
 
     get box() { 
 	this.und.setAttribute("geometry","primitive","box");
-	this.und.setAttribute("id","barney");
-	this.und.setAttribute("wireframe",true);
-	this.und.setAttribute("material","color","red");
-	this.und.setAttribute("position",{x:0, y:0, z:0});
+	//this.und.setAttribute("id","barney");
+	//this.und.setAttribute("wireframe",true);
+	//this.und.setAttribute("material","color","red");
+	//this.und.setAttribute("position",{x:0, y:0, z:0});
 	//this.und.setAttribute("geometry","depth",2);
 	//this.und.setAttribute("geometry","width",2);
 	//this.und.setAttribute("geometry","height",2);
@@ -51,78 +41,64 @@ class ja {
 
 
     pos(po) {
-	this.und.setAttribute("position","position",po);
-	return this;
+	return this.adv("position",po);
     }
     
-    scale(s) {
-	this.und.setAttribute("scale","scale",s);
-	return this;
+    sca(s) {
+	return this.adv("scale",s);
     }
 
     id(x) {
-	this.und.setAttribute("id",x);
-	return this;
+	return this.adv("id",x);
     }
 
-    color(co) {
+    col(co) {
 	this.und.setAttribute("material","color",co);
 	return this;
     }
 
     get green() {
-	return this.color("green");
+	return this.col("green");
     }
 
     get wire() {
-	this.und.setAttribute("wireframe","true"); 
-	return this;
+	return this.adv("wireframe","true"); 
     }
     
-    into(dest) {
-	var result = this._into(dest);
-	if (result!=0)
-	    alert("bugbug708:" + result);
+    
+    mixin(foo) {
+	return this.adv("mixin",foo);
+    }
+
+    adv(name,val) {
+	this.und.setAttribute(name,val);
 	return this;
     }
 
-    _into(dest) {
+    into(dest) {
 	if (typeof dest != 'function') {
-	    return "bugbug1217c";
+	    alert("bugbug708:" + result);
+	    return this;
 	}
-	// if (typeof this != 'ja') {
-	//     return "bugbug1138u"+JSON.stringify(this);
-	// }
-	//if (typeof this.und != "a-entity") {
-	//    return "bugbug1139i"+typeof this.und;
-	//}
 	
-	//debugger; //bugbug you are here
-	dest.call(null, this.und);
-	return 0;
+	dest(this.und);
+	
+	return this;  //continue the chain if needed.
     }
-
-
 }
 
 
-
-
 ////////////////////////
-
-
-
-
 
 
 $("document").ready( function(event) {
 
     //var urlParams = new URLSearchParams(window.location.search);
 
-    var foo = document.querySelector("#foo");
-    //var collector =  (x)=>{foo.appendChild(x);};  //fnPointer  bugbug simplify
+    var scene = document.querySelector("#scene");
+
     var collector = function(x){
-	foo.appendChild(x);
+	scene.appendChild(x);
 	x.flushToDOM(false);
 	console.log(x);
     };
@@ -138,23 +114,20 @@ $("document").ready( function(event) {
 	//afh.blank().box().position("1 1 1").scale("44 44 44").green().useWith(collect);
 	//afh.blank().green().platform().mixin("something").color('blue').useWith(collect);
 
-	//bugbug not even this????
-	ja.testblank.into(collector);
+	//works
+	ja.blank.box.green.pos("-5 5 -3").into(collector);
+	ja.blank.box.col("red").pos("-10 1 -10").into(collector);
+	ja.blank.mixin("platform").pos("100 100 -400").green.into(collector);
+	//ja.blank.pos("5 1 -5").mixin("platform").into(collector);
+	    //.green
+	    //.pos("-1 1 1")
+	    //.sca("4 4 4")
 
-    },2000);
+
+    },1500);
 });
 		     
 
-
-//keep as reference....worked in other code!
-// function createBlankUser() {
-//     var retval=document.createElement('a-entity');
-//     retval.setAttribute('geometry','primitive: cone; height:7; radiusTop:0, radiusBottom:0.25');
-//     retval.setAttribute('material','color','orange');
-//     retval.setAttribute('cursor-listener',{});
-//     retval.doMainAction=conferenceJsHook;//bugbug should just take user as argument now!
-//     return retval;
-// }
 
 
 //     makeBigText:function(size) {
