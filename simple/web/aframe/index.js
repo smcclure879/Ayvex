@@ -144,6 +144,10 @@ function loadNewChunk(containerObj,newRes,cbGood,cbBad) {
     if (containerObj.getAttribute('res') == newRes) 
 	return cbGood();
     var chunkId=containerObj.id;
+    var gather = function(x){ 
+	containerObj.appendChild(x); 
+    };
+
     if (!allWord(chunkId))     //bugbug todo write this function to sanitize the id!!  bugbug already wrote this somewhere...
 	return cbBad("err1034d");
   
@@ -156,8 +160,9 @@ function loadNewChunk(containerObj,newRes,cbGood,cbBad) {
 	    if (typeof cbGood == 'function') {
 		var chunk = chunkHandle();
 		if (typeof chunk.hydrate == 'function') {
+		    //bugbug todo verify that purify worked...any leak??
 		    purify(containerObj);
-		    var obj = chunk.hydrate(containerObj,newRes);
+		    var obj = chunk.hydrate(gather,newRes);
 		    cbGood(obj);                          //   <------- THE GOAL of this function  (bugbug invert logic??)
 		} else {
 		    cbBad("bugbug139x:"+dumps(chunk.hydrate));
@@ -173,12 +178,6 @@ function loadNewChunk(containerObj,newRes,cbGood,cbBad) {
     
 }
 
-
-// function removeObject(oo)  {  //and return the parent it was under
-//     var parent = oo.parentElement;
-//     parent.removeChild(oo);
-//     return parent;
-// }
 
 
 function loadToRes(containerObj,newRes,cb) {
@@ -475,36 +474,7 @@ function createBlankUser() {
 
 
 
-///bugbug need a separate file for drawing helpers...
 
-
-var steve = {
-    
-    // needThisForSomethingBugbug:function(){
-    // 	label.setAttribute('material','color','red');
-    // 	label.setAttribute('text','text',id);
-    // 	label.setAttribute('position','0 1.8 0.5');
-    // 	label.setAttribute('rotation','0 0 45');
-    // 	label.setAttribute('scale','0.3 0.3 0.3');
-    // 	user.appendChild(label);
-    // },
-
-    createBlank:function() {
-	return document.createElement("a-entity");
-    },
-
-    makeBigText:function(size) {
-	var label = steve.createBlank();
-	label.setAttribute('text','text',""+size);
-	label.setAttribute('material','color','red');
-	label.setAttribute('position','0 0 0');
-	label.setAttribute('scale','1 1 1');
-	return label;
-    },
-
-    //function drawCityBlock(size,pos)  ....etc etc
-
-}
 
 
 

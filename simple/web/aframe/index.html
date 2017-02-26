@@ -12,6 +12,7 @@
   <script src="../lib/aframe-text-component.js"></script>
 <!-- bugbug some more of these might get moved into libs or better shared with old prototype???-->
   <script src="util.js"></script>
+  <script src="ja.js"></script>
   <script src="adapter.js"></script>
   <script src="conference.js"></script>
   <script src="comm.js"></script>
@@ -22,7 +23,7 @@
 <body>
 
   
-  <a-scene id="scene" fog="type: linear; color: #aaa">
+  <a-scene debug id="scene" fog="type: linear; color: #aaa">
 
     <a-assets>
 
@@ -58,7 +59,7 @@
     <a-entity light="type: point; color: #666" position="10000 10000 -10000"></a-entity>
     
     
-    <a-entity id="user" position="0 0.001 20" wasd-controls="fly:true" look-controls="enabled:true">
+    <a-entity id="user" position="0 0.001 20" wasd-controls="fly:true; acceleration:100" look-controls="enabled:true">
       <a-entity camera="userHeight: 0.001; far: 100000" >
 	
 	
@@ -87,7 +88,7 @@
     
     
     <a-entity position="-8 8 -8" rotation="10 15 0">
-      <a-entity text="text: -MIRROR-; font: #optimerBoldFont" position="-1 2.5 0" material="color:pink"></a-entity>
+      <a-entity text="text: -MIRROR-; font: #optimerBoldFont" position="-1 2.5 0" material="color:brown"></a-entity>
       <a-video id="localVideo" width="8" height="4.5" scale="-1 1 1"></a-video>
     </a-entity>
     
