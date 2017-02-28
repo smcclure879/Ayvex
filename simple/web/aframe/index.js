@@ -29,8 +29,10 @@ function unselect(x) {
 }
 
 
-
+var noMirror = 0;
 function doMirror1() {
+    if (noMirror)
+	return;
     getUserMedia(
 	{video:true,audio:true},
 	function doMirror2(mirrorStream){
@@ -196,9 +198,11 @@ function loadToRes(containerObj,newRes,cb) {
 
 
 
-function doSkyhook(activator) {
-    
-    var destObj = document.querySelector("#"+activator.getAttribute('destination'));
+function doSkyhook(destObj) {
+    if (!destObj) {
+	log("dest not ava: "+dest);  //bugbug need to give em more info later
+	return;
+    }
     
     //load enough levels of destination (newRes = userScaleFactor, which might change over time)
     loadToRes(destObj,userScaleFactor, function() {  // "then..."
@@ -234,16 +238,16 @@ function doSkyhook(activator) {
  // 	}
 
 
-//bugbug some of this should happen when you prep a skyhook
-function prepSkyhooks() {
-    var skyhooks = document.querySelectorAll("[id^='skyhook-']");
 
-    for(var ii=0,il=skyhooks.length; ii<il; ii++) {
-	var sh = skyhooks[ii];
-	//crappy lambda per object way to do this...
-	sh.doMainAction=function() { doSkyhook(sh); };  //kinda a "this" being passed...objectify better later
-    }
-}
+//bugbug some of this should happen when you prep a skyhook
+// function prepSkyhooks() {
+//     var skyhooks = document.querySelectorAll("[id^='skyhook-']");
+
+//     for(var ii=0,il=skyhooks.length; ii<il; ii++) {
+// 	var sh = skyhooks[ii];
+// 	sh.prepSkyhook();
+//     }
+// }
 
 
 
@@ -306,8 +310,10 @@ $("document").ready( function(event) {
     $user = document.querySelector("#user");
     $terminator = document.querySelector("#terminator");
     sphere = document.querySelector("#sphere");
+    $scene = document.querySelector("a-scene");
 
-
+    if (!$scene)
+	alert("bugbug1023s");
 
     var initAnim=window.setInterval(function(){
         z-=6;
@@ -340,7 +346,7 @@ $("document").ready( function(event) {
 
     $(this).keydown(function(evt) {
 	if (evt.key=='v')
-	    onSpaceKey(evt);
+	    onActivateKey(evt);
     });
 
 
@@ -352,12 +358,13 @@ $("document").ready( function(event) {
     
 
 
-
     //autocall on startup
     window.setTimeout(function(){
 	doMirror1();
-	prepSkyhooks();
-    },3000);
+	//prepSkyhooks();  //should now happen with near skyhook creation
+	prepFirstSkyhook();
+	prepWorlds();
+    },1900);
 
     
     //this should ideally be based on something besides a timer...like user movement or inactivity    
@@ -367,15 +374,40 @@ $("document").ready( function(event) {
     
 });
  
+
+function prepFirstSkyhook() {
+    ja.a.skyhook("satellite").pos("15 10 -20").into($scene);
+}
+
+var worldList = ["elshardia","treesylvania","pyrfrostan"];  //satellite
+function prepWorlds(){
+    //bugbug you are here why don't I see the worlds???
+    var holder = ja.a.id("holderOfWorlds")
+	.pos("500 100 500")
+	.into($scene);
+
+    debugger;
+    holder.spread( 400, 
+		   worldList.map( (name) => ja.a.world(name).green )  //bugbug .world(name)
+		 );
+
+}
+
+
+
+
 function getSelectedItem() { return selectedItem; }
 
 
-function onSpaceKey(evt) {
+function onActivateKey(evt) {
     if (!selectedItem)   return;
     if (!selectedItem.id)   return;  //selectedItem (req for a call) gets to other user when they are drawing me!!
-    if (!selectedItem.doMainAction)   return;
-    if ( typeof selectedItem.doMainAction != 'function' )   return;
-    return selectedItem.doMainAction(evt);  //which should be conferenceJsHook() for a user
+    //mach is a a generic sorta german verb, in this project it means Main Action "go", "activate", "fire" etc    
+    var fn = selectedItem.mach;
+    if (!fn || typeof fn !='function') 
+	return;
+ 
+    return fn(evt);
 }
 
 
@@ -467,9 +499,10 @@ function createBlankUser() {
     retval.setAttribute('geometry','primitive: cone; height:7; radiusTop:0, radiusBottom:0.25');
     retval.setAttribute('material','color','orange');
     retval.setAttribute('cursor-listener',{});
-    retval.doMainAction=conferenceJsHook;//bugbug should just take user as argument now!
+    retval.mach=conferenceJsHook;//bugbug should just take user as argument now!
     return retval;
 }
+
 
 
 

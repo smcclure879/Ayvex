@@ -5,6 +5,18 @@
 //     ja.blank.cyl.col("blue")
 
 
+
+
+function gausW(seed,width) {
+    return 10*Math.sin(seed*10*3.14159/4.1)*width;  //bugbug230u
+}
+
+function fuzzedPosition(seed,w) {
+    return gausW(seed,w) + " " + gausW(seed+1,w) + " " + gausW(seed+2,w);
+}
+
+
+
 class ja {
 
     static get a() {  //like the "indefinite article" "a"
@@ -14,6 +26,16 @@ class ja {
     constructor() {
 	this.und = document.createElement('a-entity');
     }
+
+
+
+
+    fuzz(seed) {
+	return this.adv("position",fuzzedPosition(seed));
+    }
+
+
+
 
     append(x) {
 	if (x instanceof ja)
@@ -116,16 +138,97 @@ class ja {
 	return this.mixin("platform");
     }
 
+    world(name) {
+	return this.id(name).mixin("platform");
+    }
+
+
+    //bugbug doesn't work yet
+    sign(fontHeight,str) {
+	this.adv3("text","text",str);
+	this.adv3("text","font","#optimerBoldFont");
+	return this.sca("1 1 1");
+    }
+
+    static prepDestination(destName) {
+	alert(destName);//bugbug
+	return ja.a.platform.id(destName).position;
+    }
+
+
+
+    //note if you build a skyhook it attempts auto-res the destination to cheap resolution (prepDestination)
+    //and you gotta have doSkyhook ready to go
+    skyhook(destName) {
+	var destObj = document.querySelector("#"+destName);
+	if (!destObj) {
+	    alert("bugbug836b");
+	}
+
+	this.mixin("skyhook")
+	    .id("skyhook-"+destName)
+	    .mach( ()=>{doSkyhook(destObj);} );	
+
+	return this;
+    }
+
+    mach(fn) {
+	return this.und.mach=fn;
+    }
+
+    get exp() {  //make this "experimental" in some unified way
+	return this.yellow;  //bugbug extra wireframe?
+    }
+
+    texture(tex) {
+	return this.adv("texture",tex);
+    }
+
+    get grass() {
+	return this.texture("texture","blah blah bugbug207 grass");
+    }
+
 
     mit(ss) {  //note: array flattening is OK?  (ss can be array or single item)
 	if (ss instanceof Array) 
-	    ss.map( (x)=>{this.append(x);} );
+	    ss.map( (item)=>{this.append(item);} );
 	else 
 	    this.append(ss);
 	return this;
     }
 
+
+    //bugbug you are here, spread worked once for skyhooks, never for worlds
+    spread(size, ss) { //ss is array of sub-ja's ... "subs"
+	if (ss instanceof Array) {
+	    var spreader=0;
+	    ss.map( (item)=>{
+		if (!item.und.getAttribute("position"))
+		    item.adv("position","0 0 0");
+
+		//bugbug better detrand
+		item.x( size*Math.sin(spreader++) );
+		item.y( size/40*Math.cos(spreader*3 ));
+		item.z( size*Math.sin(spreader*2.583));
+		this.append( item );
+		//return nothing...desire only the side effect of multi-append
+	    });
+	} else {
+	    alert("spread requires an array bugbug700y");
+	}
+	return this;
+    }
+
     into(dest) {
+	if (!dest)
+	    alert("bugbug1037p");
+
+	var tag=(dest.tagName || "").toLowerCase();
+	if ( ['a-entity','a-scene'].indexOf(tag) > -1) {
+	    var that = dest;
+	    dest=function(x){that.appendChild(x);}
+	}
+
 	if (typeof dest != 'function') {
 	    alert("bugbug708:" + result);
 	    return this;
