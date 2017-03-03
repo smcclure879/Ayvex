@@ -55,8 +55,17 @@ class ja {
 	this.und.setAttribute(name,sub,val);
 	return this;
     }
+    
+    adv3delta(name,sub,delta) {
+	//bugbug didn't work...WHY??
+	//this.und.getAttribute(name)[sub]+=delta;
+	//return this;
 
-
+	var val = this.und.getAttribute(name)[sub];
+	this.und.setAttribute(name,sub,delta+val);
+	return this;
+    }
+    
 
 
     //save known good for testing...but don't use in the app!!!
@@ -82,6 +91,10 @@ class ja {
     y(v) { return this.adv3("position","y",v); }
     z(v) { return this.adv3("position","z",v); }
 
+    dx(v) { return this.adv3delta("position","x",v); }
+    dy(v) { return this.adv3delta("position","y",v); }
+    dz(v) { return this.adv3delta("position","z",v); }
+
 
     
     sca(s) {
@@ -89,7 +102,8 @@ class ja {
     }
 
     id(x) {
-	return this.adv("id",x);
+	this.und["id"]=x;
+	return this;
     }
 
     col(co) {
@@ -111,6 +125,10 @@ class ja {
 
     get yellow() {
 	return this.col("yellow");
+    }
+
+    get orange() {
+	return this.col("orange");
     }
 
     get gray() {
@@ -138,8 +156,14 @@ class ja {
 	return this.mixin("platform");
     }
 
+
     world(name) {
-	return this.id(name).mixin("platform");
+	return this
+	    .id(name).adv("res",0)
+	    .mit([
+		ja.a.platform.green
+	    ])
+	;
     }
 
 
@@ -167,7 +191,7 @@ class ja {
 
 	this.mixin("skyhook")
 	    .id("skyhook-"+destName)
-	    .mach( ()=>{doSkyhook(destObj);} );	
+	    .mach( ()=>{doSkyhook(destObj,destName);} );	
 
 	return this;
     }
@@ -207,9 +231,11 @@ class ja {
 		    item.adv("position","0 0 0");
 
 		//bugbug better detrand
-		item.x( size*Math.sin(spreader++) );
-		item.y( size/40*Math.cos(spreader*3 ));
-		item.z( size*Math.sin(spreader*2.583));
+
+		++spreader;
+		item.dx( size*Math.sin(spreader) );
+		item.dy( size/4*Math.cos(spreader*0.2 ));
+		item.dz( size*Math.sin(spreader*2.583));
 		this.append( item );
 		//return nothing...desire only the side effect of multi-append
 	    });
@@ -238,5 +264,26 @@ class ja {
 	return this;
     }
 
-}
+
+
+
+    seed(seedVal) {
+	this.adv("seed",seedVal);
+	return this;
+    }
+
+
+
+
+
+
+
+
+
+} //end class
+
+
+
+
+
 

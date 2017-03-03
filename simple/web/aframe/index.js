@@ -29,10 +29,10 @@ function unselect(x) {
 }
 
 
-var noMirror = 0;
+
+
 function doMirror1() {
-    if (noMirror)
-	return;
+
     getUserMedia(
 	{video:true,audio:true},
 	function doMirror2(mirrorStream){
@@ -93,7 +93,7 @@ function runIfFunction(f,arg) {
 var allowedAttribs=['position','rotation','scale','id','visible'];
 function purify(obj) {
     
-    //obj.removeAllChildren();
+    //sorta like obj.removeAllChildren();
     while (obj.hasChildNodes()) {
     obj.removeChild(obj.lastChild);
     }
@@ -102,7 +102,7 @@ function purify(obj) {
     for (var ii = 0; ii < obj.attributes.length; ii++) {
 	var attrib = obj.attributes[ii];
 	if (!attrib.specified) continue;
-	if (allowedAttribs.indexOf(attrib.name)<0) continue;
+	if (allowedAttribs.indexOf(attrib.name)>-1) continue;
 	if (attrib.name.startsWith('_')) continue;
 
 	obj.attributes.removeNamedItem(attrib.name);
@@ -146,7 +146,11 @@ function loadNewChunk(containerObj,newRes,cbGood,cbBad) {
     if (containerObj.getAttribute('res') == newRes) 
 	return cbGood();
     var chunkId=containerObj.id;
-    var gather = function(x){ 
+    if (!chunkId || chunkId.length==0) {
+	alert("bugbug1250p");
+    }
+    var gather = function(x) {
+
 	containerObj.appendChild(x); 
     };
 
@@ -165,6 +169,11 @@ function loadNewChunk(containerObj,newRes,cbGood,cbBad) {
 		    //bugbug todo verify that purify worked...any leak??
 		    purify(containerObj);
 		    var obj = chunk.hydrate(gather,newRes);
+
+		    //we need only the object, so clear out the means by which the next chunk will load!!
+		    chunk=null;
+		    chunkHandle=null; 
+
 		    cbGood(obj);                          //   <------- THE GOAL of this function  (bugbug invert logic??)
 		} else {
 		    cbBad("bugbug139x:"+dumps(chunk.hydrate));
@@ -198,25 +207,24 @@ function loadToRes(containerObj,newRes,cb) {
 
 
 
-function doSkyhook(destObj) {
+function doSkyhook(destObj,name) {
     if (!destObj) {
-	log("dest not ava: "+dest);  //bugbug need to give em more info later
+	log("NOT AVA-",name);  //bugbug need to give em more info later
 	return;
     }
     
     //load enough levels of destination (newRes = userScaleFactor, which might change over time)
     loadToRes(destObj,userScaleFactor, function() {  // "then..."
-	
-	var firstPos = $user.getAttribute('position');
-	var lastPos = destObj.getAttribute('position');
+
 	var tickCount = 0;
 	var maxTickCount = 10;
-	
+
+	var firstPos = $user.getAttribute('position');
+	var lastPos = destObj.getAttribute('position');
 	//don't jump RIGHT to the center...
 	lastPos.y += 4; 
 	lastPos.x += 20;
-	
-	
+
 	var skyhookAnim=setInterval(function(){
 	    var newPos = tween(tickCount, maxTickCount, firstPos, lastPos);
 	    $user.setAttribute('position',newPos);
@@ -228,26 +236,6 @@ function doSkyhook(destObj) {
     });
 
 }
-
-
- // function(reasonForError){  //cbBad
- // 	    var msg="bugbug803w:"+reasonForError;
- // 	    alert(msg);
- // 	    log(msg);
- // 	    cb();
- // 	}
-
-
-
-//bugbug some of this should happen when you prep a skyhook
-// function prepSkyhooks() {
-//     var skyhooks = document.querySelectorAll("[id^='skyhook-']");
-
-//     for(var ii=0,il=skyhooks.length; ii<il; ii++) {
-// 	var sh = skyhooks[ii];
-// 	sh.prepSkyhook();
-//     }
-// }
 
 
 
@@ -345,11 +333,26 @@ $("document").ready( function(event) {
 
 
     $(this).keydown(function(evt) {
-	if (evt.key=='v')
-	    onActivateKey(evt);
+	switch(evt.key) {
+	case 'v': onActivateKey(evt); break;
+	case 'q': onTurnLeftKey(evt); break;
+	case 'e': onTurnRightKey(evt); break;
+	case 'r': onRiseKey(evt); break;
+	case 'f': onFallKey(evt); evt.stopPropagation(); return false; break;  //override fullscreen on 'f'
+	case 'm': maybeDoMirror1();  break;
+
+	    
+	case 'a':
+	case 's':
+	case 'd':
+	case 'w':  return; break;  //do nothing
+	    
+	    
+	default: term(evt.key); return; break;
+	}
     });
-
-
+    
+    
     
     if (!$remoteVideo)
       alert("err1236t");
@@ -357,10 +360,13 @@ $("document").ready( function(event) {
       alert("err224t");
     
 
-
+var startMirror = 0;
     //autocall on startup
     window.setTimeout(function(){
-	doMirror1();
+
+	if (startMirror)
+	    doMirror1();
+
 	//prepSkyhooks();  //should now happen with near skyhook creation
 	prepFirstSkyhook();
 	prepWorlds();
@@ -381,16 +387,13 @@ function prepFirstSkyhook() {
 
 var worldList = ["elshardia","treesylvania","pyrfrostan"];  //satellite
 function prepWorlds(){
-    //bugbug you are here why don't I see the worlds???
     var holder = ja.a.id("holderOfWorlds")
-	.pos("500 100 500")
-	.into($scene);
+	.pos("0 0 0");
 
-    debugger;
-    holder.spread( 400, 
-		   worldList.map( (name) => ja.a.world(name).green )  //bugbug .world(name)
-		 );
-
+    worldOriginPosition="700 700 700";
+    holder.spread( 300, 
+		   worldList.map( (name)=>ja.a.world(name).pos(worldOriginPosition) ));
+    holder.into($scene);
 }
 
 
@@ -410,14 +413,40 @@ function onActivateKey(evt) {
     return fn(evt);
 }
 
+    
+var turnIncrement=30;  //degrees
+function onTurnLeftKey(evt){
+    turn(turnIncrement);
+}
+function onTurnRightKey(evt){
+    turn(-turnIncrement);
+}
 
+var rfInc = 0.1;
+function onRiseKey(evt){
+    alt($user,'position','y',rfInc);
+}
+
+function onFallKey(evt){
+    alt($user,'position','y',-rfInc);
+}
+    
+function turn(deg) {
+    alt($user,"rotation","y",deg);
+}
+
+function alt(who,attr,sub,delta) {
+    var val=who.getAttribute( attr )[sub];
+    $user.setAttribute( attr, sub, val+delta );
+}
+		     
 
 
 function timedOut(item) {
     //bugbug compact this logic (this is optimized for debugging) 
     //  ( it would be smart to have this logic in the server, tho it could be a nightly reboot for a fix ha  :-)   )
     var secondsDiff = (getOfficialTime()-item.saveTime)/1000;
-    //debugger;
+
     if (secondsDiff > 1*MINUTES) {
 	return secondsDiff;
     }
