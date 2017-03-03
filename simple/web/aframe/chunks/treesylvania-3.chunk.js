@@ -11,7 +11,8 @@ chunkHandle = function () {
 
 
 
-		ja.a.platform.red		    //col("#aec572")
+		ja.a.platform
+		    .col("#aec572")
 		,ja.a.tower.orange
 		//ja.a.seed(42).tree;
 
