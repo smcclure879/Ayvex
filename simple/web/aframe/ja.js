@@ -41,9 +41,17 @@ class ja {
 	if (x instanceof ja)
 	    x=x.und;
 
+	if (!this.und) {
+	    alert("bugbug753q you are here--why is this.und null????");
+	    return;
+	}
+
+	//bugbugalert("type of x:"+typeof x);
+
 	this.und.appendChild(x);
 	//note do NOT return this...called from map where we don't want returns, and other places 
     }
+
 
     //however...most things return "this" to enable them to be chained.
     adv(name,val) {
@@ -246,15 +254,25 @@ class ja {
     }
 
     into(dest) {
-	if (!dest)
+	if (!dest) {
 	    alert("bugbug1037p");
+	    debugger;
+	}
 
+	if (typeof dest == 'undefined') {
+	    alert("bugbug727s");
+	    debugger;
+	}
+	
+
+	//coerce entity tags to gather functions 
 	var tag=(dest.tagName || "").toLowerCase();
 	if ( ['a-entity','a-scene'].indexOf(tag) > -1) {
 	    var that = dest;
 	    dest=function(x){that.appendChild(x);}
 	}
 
+	//and at this point, it better be a function
 	if (typeof dest != 'function') {
 	    alert("bugbug708:" + result);
 	    return this;
@@ -265,17 +283,12 @@ class ja {
     }
 
 
-
-
-    seed(seedVal) {
-	this.adv("seed",seedVal);
-	return this;
+    static de(classFn) {
+	var retval = ja.a;
+	retval.adv("seed",seed);
+	retval.drawingObject = classFn();
+	return retval;
     }
-
-
-
-
-
 
 
 

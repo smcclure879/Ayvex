@@ -5,7 +5,7 @@ var selectedItem = null;
 var MINUTES = 60;
 var weAreResing=1;
 var userScaleFactor = -3;  //bugbug make member of user
-
+var myClasses = {};  //for dynamic loading of classes...might not be needed (bugbug)
 
 
 function term(x) {
@@ -113,7 +113,7 @@ function purify(obj) {
 
 
 
-function loadJS(url, implementationCode){
+function loadJS(url, cb){
     //url is URL of external file, implementationCode is the code
     //to be called from the file, location is the location to 
     //insert the <script> element
@@ -121,8 +121,8 @@ function loadJS(url, implementationCode){
     var scriptTag = document.createElement('script');
     scriptTag.src = url;
     
-    scriptTag.onload = implementationCode;
-    scriptTag.onreadystatechange = implementationCode;
+    scriptTag.onload = cb;
+    scriptTag.onreadystatechange = cb;
     
     document.head.appendChild(scriptTag);
 };
@@ -383,6 +383,7 @@ var startMirror = 0;
 
 function prepFirstSkyhook() {
     ja.a.skyhook("satellite").pos("15 10 -20").into($scene);
+    //bugbug ja.a.skyhook("treesylvania").pos("15 10 -20").into($scene);
 }
 
 var worldList = ["elshardia","treesylvania","pyrfrostan"];  //satellite
