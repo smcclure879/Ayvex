@@ -1,0 +1,37 @@
+<head>
+  <link href="/web/lib/mocha.css" rel="stylesheet" />
+  <script src="/web/lib/jquery-1.10.2.js"></script>
+  <script src="jsl.js"></script>
+</head>
+<body>
+
+  <div id="mocha"></div>
+  
+  <script src="/web/lib/expectIndex.js"></script>
+  <script src="/web/lib/mocha.js"></script>
+  
+  <script >
+    mocha.setup({
+      ui:'bdd',
+      ignoreLeaks: true,
+      asyncOnly: true
+    });
+  </script>
+  
+  
+
+
+  <script src="dynex.js"></script>  
+  
+  <script>
+    mocha.checkLeaks();
+    mocha.globals(['jQuery']);
+    mocha.run();
+  </script>
+  
+  
+
+  
+  
+
+</body>
