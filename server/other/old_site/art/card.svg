@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="utf-8" standalone="no" ?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" 
+  "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+
+<svg version="1.1" 
+     xmlns="http://www.w3.org/2000/svg" 
+     xmlns:xlink="http://www.w3.org/1999/xlink"
+
+     width="214mm" height="278mm" viewBox="0 0 214 278" >
+  <!-- slightly smaller than the 215.9 by 279.4 mm for letter size paper -->
+  
+
+  <style> 
+    /* <![CDATA[ */
+    .noprint {
+        fill-opacity: 0.0;
+	stroke: black;
+	stroke-width: 0.05mm;
+	stroke-opacity: 0.2;
+    }
+    /* ]]> */
+  </style>
+
+
+
+
+  <defs>
+
+    <g id="lettersize" >
+      <rect x="0" y="0" width="214" height="278" class="noprint"/>
+    </g>
+
+    <g id="blankcard">
+      <rect x="0" y="0" width="89" height="51" class="noprint"/>
+    </g>
+
+    <g id="logo">  
+      <line x1="1" y1="-1" x2="86" y2="-1" stroke="black" stroke-opacity="0.45" stroke-width="0.2mm" />
+      <text fill="black" fill-opacity="0.45" >
+	<tspan id="sting" y="1.2mm" font-size="2.7mm" font-family="serif" >
+	  Ayvex
+	</tspan>
+	<tspan id="tag"   y="0.45mm" font-size="1.2mm" font-family="serif" font-stretch="wider">
+	  LIGHT INDUSTRIES LLC
+	</tspan>
+      </text>
+    </g>
+
+    <g id="contact">
+      <text y="5.1mm" font-family="sans-serif">
+	<tspan x="0" font-size="0.8mm">
+	  ayvexLLC@gmail.com
+	</tspan>
+        <tspan dx="10" dy="-0.5" font-size="0.6mm">
+	  PassCode:
+	</tspan>
+      </text>
+    </g>
+
+    <g id="cloud">
+      <text  font-family="serif" fill="black" fill-opacity="0.15" font-size="1.8mm"  x="0mm" y="0mm" width="45mm" >
+	<tspan x="0mm" y="2mm" width="45mm">
+	  Machines whispered to. Plans made right. Disasters averted.
+	</tspan>
+	<tspan x="0mm" y="4mm" width="45mm">
+	  Physical protoyping. Mechanical reckoning. 
+	</tspan>
+	<tspan x="0mm" y="6mm" width="45mm">
+	  The big picture.  The details.  Clearing the critical pathway.
+	</tspan>
+	<tspan x="0mm" y="8mm" width="45mm">
+	  Preventing &quot;Ready Player One&quot;. Open Distributed VR infrastructure. 
+	</tspan>
+	<tspan x="0mm" y="10mm" width="45mm"> 
+	  The hard made easy. The impossible made possible. SUPER GENIUS.
+	</tspan>
+	<tspan x="0mm" y="12mm" width="45mm">
+	  Blue Sky Envisioneering Services.  Emperor Norton Consulting Solutions.  
+	</tspan>
+	<tspan x="0mm" y="14mm" width="45mm">
+	  Electronics, Math, Physics, Geology, Genetics, Programming.
+	</tspan>
+	<tspan x="0mm" y="16mm" width="45mm">
+	  Geopolitical Upheavals reversed. Vintage Time Machines Repaired. 
+	</tspan>
+	<tspan x="0mm" y="18mm" width="45mm">
+	  Failure modes identified and placated. Systemantics tamed.
+	</tspan>
+	<tspan x="0mm" y="20mm" width="45mm">
+	  Parameter spaces explored. Suppository writing specialist.
+	</tspan>
+	<tspan x="0" y="22mm" width="45mm" font-size="4mm" dy="3">
+	  Confusions clarified.
+	</tspan>
+      </text>
+    </g>
+      
+
+
+
+  
+    <g id="card" >
+      <use xlink:href="#cloud" x="2" y="18" transform="scale(0.44)"/>
+      <use xlink:href="#blankcard" x="0" y="0" />
+      <use xlink:href="#logo" x="1" y="3.5" />
+      <use xlink:href="#contact" x="1" y="31" />
+    </g>
+
+
+    <g id="row" transform="translate(12,0)">
+      <use xlink:href="#card"  />
+      <use xlink:href="#card" transform="translate(89,0)" />
+    </g>
+    
+  </defs>
+
+ 
+ <use xlink:href="#lettersize" x="0" y="0" />
+
+ <g id="printmargins" transform="translate(0,3)">
+   <use xlink:href="#row" x="0" y="0" />
+   <use xlink:href="#row" x="0" y="51" />
+   <use xlink:href="#row" x="0" y="102" />
+   <use xlink:href="#row" x="0" y="153" />
+   <use xlink:href="#row" x="0" y="204" />
+ </g>
+
+ 
+</svg>

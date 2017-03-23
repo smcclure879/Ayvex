@@ -158,7 +158,7 @@ function loadNewChunk(containerObj,newRes,cbGood,cbBad) {
 	return cbBad("err1034d");
   
     //bugbug for now the newRes should be coming from the skyHook entry.  so the file better exist.
-    var path = "/web/aframe/chunks/" + chunkId + signedInt(newRes) + ".chunk.js";
+    var path = "/web/chunks/" + chunkId + signedInt(newRes) + ".chunk.js";
 
 
     loadJS(path, function(scriptContents) {

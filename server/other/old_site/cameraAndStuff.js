@@ -1,0 +1,216 @@
+var getSelectedItem = null;
+
+  
+// (c) Dean McNamee <dean@gmail.com>.  All rights reserved.
+function start3d(theDrawings,opts) 
+{
+	var screen_canvas = document.getElementById('c');
+	var renderer = new Pre3d.Renderer(screen_canvas);
+
+	// Hook into the canvas for draw debugging.
+	//   - bezier cubic curve
+	//     - red: control point 0
+	//     - green: control point 1
+	//     - blue: end point
+	var orig_bezierCurveTo = renderer.ctx.bezierCurveTo;
+	function debug_bezierCurveTo(c0x, c0y, c1x, c1y, epx, epy) 
+	{
+		this.save();
+		this.setFillColor(1, 0, 0, 1);
+		this.fillRect(c0x, c0y, 3, 3);
+		this.setFillColor(0, 1, 0, 1);
+		this.fillRect(c1x, c1y, 3, 3);
+		this.setFillColor(0, 0, 1, 1);
+		this.fillRect(epx, epy, 3, 3);
+		this.restore();
+		orig_bezierCurveTo.call(this, c0x, c0y, c1x, c1y, epx, epy);
+	} 
+
+	renderer.ctx.setStrokeColor(0x52 / 255, 0xbb / 255, 0x5c / 255, 1);
+	renderer.ctx.lineWidth = 1;
+
+	function draw() {		
+	    if (!theDrawings) {
+		debugSet("no drawings");
+		return;
+	    }
+	    renderer.transform.reset();
+	    //here, we could be translating model, but don't
+	    //renderer.transform.translate(0, 0, 0);  // Center over the origin.  
+	    
+	    renderer.transform.scale(1, 1, 1);  //todo consider if need stretch in Z  //bugbug needed?
+	    
+	    renderer.ctx.setFillColor(red(mainBgColor),green(mainBgColor),blue(mainBgColor),alpha(mainBgColor));  //bugbug settings
+	    renderer.drawBackground();
+	    
+	    var drawing=null;
+	    for(var ii=0,lim=theDrawings.length; ii<lim; ii++)   {
+			drawing = theDrawings[ii];	
+			
+			//for debugging drawings of certain types (keep) bugbug revisit
+			// if (!drawing.isSign)  //bugbug
+			// {
+			// continue;
+			// }		
+			
+			drawIt(drawing);
+	    }
+	    
+	    //dynamic: e.g. from the DB
+	    for(var key in theDrawings.dynamic)	{
+			drawing = theDrawings.dynamic[key];
+			drawIt(drawing);
+	    }
+	    
+	    
+	    renderer.drawBuffer();
+	    
+	    //todo renderer.drawReticle();  //in screen coords
+	}
+    
+
+
+	function drawIt(drawing)
+	{
+		renderer.camera.transform.check();  //bugbug assert  //bugbug needed???
+		if (drawing instanceof iDrawable) {
+			var log2Size=1;  //a 2m object (bugbug)
+			drawing.draw(renderer,log2Size);  //new path
+		} else {  //have the renderer do it  (old lib code path)
+			renderer.drawPath(drawing);
+		}
+	}
+	  
+	//bugbug move this function into the renderer (pre3d.js function getnearest )
+	function findNearest(x,y,selectIt) { //callback from demoUtils.js function handleCameraMouse
+		var best={closestDrawingIndex:-1,closestPointIndex:-1,bestQuadranceSoFar:40000};  //quadrance=dist*dist //bugbug const
+		var lim=theDrawings.length;
+		var ii=0;
+		var drawing=null;
+		for(; ii<lim; ii++) { //ii=drawingNumber
+			drawing = theDrawings[ii];
+			if (drawing instanceof iDrawable) {
+				best = drawing.getNearest(x,y,renderer,best,ii);  //ii passed only for selection
+			} else { //have the renderer do it
+				//pass the best thru, and insist it hand the old or new best back out  (end up with path#, point #, point serialNum, distance between click and selectPoint
+				best = renderer.getNearest(drawing,x,y,best,ii);  
+			}
+		}
+
+		
+		for(var key in theDrawings.dynamic) {
+			drawing = theDrawings.dynamic[key];
+			ii++; //bugbug should we???
+			best=drawing.getNearest(x,y,renderer,best,ii);
+			best.key=key;
+		}
+	
+		
+		if (selectIt) 
+			select(best);
+			
+		return best;
+	}
+  
+
+	var selectedItem=null;
+	//best == newly selected item (best match to mouseclick)
+	function select(bestItem) {  //bugbug get rid of "two kinds of stuff to iterate thru"
+		if (bestItem===null || bestItem.closestPointIndex<0) 
+			return;
+		
+		//debugSet(bestItem.closestDrawingIndex+","+bestItem.closestPointIndex);
+		
+		if (selectedItem!==null) {
+			//clear out the old selection
+			if (selectedItem!==null && selectedItem.closestDrawingIndex>=0 && selectedItem.closestDrawingIndex<theDrawings.length) {
+				theDrawings[selectedItem.closestDrawingIndex].isSelected=false;
+			} else if (selectedItem.key) {
+				theDrawings.dynamic[selectedItem.key].isSelected=false;
+			} else {
+				alert("wtfbugbug");
+			}
+		}
+		
+		//actually perform new selection
+		selectedItem=bestItem;
+		var actualItem=bestItem.actualItem;
+		
+		//bugbug consolidate this handling of two lists of drawings...
+		if (selectedItem.key) {
+			actualItem.isSelected=true;
+			actualItem.closestPointIndex=-177777;
+		} else {
+			actualItem.isSelected=true;
+			actualItem.closestPointIndex=bestItem.closestPointIndex;
+			//theDrawings[bestItem.closestDrawingIndex].closestPointIndex=bestItem.closestPointIndex;
+		}
+	}
+	
+	//changing the global function to look inside me. bugbug revisit this
+	getSelectedItem = function(){
+		return selectedItem;
+	};
+	
+	
+
+	renderer.camera.focal_length = 3;  //bugbug settings originally 1/2
+
+	//"this looks like a good spot"--found by flying around the model
+	camX=165;
+	camY=-656;
+	camZ=-683;
+	camRotX=rad(52);
+	camRotY=rad(351);
+	camRotZ=0;
+
+	//bugbug move some of this into structures (camPos&Orient) and into opts (e.g. draw and findNearest)
+	//bugbug are there more opts???  the callee supports more!
+	DemoUtils.autoCamera(renderer, camX, camY, camZ, camRotX, camRotY, camRotZ, draw, findNearest, opts);
+
+	var toolbar = new DemoUtils.ToggleToolbar();
+	toolbar.addEntry('Debug points', false, function(e) {
+		if (this.checked) {
+		  renderer.ctx.bezierCurveTo = debug_bezierCurveTo;
+		} else {
+		  renderer.ctx.bezierCurveTo = orig_bezierCurveTo;
+		}
+		draw();
+	});
+	toolbar.populateDiv(document.getElementById('toolbar'));
+
+
+	//too early to draw() here, wait for tick()
+
+   
+}
+
+
+//bugbug move to use of ONLY color objects since customers of "color" want it too many ways and I don't want to write all this crud
+
+function red(x) {
+    if (x=='black') return 0;
+    if (x=='red') return 255;
+    return 100;
+}
+
+function green(x) {
+    if (x=='black') return 0;
+    if (x=='red') return 0;
+    if (x=='green') return 255;
+    return 100;
+}
+
+function blue(x) {
+    if ( x=='black' ) return 0;
+    if ( x=='red' ) return 0;
+    if ( x=='blue' ) return 255;
+    return 100;
+}
+
+
+function alpha(x) {
+    return 255;
+}
+
+
