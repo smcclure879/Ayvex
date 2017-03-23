@@ -15,7 +15,7 @@ String.prototype.capitalize = function() {
 
 function preloadSingle(libName) {
     var retval = new $.Deferred(function(thisDeferral) {
-	var path = "/web/aframe/chunks/" + libName + ".dyn.js";
+	var path = "/web/chunks/" + libName + ".dyn.js";
 	//var classFunction = null;
 	loadJS(path, function(evt) {
 	    
