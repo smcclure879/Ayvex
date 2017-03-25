@@ -7,7 +7,7 @@ It will be a better world if VR is open, distributed, and free.
 
 <b>Participate</b>:  
 1. fork the repository
-2. git checkout cleanup    (it's a branch)
+2. git checkout cleanup    (it's the branch we're using right now)
 2. tell me what you want to work on
 
 <b>Books</b>:</br>
