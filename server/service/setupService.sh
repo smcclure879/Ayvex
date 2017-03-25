@@ -1,9 +1,10 @@
 #!/bin/sh
 
+rm /etc/init.d/ayvex
 cp ayvex.service.sh /etc/init.d/ayvex
 
 chmod a+x /etc/init.d/ayvex
-chmod a+x /home/pi/gitstuff/ayvex/simple/simple.server.node.js
+chmod a+x /home/pi/gitstuff/ayvex/server/simple.server.node.js
 
 rm /etc/rc2.d/S02ayvex
 rm /etc/rc2.d/S03ayvex

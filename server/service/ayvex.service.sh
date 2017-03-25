@@ -19,7 +19,7 @@
 case "$1" in
 start)
 echo "starting ayvex"
-nodejs  /home/pi/gitstuff/ayvex/simple/simple.server.node.js
+nodejs  /home/pi/gitstuff/ayvex/server/simple.server.node.js
 ;;
 stop)
 echo "Stopping ayvex"
