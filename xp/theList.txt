@@ -75,6 +75,18 @@ The list of XP owners.
 56. oris: advice on video production
 57. steve: instructions panel coding
 
+(insert branch mesh etc points here, if any)
+
+58-100. remainder of pre-aframe work including company setup.
+
+
+the XP list in cleanup is now official and starts numbering at 101.
+101-110. aframe project itself:   for being a foundation for us
+111-120. steve:  writing initial aframe prototype
+121. shelvacu:    about the need for cleanup branch
+122. steve:  for doing cleanup
+123. steve:  for platforms/planes
+124. entire coffee and code group:  support
 
 
 
@@ -92,4 +104,6 @@ call about the reward structure.  Worst case scenario you can trade these coupon
 
 These *are* intended to be negotiable:  See steve to transfer XP. It will be done via edits to this file in
 the master branch of the Ayvex project.  It has been suggested to build a market in similar "penny options" 
-for startups...Trading them online, etc.  
+for startups...Trading them online, etc.  Ayvex is exploring setting up such a system if there is sufficient interest.
+
+
