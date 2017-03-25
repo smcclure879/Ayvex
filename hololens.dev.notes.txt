@@ -1,0 +1,36 @@
+develop microosft hololens aps now__ allen g taylor
+build 2015 intro
+build 2017 30s sold out. blowaway video? anatomy, minecraft, ugh, robo rage = proj x, 
+3k$ dev kit
+"industrial, lowes" etc ugh
+"education"
+
+oregon story board
+
+cpy,gpu,hpu
+2gb ram 16gb flash
+6cam, light intensity
+4mics voicecommand and ambient sound
+cortana
+dev pc: 4+core 8gm ram bios with hardware virt
+slat 
+dep
+mixed reality windows 10 (not holographic)
+gpu dx 11, wddm 1.2
+not home edition
+unity free+
+VS community 2015+
+emulator in unity
+
+walk around keep map of whole house...yes
+
+holo toolkit in unity...all the extras for hololens (mostly freebies to add ?)
+msft store ugh
+
+
+book..apps...
+msft demos
+simple
+complex
+all on github
+

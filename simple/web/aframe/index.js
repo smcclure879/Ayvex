@@ -5,7 +5,7 @@ var selectedItem = null;
 var MINUTES = 60;
 var weAreResing=1;
 var userScaleFactor = -3;  //bugbug make member of user
-
+var myClasses = {};  //for dynamic loading of classes...might not be needed (bugbug)
 
 
 function term(x) {
@@ -30,7 +30,9 @@ function unselect(x) {
 
 
 
+
 function doMirror1() {
+
     getUserMedia(
 	{video:true,audio:true},
 	function doMirror2(mirrorStream){
@@ -91,7 +93,7 @@ function runIfFunction(f,arg) {
 var allowedAttribs=['position','rotation','scale','id','visible'];
 function purify(obj) {
     
-    //obj.removeAllChildren();
+    //sorta like obj.removeAllChildren();
     while (obj.hasChildNodes()) {
     obj.removeChild(obj.lastChild);
     }
@@ -100,7 +102,7 @@ function purify(obj) {
     for (var ii = 0; ii < obj.attributes.length; ii++) {
 	var attrib = obj.attributes[ii];
 	if (!attrib.specified) continue;
-	if (allowedAttribs.indexOf(attrib.name)<0) continue;
+	if (allowedAttribs.indexOf(attrib.name)>-1) continue;
 	if (attrib.name.startsWith('_')) continue;
 
 	obj.attributes.removeNamedItem(attrib.name);
@@ -111,7 +113,7 @@ function purify(obj) {
 
 
 
-function loadJS(url, implementationCode){
+function loadJS(url, cb){
     //url is URL of external file, implementationCode is the code
     //to be called from the file, location is the location to 
     //insert the <script> element
@@ -119,8 +121,8 @@ function loadJS(url, implementationCode){
     var scriptTag = document.createElement('script');
     scriptTag.src = url;
     
-    scriptTag.onload = implementationCode;
-    scriptTag.onreadystatechange = implementationCode;
+    scriptTag.onload = cb;
+    scriptTag.onreadystatechange = cb;
     
     document.head.appendChild(scriptTag);
 };
@@ -144,7 +146,11 @@ function loadNewChunk(containerObj,newRes,cbGood,cbBad) {
     if (containerObj.getAttribute('res') == newRes) 
 	return cbGood();
     var chunkId=containerObj.id;
-    var gather = function(x){ 
+    if (!chunkId || chunkId.length==0) {
+	alert("bugbug1250p");
+    }
+    var gather = function(x) {
+
 	containerObj.appendChild(x); 
     };
 
@@ -163,6 +169,11 @@ function loadNewChunk(containerObj,newRes,cbGood,cbBad) {
 		    //bugbug todo verify that purify worked...any leak??
 		    purify(containerObj);
 		    var obj = chunk.hydrate(gather,newRes);
+
+		    //we need only the object, so clear out the means by which the next chunk will load!!
+		    chunk=null;
+		    chunkHandle=null; 
+
 		    cbGood(obj);                          //   <------- THE GOAL of this function  (bugbug invert logic??)
 		} else {
 		    cbBad("bugbug139x:"+dumps(chunk.hydrate));
@@ -196,23 +207,24 @@ function loadToRes(containerObj,newRes,cb) {
 
 
 
-function doSkyhook(activator) {
-    
-    var destObj = document.querySelector("#"+activator.getAttribute('destination'));
+function doSkyhook(destObj,name) {
+    if (!destObj) {
+	log("NOT AVA-",name);  //bugbug need to give em more info later
+	return;
+    }
     
     //load enough levels of destination (newRes = userScaleFactor, which might change over time)
     loadToRes(destObj,userScaleFactor, function() {  // "then..."
-	
-	var firstPos = $user.getAttribute('position');
-	var lastPos = destObj.getAttribute('position');
+
 	var tickCount = 0;
 	var maxTickCount = 10;
-	
+
+	var firstPos = $user.getAttribute('position');
+	var lastPos = destObj.getAttribute('position');
 	//don't jump RIGHT to the center...
 	lastPos.y += 4; 
 	lastPos.x += 20;
-	
-	
+
 	var skyhookAnim=setInterval(function(){
 	    var newPos = tween(tickCount, maxTickCount, firstPos, lastPos);
 	    $user.setAttribute('position',newPos);
@@ -223,26 +235,6 @@ function doSkyhook(activator) {
 
     });
 
-}
-
-
- // function(reasonForError){  //cbBad
- // 	    var msg="bugbug803w:"+reasonForError;
- // 	    alert(msg);
- // 	    log(msg);
- // 	    cb();
- // 	}
-
-
-//bugbug some of this should happen when you prep a skyhook
-function prepSkyhooks() {
-    var skyhooks = document.querySelectorAll("[id^='skyhook-']");
-
-    for(var ii=0,il=skyhooks.length; ii<il; ii++) {
-	var sh = skyhooks[ii];
-	//crappy lambda per object way to do this...
-	sh.doMainAction=function() { doSkyhook(sh); };  //kinda a "this" being passed...objectify better later
-    }
 }
 
 
@@ -306,8 +298,10 @@ $("document").ready( function(event) {
     $user = document.querySelector("#user");
     $terminator = document.querySelector("#terminator");
     sphere = document.querySelector("#sphere");
+    $scene = document.querySelector("a-scene");
 
-
+    if (!$scene)
+	alert("bugbug1023s");
 
     var initAnim=window.setInterval(function(){
         z-=6;
@@ -339,11 +333,26 @@ $("document").ready( function(event) {
 
 
     $(this).keydown(function(evt) {
-	if (evt.key=='v')
-	    onSpaceKey(evt);
+	switch(evt.key) {
+	case 'v': onActivateKey(evt); break;
+	case 'q': onTurnLeftKey(evt); break;
+	case 'e': onTurnRightKey(evt); break;
+	case 'r': onRiseKey(evt); break;
+	case 'f': onFallKey(evt); evt.stopPropagation(); return false; break;  //override fullscreen on 'f'
+	case 'm': maybeDoMirror1();  break;
+
+	    
+	case 'a':
+	case 's':
+	case 'd':
+	case 'w':  return; break;  //do nothing
+	    
+	    
+	default: term(evt.key); return; break;
+	}
     });
-
-
+    
+    
     
     if (!$remoteVideo)
       alert("err1236t");
@@ -351,13 +360,17 @@ $("document").ready( function(event) {
       alert("err224t");
     
 
-
-
+var startMirror = 0;
     //autocall on startup
     window.setTimeout(function(){
-	doMirror1();
-	prepSkyhooks();
-    },3000);
+
+	if (startMirror)
+	    doMirror1();
+
+	//prepSkyhooks();  //should now happen with near skyhook creation
+	prepFirstSkyhook();
+	prepWorlds();
+    },1900);
 
     
     //this should ideally be based on something besides a timer...like user movement or inactivity    
@@ -367,25 +380,74 @@ $("document").ready( function(event) {
     
 });
  
-function getSelectedItem() { return selectedItem; }
 
+function prepFirstSkyhook() {
+    ja.a.skyhook("satellite").pos("15 10 -20").into($scene);
+    //bugbug ja.a.skyhook("treesylvania").pos("15 10 -20").into($scene);
+}
 
-function onSpaceKey(evt) {
-    if (!selectedItem)   return;
-    if (!selectedItem.id)   return;  //selectedItem (req for a call) gets to other user when they are drawing me!!
-    if (!selectedItem.doMainAction)   return;
-    if ( typeof selectedItem.doMainAction != 'function' )   return;
-    return selectedItem.doMainAction(evt);  //which should be conferenceJsHook() for a user
+var worldList = ["elshardia","treesylvania","pyrfrostan"];  //satellite
+function prepWorlds(){
+    var holder = ja.a.id("holderOfWorlds")
+	.pos("0 0 0");
+
+    worldOriginPosition="700 700 700";
+    holder.spread( 300, 
+		   worldList.map( (name)=>ja.a.world(name).pos(worldOriginPosition) ));
+    holder.into($scene);
 }
 
 
+
+
+function getSelectedItem() { return selectedItem; }
+
+
+function onActivateKey(evt) {
+    if (!selectedItem)   return;
+    if (!selectedItem.id)   return;  //selectedItem (req for a call) gets to other user when they are drawing me!!
+    //mach is a a generic sorta german verb, in this project it means Main Action "go", "activate", "fire" etc    
+    var fn = selectedItem.mach;
+    if (!fn || typeof fn !='function') 
+	return;
+ 
+    return fn(evt);
+}
+
+    
+var turnIncrement=30;  //degrees
+function onTurnLeftKey(evt){
+    turn(turnIncrement);
+}
+function onTurnRightKey(evt){
+    turn(-turnIncrement);
+}
+
+var rfInc = 0.1;
+function onRiseKey(evt){
+    alt($user,'position','y',rfInc);
+}
+
+function onFallKey(evt){
+    alt($user,'position','y',-rfInc);
+}
+    
+function turn(deg) {
+    alt($user,"rotation","y",deg);
+}
+
+function alt(who,attr,sub,delta) {
+    var val=who.getAttribute( attr )[sub];
+    $user.setAttribute( attr, sub, val+delta );
+}
+		     
 
 
 function timedOut(item) {
     //bugbug compact this logic (this is optimized for debugging) 
     //  ( it would be smart to have this logic in the server, tho it could be a nightly reboot for a fix ha  :-)   )
     var secondsDiff = (getOfficialTime()-item.saveTime)/1000;
-    //debugger;
+
     if (secondsDiff > 1*MINUTES) {
 	return secondsDiff;
     }
@@ -467,9 +529,10 @@ function createBlankUser() {
     retval.setAttribute('geometry','primitive: cone; height:7; radiusTop:0, radiusBottom:0.25');
     retval.setAttribute('material','color','orange');
     retval.setAttribute('cursor-listener',{});
-    retval.doMainAction=conferenceJsHook;//bugbug should just take user as argument now!
+    retval.mach=conferenceJsHook;//bugbug should just take user as argument now!
     return retval;
 }
+
 
 
 
