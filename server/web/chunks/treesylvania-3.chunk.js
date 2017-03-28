@@ -17,7 +17,7 @@ function preloadSingle(libName) {
     var retval = new $.Deferred(function(thisDeferral) {
 	var path = "/web/chunks/" + libName + ".dyn.js";
 	//var classFunction = null;
-	loadJS(path, function(evt) {
+	jsl.load(path, function(evt) {
 	    
 	    var typeName = libName.capitalize();
 
