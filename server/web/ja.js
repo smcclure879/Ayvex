@@ -183,7 +183,7 @@ class ja {
     }
 
     static prepDestination(destName) {
-	alert(destName);//bugbug
+	alert("prepping..."+destName);//bugbug
 	return ja.a.platform.id(destName).position;
     }
 
