@@ -44,7 +44,7 @@ function doMirror1() {
 	    
 	},
 	function(err){
-	    alert(err);
+	    alert("gum issue:"+err);
 	}
     );
 }
@@ -113,19 +113,19 @@ function purify(obj) {
 
 
 
-function loadJS(url, cb){
-    //url is URL of external file, implementationCode is the code
-    //to be called from the file, location is the location to 
-    //insert the <script> element
+//function loadJS(url, cb){
+//    //url is URL of external file, implementationCode is the code
+//    //to be called from the file, location is the location to 
+//    //insert the <script> element
     
-    var scriptTag = document.createElement('script');
-    scriptTag.src = url;
+//     var scriptTag = document.createElement('script');
+//     scriptTag.src = url;
     
-    scriptTag.onload = cb;
-    scriptTag.onreadystatechange = cb;
+//     scriptTag.onload = cb;
+//     scriptTag.onreadystatechange = cb;
     
-    document.head.appendChild(scriptTag);
-};
+//     document.head.appendChild(scriptTag);
+// };
 
     
 
@@ -161,7 +161,8 @@ function loadNewChunk(containerObj,newRes,cbGood,cbBad) {
     var path = "/web/chunks/" + chunkId + signedInt(newRes) + ".chunk.js";
 
 
-    loadJS(path, function(scriptContents) {
+    debugger; //bugbug201
+    jsl.load(path, function(scriptContents) {
 	if (typeof chunkHandle == 'function') {  
 	    if (typeof cbGood == 'function') {
 		var chunk = chunkHandle();
@@ -182,7 +183,7 @@ function loadNewChunk(containerObj,newRes,cbGood,cbBad) {
 		cbBad("bugbug746e:"+dumps(cbGood));
 	    }
 	} else {
-	    cbBad("bugbug746ff:"+dumps(chunkHandle));
+	    cbBad("bugbug746ff:"+chunkId+" "+dumps(chunkHandle));
 	}
     });
 

@@ -11,18 +11,27 @@ String.prototype.capitalize = function() {
 }
 
 
+var debuggingIsOn=true;
+var assert = {
+    exists: function(a,msg) { 
+	if (debuggingIsOn && !a) {
+	    alert("ASSERTFAIL:"+msg);
+	}
+    }
+}
+
 
 
 function preloadSingle(libName) {
     var retval = new $.Deferred(function(thisDeferral) {
 	var path = "/web/chunks/" + libName + ".dyn.js";
-	//var classFunction = null;
-	loadJS(path, function(evt) {
+
+	jsl.load(path, function(evt) {
 	    
 	    var typeName = libName.capitalize();
 
-	    alert("bugbug cf="+libName+" "+classFunction);
-	    myClasses[typeName]=classFunction;
+	    assert.exists(myClasses[typeName],"class not existing:"+typeName+"..."+dumps(myClasses));
+
 	    thisDeferral.resolve();  //else this.reject();
 	    
 	},function(ooo){
@@ -38,6 +47,7 @@ function preload(libList,cb){  //e.g. "tree branch squirrel"
     
     $.when.apply( $, libs.map( preloadSingle ) )
 	.then(function(){
+	    debugger; //bugbug you are here
 	    cb();
 	}).fail(function(){ 
 	    alert("bugbug1258u");
@@ -55,6 +65,7 @@ chunkHandle = function () {
     function theRealBuild(gather) {
 
 	//let's build the tree first and stick in the scene momentarily!!
+	debugger;
 	var theFirstTree = myClasses["Tree"](treeSeed);
 
 
@@ -86,8 +97,9 @@ chunkHandle = function () {
 	hydrate: function(gather,newRes) { //container already has pos,rot,etc.....we provide contents here
 
 	    //preliminary loads of extra js files
+	    debugger;  //bugbug 
 	    var libs="tree branch leaf";
-	    preload(libs, ()=>{   //and then do the real build...
+	    preload(libs, function(){   //and then do the real build...
 		theRealBuild(gather);
 	    });
 	}	    

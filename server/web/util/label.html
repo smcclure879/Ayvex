@@ -1,0 +1,63 @@
+
+<body>
+  <script>
+    
+    function makeid()
+    {
+    var text = "";
+    var possible = "abcdefghiJKLmnpQrstuvwxyz0123456789";
+    
+    for( var i=0; i < 5; i++ ) {
+		      text += possible.charAt(Math.floor(Math.random() * possible.length));
+    }
+    return text;
+
+
+    }
+      
+
+
+
+
+    
+    document.addEventListener("DOMContentLoaded", function(event) {
+
+
+
+    
+    var date =  document.querySelector("#date") ;
+    var label = document.querySelector("#label");
+		      var now = (new Date()).toISOString();
+		      now = now.substr(0,now.length-5);
+    var lab = makeid();
+
+
+    date.innerText = now;
+    label.innerText = lab;
+//    var utc_timestamp = Date.UTC(now.getUTCFullYear(),now.getUTCMonth(), now.getUTCDate() ,
+  //        now.getUTCHours(), now.getUTCMinutes(), now.getUTCSeconds(), now.getUTCMilliseconds());
+    
+    //foo.innerText = Date.utc_timestamp; //isoDate;
+    
+    date.style.fontSize="140px";
+    label.style.fontSize="210px";	      
+
+
+
+
+    });
+    
+  </script>
+<hr>
+  <div id="label">xxx</div>
+  <hr>
+
+  Owner:           <br><br><hr>
+  Contents:        <br><br><hr>
+  Attic location:  <br><br><hr>
+
+  <div id="date">this is me</div>
+
+  <hr>
+
+</body>

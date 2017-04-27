@@ -24,3 +24,7 @@ class Leaf {
     }
 }
 
+
+myClasses["Leaf"] = function(seed) { 
+    return new Leaf(seed); 
+};

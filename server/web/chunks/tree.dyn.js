@@ -112,9 +112,13 @@ class Tree {
 }
 
 
-classFunction = function(seed) {
-    return new Tree(seed);  //'bugbug???
-}
+myClasses["Tree"] = function(seed) { 
+    return new Tree(seed); 
+};
+
+//function(seed) {
+//    return new Tree(seed);  //'bugbug???
+//}
 
 
 // the js port and other changes to this code are copyright 2017 Ayvex Light Industries LLC
