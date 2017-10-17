@@ -288,6 +288,7 @@ function doStaticRedir(req,res) {
 
     if (!ext.test(req.url))  {
 	res.end("err257b");
+	log(req.url);
 	return;
     }
     
@@ -295,6 +296,15 @@ function doStaticRedir(req,res) {
     return doStaticBase(filePath,res);
 }
 
+function doAcmeStatic(req,res) {
+    if (req.url.contains("..")) {
+	res.end("err459i");
+	return;
+    } else {
+	var filePath = path.join(__dirname,"web", req.url);
+	return doStaticBase(filePath,res);
+    }
+}
 
 
 //     } else if (ext.test(req.url)) {
@@ -325,6 +335,8 @@ function mainHandler (req, res) {
 	    return doStatic(req,res);
 	} else if (path=="/favicon.ico") {
 	    return doStaticRedir(req,res);
+	} else if (path.startsWith("/.well-known/acme-challenge")) {
+	    return doAcmeStatic(req,res);
 	} else {
 	    logIt("err320-fallthru-why?");
 	    
