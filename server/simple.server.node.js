@@ -158,29 +158,60 @@ function doBonk(res){
     res.end("OK");
     return;
 }
+function runExternal(ccc) {
+    var exec = require('child_process').exec;
+    exec(ccc, function callback(error, stdout, stderr){
+	logIt(ccc);
+	logIt(error);
+	logIt(stdout);
+	logIt(stderr);
+	
+    });
+}
+function beepOneMinute() {
+    runExternal("amixer cset numid=3 1;sudo espeak -a 200 \"isabel isabel isabel isabel isabel isabel isabel isabel isabel isabel isabel isabel isabel isabel isabel isabel isabel isabel isabel isabel isabel isabel isabel isabel\"   ");
+}
+
+function actualBeep(textFromUser) {
+    if (textFromUser=="1") {  
+	beepOneMinute();
+	return "yup";
+    }
+    //bugbug todo sterilize inputs
+    
+    return "NYI-beep";
+}
+
+function doBeep(res,text) {
+    writeNormalHead(res);
+    res.end( "OK--"+actualBeep(text) );
+    return;
+}
 	
 function doGet(req,res) {
-	var url = ""+req.url;
-        if (url=="/api/bonk/") {
-	    return doBonk(res);
-	} else if (url=="/api/user/") {
+    var url = ""+req.url;
+    if (url.startsWith("/api/beep/")) {
+	return doBeep(res,url.removeStart("/api/beep/"));
+    } else if (url=="/api/bonk/") {
+	return doBonk(res);
+    } else if (url=="/api/user/") {
+	writeNormalHead(res);
+	var userList = getUserList();
+        //console.log("users:"+userList);
+        res.end(userList);
+    } else if (url.startsWith("/api/user/")) {
+	var userName = url.removeStart("/api/user/");
+	if (users[userName]) {
 	    writeNormalHead(res);
-	    var userList = getUserList();
-            //console.log("users:"+userList);
-            res.end(userList);
-	} else if (url.startsWith("/api/user/")) {
-	    var userName = url.removeStart("/api/user/");
-		if (users[userName]) {
-			writeNormalHead(res);
-			res.end(users[userName]);
-	    } else { //don't have
-			res.writeHead(404, {'Content-Type': 'application/json'});
-			res.end('{response:"nothing found"}\n');    
-	    }
-	} else {
+	    res.end(users[userName]);
+	} else { //don't have
 	    res.writeHead(404, {'Content-Type': 'application/json'});
-	    res.end('{response:"unknown api--'+req.url+'"}\n');    
+	    res.end('{response:"nothing found"}\n');    
 	}
+    } else {
+	res.writeHead(404, {'Content-Type': 'application/json'});
+	res.end('{response:"unknown api--'+req.url+'"}\n');    
+    }
 }	
 
 function unknownMethod(req,res) {
