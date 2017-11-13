@@ -117,12 +117,13 @@ Object.prototype.contains = function (sought) {
 var dump=util.inspect;
 
 
-
+//mime types
 function getContentType(someFile) {
     someFile = ""+someFile;
     if (someFile.endsWith('.html')) return  'text/html';
     if (someFile.endsWith('.htm' )) return 'text/html';
     if (someFile.endsWith('.js'  )) return 'script/javascript';
+    if (someFile.endsWith('.jss' )) return 'text/javascript;';
     if (someFile.endsWith('.svg' )) return 'image/svg+xml';
 	return 'text/plain';
 }
