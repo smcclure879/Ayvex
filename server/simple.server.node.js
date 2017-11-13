@@ -158,18 +158,27 @@ function doBonk(res){
     res.end("OK");
     return;
 }
-
+function runExternal(ccc) {
+    var exec = require('child_process').exec;
+    exec(ccc, function callback(error, stdout, stderr){
+	logIt(ccc);
+	logIt(error);
+	logIt(stdout);
+	logIt(stderr);
+	
+    });
+}
 function beepOneMinute() {
-    runExternal("espeak \"isabel isabel isabel isabel isabel isabel isabel isabel isabel isabel isabel isabel isabel isabel isabel isabel isabel isabel isabel isabel isabel isabel isabel isabel\"   ");
+    runExternal("amixer cset numid=3 1;sudo espeak -a 200 \"isabel isabel isabel isabel isabel isabel isabel isabel isabel isabel isabel isabel isabel isabel isabel isabel isabel isabel isabel isabel isabel isabel isabel isabel\"   ");
 }
 
 function actualBeep(textFromUser) {
     if (textFromUser=="1") {  
 	beepOneMinute();
-	return;
+	return "yup";
     }
     //bugbug todo sterilize inputs
-
+    
     return "NYI-beep";
 }
 
