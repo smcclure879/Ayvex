@@ -1,27 +1,42 @@
+'use strict';
+const webPush = require('web-push');
+const http = require('http');
+const https = require('https');
+const fs = require('fs');
+const path = require('path');
+const ext = /[\w\d_-]+\.[\w\d]+$/;
+const util = require("util");
+const datastore = require('nedb');
 
 
-var http = require('http');
-var https = require('https');
-var fs = require('fs');
-var path = require('path');
-var ext = /[\w\d_-]+\.[\w\d]+$/;
-var util = require("util");
+//early startup stuff----------------------
+const db = new datastore({ filename: 'beepRegistrations.db', autoload: true });
+db.ensureIndex({ fieldName: 'endpoint', unique: true, sparse: true }, function (err) {
+    if (err)
+	logIt("problem creating index:"+err);
+});
+
+const rawData = fs.readFileSync('vapid-keys.secret.json');
+const vapidDetails = JSON.parse(rawData);
 
 
-var myNow = function() {
+//end early startup stuff-----------------
+
+
+const myNow = function() {
     return new Date().toISOString();
 };
-var metalog = function(x) {
+const metalog = function(x) {
     process.stdout.write(x);
     //log to a file here
 }
-var startIt = function(x) {
+const startIt = function(x) {
     metalog(myNow()+" "+x+" ");
 }
-var logIt = function(x) {
+const logIt = function(x) {
     metalog(x+" ");
 }
-var doneIt = function(x) {
+const doneIt = function(x) {
     if (!x) { 
 	x='';
     }
@@ -33,15 +48,15 @@ var doneIt = function(x) {
 
 //todo move this all to a wrapFs module
 
-var functionExists = function(f) {
+const functionExists = function(f) {
     return (typeof f === 'function');
 };
 
-var isEmptyObject = function(o) {
+const isEmptyObject = function(o) {
     return ( Object.keys(o).length == 0 );
 };
 
-var noFsCheck = function(typeOfCheck) {
+const noFsCheck = function(typeOfCheck) {
     if (!isEmptyObject(fs)) return;
     if (typeOfCheck != 'fatal') return;
 
@@ -52,7 +67,7 @@ noFsCheck('fatal');
 
 //this is dumb dumb dumb should be a utility module or something
 //even the INTENT is wrong,  it's really "exists and is a readable file".  probably best to just read it (bugbug you are here)
-var fsExists = (function() { 
+const fsExists = (function() { 
     if ( functionExists( fs.exists ) ) 
 	return fs.exists;
     if ( functionExists( fs.access ) )
@@ -114,7 +129,7 @@ Object.prototype.contains = function (sought) {
 }
 
 
-var dump=util.inspect;
+const dump=util.inspect;
 
 
 //mime types
@@ -122,8 +137,8 @@ function getContentType(someFile) {
     someFile = ""+someFile;
     if (someFile.endsWith('.html')) return  'text/html';
     if (someFile.endsWith('.htm' )) return 'text/html';
+    if (someFile.endsWith('.work.js' )) return 'text/javascript;';
     if (someFile.endsWith('.js'  )) return 'script/javascript';
-    if (someFile.endsWith('.jss' )) return 'text/javascript;';
     if (someFile.endsWith('.svg' )) return 'image/svg+xml';
 	return 'text/plain';
 }
@@ -143,14 +158,14 @@ function doApi(req,res) {
     logIt('api-' + req.method );
 
     if (req.method=='GET') {
-		return doGet(req,res);
-	} else if (req.method=='PUT') {
-		return doPut(req,res);
-	} 
-	//else if (req.method=='POST') doPost();
-	else {    
-		return unknownMethod(req,res);
-	}
+	return doGet(req,res);
+    } else if (req.method=='PUT') {
+	return doPut(req,res);
+    //} else if (req.method=='POST') {
+    //	doPost();
+    } else {    
+	return unknownMethod(req,res);
+    }
 }
 
 function doBonk(res){
@@ -159,20 +174,115 @@ function doBonk(res){
     res.end("OK");
     return;
 }
-	
-function doGet(req,res) {
-    var url = ""+req.url;
 
+
+function validateJsonOrDie(str) {
+    //bugbug todo should throw if not valid json  NYI
+
+
+}
+
+
+function doBeepApi(req,res) {
+    const subUrl = (""+req.url).removeStart("/api/beep/");
+
+    var action;
+    if (subUrl.startsWith("register")) {
+	action = function(objFromUser) {
+	    //bugbug todo sterilize user input better..shouldn't just persist from enduser!
+	    var obj=Object.assign({},objFromUser);
+	    obj["dateTime"] = myNow();
+	    obj["isRegistration"] = true;
+	    const findSameEndpoint = { endpoint:obj['endpoint'] };
+	    const options = { multi:false, upsert:true, returnUpdatedDocs:false };
+
+	    db.update(findSameEndpoint, obj, options, function (err, numAffected, newDoc, upsert) { // optional
+		//  Warning: above callback API was changed btwn v1.7.4 and v1.8. Please refer2 change log
+		//dumb logging ...find something better --  db.insert({"foobar":"saved to db--"+newDoc._id});
+	    });
+	};
+    } else if (subUrl.startsWith("sendall")) {
+	action = function(userJsonObj) {
+
+	    const notificationOptions = {
+		vapidDetails: vapidDetails
+		//,
+		//gcmAPIKey: '< GCM API Key >',
+		//vapidDetails:  {
+		// 	subject: 'mailto:vapidAdmin@ayvexllc.com',
+		// 	publicKey: '< URL Safe Base64 Encoded Public Key >',
+		// 	privateKey: '< URL Safe Base64 Encoded Private Key >'
+		// },
+		//TTL: <Number>,
+		//headers :{  '< header name >': '< header value >'  }
+	    };
+		
+	    //iterate all registrations and send msg to each
+	    db.find({"isRegistration":true},function(err,docs){
+		for (var ii = 0, len = docs.length; ii < len; ii++) {
+		    var reg = docs[ii];
+		    //userJsonObj.ii = ii;
+		    var payload=Object.assign({},userJsonObj);
+		    payload.ii = ii;
+		    logIt("about to send to:"+JSON.stringify(reg));
+		    webPush.sendNotification(reg, JSON.stringify(payload), notificationOptions)
+			.then(function(obj){
+			    logIt(obj.statusCode);  // the status code of the response from the push service;
+			    logIt(JSON.stringify(obj.headers));    // the headers of the response from the push service;
+			    logIt(obj.body);        // the body of the response from the push service.
+			}).catch(function(err){
+			    logIt(err);
+			});
+
+
+		    //old details from sendNotification args...
+		    //       { endpoint: reg.endpoint, //the backchannel to user's browser
+			 //      TTL: 10000000,   //roughly a month of seconds???
+			 //      keys: reg.keys
+			     //{
+			       //    p256dh: reg.getKeys('p256dh'),
+			       //    auth: reg.getKeys('auth')
+			       //}
+			 //    }, userJsonObj);  //the payload
+		}//end for
+	    });
+	};
+    } else {
+	db.insert({debug:"bugbug how did we get here??",now:myNow()});  //best effort
+    }
+	
+	
+    var body='';
+    req.on('data',function(data){
+	body+=data;
+    });
+    req.on('end',function(){
+	logIt("body="+body);
+
+	var userJson = JSON.parse(body);
+	action(userJson);	
+	
+	writeNormalHead(res);
+	res.end('{"response":"putOK"}\n');    //todo think we need to return id bugbug
+	
+    });
+    
+}
+
+
+    
+function doGet(req,res) {
+    const url = ""+req.url;
 
     if (url=="/api/bonk/") {
 	return doBonk(res);
     } else if (url=="/api/user/") {
 	writeNormalHead(res);
-	var userList = getUserList();
+	const userList = getUserList();
         //console.log("users:"+userList);
         res.end(userList);
     } else if (url.startsWith("/api/user/")) {
-	var userName = url.removeStart("/api/user/");
+	const userName = url.removeStart("/api/user/");
 	if (users[userName]) {
 	    writeNormalHead(res);
 	    res.end(users[userName]);
@@ -193,20 +303,19 @@ function unknownMethod(req,res) {
     
 	
 	
-//function doPost(req,res) {	
-//  
-//
-//	res.writeHead(404,  {'Content-Type': 'application/json'});
-//	res.end('{response:"POST NYI--'+req.method+'"}\n');    
+// function doPost(req,res) {	
+
+//     res.writeHead(404,  {'Content-Type': 'application/json'});
+//     res.end('{response:"POST NYI--'+req.method+'"}\n');    
 // }
     
 	
 	
 function doPut(req,res) {
-    var url = ""+req.url;
+    const url = ""+req.url;
     
     if (url.startsWith("/api/user/")) {
-	var userName = url.removeStart("/api/user/");
+	const userName = url.removeStart("/api/user/");
 	var body='';
 	req.on('data',function(data){
 	    body+=data;
@@ -218,6 +327,8 @@ function doPut(req,res) {
 	    writeNormalHead(res);
 	    res.end('{"response":"putOK"}\n');    //todo think we need to return id
 	});
+    } else if (url.startsWith("/api/beep/")) {
+	doBeepApi(req,res);
     } else {
 	res.writeHead(404,  {'Content-Type': 'application/json'});
 	res.end('{response:"err328s:cannot PUT '+url+'"}');
@@ -240,7 +351,7 @@ function doFancyApi(req,res) {    // strip off ?foo=bar so that the file can be 
 
     logIt('fancy');
     //console.log('  ip:'+dump(req.connection.remoteAddress));
-    var filePath = ""+req.url;
+    const filePath = ""+req.url;
     filePath = filePath.substr(0,filePath.indexOf("?"));
     filePath = path.join(__dirname, filePath);
 
@@ -282,7 +393,7 @@ function doStatic(req,res) {
 	return;
     }
 
-    var filePath = path.join(__dirname, req.url);
+    const filePath = path.join(__dirname, req.url);
     return doStaticBase(filePath,res);
 }
 
@@ -295,7 +406,7 @@ function doStaticRedir(req,res) {
 	return;
     }
     
-    var filePath = path.join(__dirname,"web", req.url);
+    const filePath = path.join(__dirname,"web", req.url);
     return doStaticBase(filePath,res);
 }
 
@@ -304,7 +415,7 @@ function doAcmeStatic(req,res) {
 	res.end("err459i");
 	return;
     } else {
-	var filePath = path.join(__dirname,"web", req.url);
+	const filePath = path.join(__dirname,"web", req.url);
 	return doStaticBase(filePath,res);
     }
 }
@@ -326,7 +437,7 @@ function doAcmeStatic(req,res) {
 
 function mainHandler (req, res) {
 
-    var path=""+req.url; 
+    const path=""+req.url; 
     startIt(req.connection.remoteAddress+" "+path);
 
     var retval = (function() {
@@ -371,8 +482,8 @@ http.createServer(mainHandler).listen(80);  //http
 startIt('started http:');
 doneIt();
 
-var keyPath   = '/etc/letsencrypt/live/ayvexllc.com/privkey.pem';
-var chainPath = '/etc/letsencrypt/live/ayvexllc.com/fullchain.pem';
+const keyPath   = '/etc/letsencrypt/live/ayvexllc.com/privkey.pem';
+const chainPath = '/etc/letsencrypt/live/ayvexllc.com/fullchain.pem';
 
 try {
     const tlsOptions = {
