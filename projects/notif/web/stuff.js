@@ -67,6 +67,25 @@ function urlBase64ToUint8Array(base64String) {
 }
 
 
+// Sunday: Nichiyôbi (にちようび – 日曜日)
+// Monday: Getsuyôbi (げつようび – 月曜日)
+// Tuesday: Kayôbi (かようび – 火曜日)
+// Wednesday: Suiyôbi (すいようび – 水曜日)
+// Thursday: Mokuyôbi (もくようび – 木曜日)
+// Friday: Kinyôbi (きんようび – 金曜日)
+// Saturday: Doyôbi (どようび – 土曜日)
+
+
+
+function shortNow() {
+    const x = new Date();
+    return "" 
+    // starting Sunday: 日月火水木金土  <-- want to use this!!! one char each
+	+ ['Su','M','Tu','W','Th','F','Sa'][ x.getDay() ]
+	+ x.getHours() + "L" + x.getMinutes() ;      
+}
+
+
 function sendMessages(evt) {
     
     fetch('/api/beep/sendall', {
@@ -74,12 +93,15 @@ function sendMessages(evt) {
 	headers: {
 	    'Content-type': 'application/json'
 	},
-	body: JSON.stringify({msg:sendText.value})
-	
-	//{endpoint: subscription.endpoint
-	// ,keys:{p256dh:"bugbug256dh",auth:"bugbugauth"}}
+	body: JSON.stringify({
+	    msg:sendText.value,
+	    type:'plain',
+	    clientTime:shortNow()
+	})
     }).then(function(result) {
 	//alert(JSON.stringify(result));
+    }).catch(function(reason){
+	alert(reason);
     });
 }
 
@@ -88,75 +110,71 @@ const vapidPublicKey="BKJ4qoXhzumDNe0-8z9guILYzmuYJdWzR5N3fAeSDKWEk9xnH3sfgG8uYw
 var applicationServerKey=urlBase64ToUint8Array(vapidPublicKey);
 var endpoint;
 
-function testServiceWorker() {
+function registerServiceWorker() {
     //https://stackoverflow.com/a/27256165		    
     if (! ('serviceWorker' in navigator)) {
 	alert('this browser does not have serviceWorker capability');
 	return;
     }
 
-    navigator.serviceWorker.register('/web/serv.work.js').then(function(reg) {
+
+    navigator.serviceWorker.register('/web/serv.work.js').then(function(reg) {  //a service worker registration
+	reg.update();
 	if(reg.installing) {
-	    alert('Service worker installing');
+	    //alert('Service worker installing');
 	} else if(reg.waiting) {
-	    alert('Service worker installed');
+	    //alert('Service worker installed');
 	} else if(reg.active) {
-	    alert('Service worker active');
+	    //alert('Service worker active');
 	} else {
 	    alert("err1948");
 	}
 	
 	reg.pushManager.getSubscription().then(function(subscription){
-
+	    
 	    return subscription ?   //the old or new subscription
-		subscription : 
+	    subscription : 
 		reg.pushManager.subscribe({
 		    userVisibleOnly: true
 		    ,applicationServerKey: applicationServerKey});
-	    
 	    
 	}).catch(function(err) {
 	    alert('boo'+err);
 	    console.log('Boo!', err);
 	}).then(function(subscription) {
-
 	    //alert("with me"+JSON.stringify(subscription));
 	    
 	    fetch('/api/beep/register', {
 		method: 'put',
-		headers: {
-		    'Content-type': 'application/json'
-		},
+		headers: { 'Content-type': 'application/json' },
 		body: JSON.stringify(subscription)
-		//{endpoint: subscription.endpoint
-		// ,keys:{p256dh:"bugbug256dh",auth:"bugbugauth"}}
 	    }).then(function(result) {
-		alert(JSON.stringify(result));
+		alert("ready for messaging"); //JSON.stringify(result));
 	    });
-
-	    
 	});
     }).catch(function(err) {
 	alert('boo2:'+err);
-	
     });
-      
 }
-    
+
 
 
 
 window.onload = function() {
 
+    setTimeout(registerServiceWorker,50);
+    senderButton.onclick = sendMessages;
+
+    
+
+    //geek buttons....
     button1.onclick = function() {
 	alert("yo");
 	testNotify();
     }
     button2.onclick = testWorkerNotify;
-
-    button3.onclick = testServiceWorker;
-
-    button4.onclick = sendMessages;
+    button3.onclick = registerServiceWorker;
+    //button4.onclick = null;
 }
 
 

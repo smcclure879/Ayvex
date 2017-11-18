@@ -24,12 +24,17 @@ self.addEventListener('push', function(event) {
     //Other formats are supported (ArrayBuffer, Blob, JSON),
     //check out the documentation on https://developer.mozilla.org/en-US/docs/Web/API/PushMessageData.
 
-    console.log("I am here inside teh servwork");
-    var payload = event.data ? event.data.text() : 'empty message: no payload';
+    //console.log("I am here inside teh servwork");
 
+    //var payload = event.data ? event.data.text() : 'empty message: no payload';
+    const userPacket = event.data.json();
+    const details = 'msg d ayvex v50 @'+userPacket.clientTime;
+    
     //Keep the service worker alive until the notification is created.
     event.waitUntil(
 	self.registration.showNotification(
-			'avyexllc',	
-			{ body: payload }));
+	    userPacket.msg,
+	    { body: details }
+	)
+    );
 });

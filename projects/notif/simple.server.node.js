@@ -19,7 +19,6 @@ db.ensureIndex({ fieldName: 'endpoint', unique: true, sparse: true }, function (
 const rawData = fs.readFileSync('vapid-keys.secret.json');
 const vapidDetails = JSON.parse(rawData);
 
-
 //end early startup stuff-----------------
 
 
@@ -204,6 +203,8 @@ function doBeepApi(req,res) {
     } else if (subUrl.startsWith("sendall")) {
 	action = function(userJsonObj) {
 
+	    db.insert({sendall:userJsonObj});  //best effort
+
 	    const notificationOptions = {
 		vapidDetails: vapidDetails
 		//,
@@ -351,7 +352,7 @@ function doFancyApi(req,res) {    // strip off ?foo=bar so that the file can be 
 
     logIt('fancy');
     //console.log('  ip:'+dump(req.connection.remoteAddress));
-    const filePath = ""+req.url;
+    let filePath = ""+req.url;
     filePath = filePath.substr(0,filePath.indexOf("?"));
     filePath = path.join(__dirname, filePath);
 
@@ -478,7 +479,7 @@ function mainHandler (req, res) {
 
 
 
-http.createServer(mainHandler).listen(80);  //http
+http.createServer(mainHandler).listen(81);  //http
 startIt('started http:');
 doneIt();
 
