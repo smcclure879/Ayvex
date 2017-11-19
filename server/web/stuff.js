@@ -87,6 +87,10 @@ function shortNow() {
 
 
 function sendMessages(evt) {
+
+    if (!sendText.value)
+	return;
+
     
     fetch('/api/beep/sendall', {
 	method: 'put',
@@ -100,6 +104,7 @@ function sendMessages(evt) {
 	})
     }).then(function(result) {
 	//alert(JSON.stringify(result));
+	sendText.value=null;
     }).catch(function(reason){
 	alert(reason);
     });
@@ -123,7 +128,6 @@ function apiCall(url) {
 //bugbug need to get this from the server...it matches only because of my paste!!!
 //const vapidPublicKey="BKJ4qoXhzumDNe0-8z9guILYzmuYJdWzR5N3fAeSDKWEk9xnH3sfgG8uYwuWNDlERDOv5egThZSbTkU1QwxOJnE";
 var vapidPublicKey=apiCall("/api/vapidpk/").publicKey;
-alert(vapidPublicKey);
 var applicationServerKey=urlBase64ToUint8Array(vapidPublicKey);
 var endpoint;
 
@@ -180,14 +184,23 @@ window.onload = function() {
 
     setTimeout(registerServiceWorker,50);
     senderButton.onclick = sendMessages;
+    sendText.onkeyup = function(evt) {
+	if (evt.keyCode==13) {
+	    sendMessages();
+	}
+    };
+    sendText.focus();
 
-    
+    var pkView = document.all("pkView");
+    pkView.innerText = vapidPublicKey;
 
     //geek buttons....
     button1.onclick = function() {
 	alert("yo");
 	testNotify();
-    }
+    };
+
+    
     button2.onclick = testWorkerNotify;
     button3.onclick = registerServiceWorker;
     //button4.onclick = null;
