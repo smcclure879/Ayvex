@@ -10,11 +10,26 @@ const datastore = require('nedb');
 
 
 //early startup stuff----------------------
-const db = new datastore({ filename: 'beepRegistrations.db', autoload: true });
+
+//subscription registrations "database"
+const db = new datastore({ filename: 'beepRegistrations.db', autoload: true, timestampData: true });
 db.ensureIndex({ fieldName: 'endpoint', unique: true, sparse: true }, function (err) {
     if (err)
-	logIt("problem creating index:"+err);
+	logIt("problem creating index on registrations:"+err);
+    else
+	logIt("db=beepRegistrations OK");
 });
+
+
+const alertsDb = new datastore({ filename: 'alerts.db', autoload: true, timestampData: true});
+alertsDb.ensureIndex({ fieldName: 'sendall.createdAt', unique: false, sparse: true, expireAfterSeconds: 259200 }, function (err) {
+    if (err)
+	logIt("problem creating index on alerts:"+err);
+    else
+	logIt("db=beepAlerts OK");
+});
+
+
 
 const rawData = fs.readFileSync('vapid-keys.secret.json');
 const vapidDetails = JSON.parse(rawData);
@@ -181,9 +196,9 @@ function doVapidPk(res){
 
 function doConvo(res) {
     writeNormalHead(res);
-    db
+    alertsDb
 	.find( {'sendall': { $exists:true }} )
-	.sort( {'sendall.clientTime':1} )
+	.sort( {'sendall.createdAt':1} )
 	//.projection( {'sendall.clientTime':1,'sendall.msg':1} )
 	.exec( function (err, docs) {
 	    if ( err )
@@ -226,7 +241,7 @@ function doBeepApi(req,res) {
 	};
     } else if (subUrl.startsWith("sendall")) {
 	action = function(userJsonObj) {
-	    db.insert({sendall:userJsonObj});  //best effort
+	    alertsDb.insert({sendall:userJsonObj});  //best effort
 	    const notificationOptions = {
 		vapidDetails: vapidDetails
 	    };
