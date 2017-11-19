@@ -105,6 +105,7 @@ function sendMessages(evt) {
     }).then(function(result) {
 	//alert(JSON.stringify(result));
 	sendText.value=null;
+	fillConvo();
     }).catch(function(reason){
 	alert(reason);
     });
@@ -178,7 +179,21 @@ function registerServiceWorker() {
 }
 
 
+function fillConvo() {
+    return;
 
+    // you are here....the plan...
+    //on client...
+    //var x = apiCall("getConvo");
+    //onthe server do...
+    //db.find( {'sendall': { $exists:true }} ,function (err, docs) {
+	//convo.innerHTML = docs
+	//    .map( x => JSON.stringify(x) )
+	//    .join("<br/><br/>");
+    //});
+
+    //convo.innerHTML=x;
+}
 
 window.onload = function() {
 
@@ -190,6 +205,7 @@ window.onload = function() {
 	}
     };
     sendText.focus();
+    fillConvo();
 
     var pkView = document.all("pkView");
     pkView.innerText = vapidPublicKey;
