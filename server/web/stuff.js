@@ -190,12 +190,10 @@ function registerServiceWorker() {
 function fillConvo() {
     var x = apiCall("/api/beep/convo/");
     convo.innerHTML=x.result;
+    convo.scrollTop = convo.scrollHeight;
 }
 
 window.onload = function() {
-
-    alert(pad2(6));
-    
     setTimeout(registerServiceWorker,50);
     senderButton.onclick = sendMessages;
     sendText.onkeyup = function(evt) {
