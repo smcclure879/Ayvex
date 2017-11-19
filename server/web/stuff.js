@@ -67,6 +67,14 @@ function urlBase64ToUint8Array(base64String) {
 }
 
 
+
+function pad2(x) {
+    x="00"+x;    
+    x=x.substr(-2);
+    return x;
+}
+
+
 // Sunday: Nichiyôbi (にちようび – 日曜日)
 // Monday: Getsuyôbi (げつようび – 月曜日)
 // Tuesday: Kayôbi (かようび – 火曜日)
@@ -82,7 +90,7 @@ function shortNow() {
     return "" 
     // starting Sunday: 日月火水木金土  <-- want to use this!!! one char each
 	+ ['Su','M','Tu','W','Th','F','Sa'][ x.getDay() ]
-	+ x.getHours() + "L" + x.getMinutes() ;      
+	+ pad2(x.getHours()) + "L" + pad2(x.getMinutes()) ;      
 }
 
 
@@ -128,7 +136,7 @@ function apiCall(url) {
 
 //bugbug need to get this from the server...it matches only because of my paste!!!
 //const vapidPublicKey="BKJ4qoXhzumDNe0-8z9guILYzmuYJdWzR5N3fAeSDKWEk9xnH3sfgG8uYwuWNDlERDOv5egThZSbTkU1QwxOJnE";
-var vapidPublicKey=apiCall("/api/vapidpk/").publicKey;
+var vapidPublicKey=apiCall("/api/beep/vapidpk/").publicKey;
 var applicationServerKey=urlBase64ToUint8Array(vapidPublicKey);
 var endpoint;
 
@@ -180,23 +188,14 @@ function registerServiceWorker() {
 
 
 function fillConvo() {
-    return;
-
-    // you are here....the plan...
-    //on client...
-    //var x = apiCall("getConvo");
-    //onthe server do...
-    //db.find( {'sendall': { $exists:true }} ,function (err, docs) {
-	//convo.innerHTML = docs
-	//    .map( x => JSON.stringify(x) )
-	//    .join("<br/><br/>");
-    //});
-
-    //convo.innerHTML=x;
+    var x = apiCall("/api/beep/convo/");
+    convo.innerHTML=x.result;
 }
 
 window.onload = function() {
 
+    alert(pad2(6));
+    
     setTimeout(registerServiceWorker,50);
     senderButton.onclick = sendMessages;
     sendText.onkeyup = function(evt) {

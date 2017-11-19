@@ -179,6 +179,25 @@ function doVapidPk(res){
     res.end();
 }
 
+function doConvo(res) {
+    writeNormalHead(res);
+    db
+	.find( {'sendall': { $exists:true }} )
+	.sort( {'sendall.clientTime':1} )
+	//.projection( {'sendall.clientTime':1,'sendall.msg':1} )
+	.exec( function (err, docs) {
+	    if ( err )
+		logIt( JSON.stringify(err) );
+	    logIt(JSON.stringify(docs));
+	    var tt = docs
+		.map( x => x.sendall.clientTime + "  " + x.sendall.msg )
+		.join( "\n" );
+	    
+	    res.write( JSON.stringify({'result':tt}) );
+	    res.end();
+	});
+}
+
 
 function validateJsonOrDie(str) {
     //bugbug todo should throw if not valid json  NYI
@@ -207,27 +226,15 @@ function doBeepApi(req,res) {
 	};
     } else if (subUrl.startsWith("sendall")) {
 	action = function(userJsonObj) {
-
 	    db.insert({sendall:userJsonObj});  //best effort
-
 	    const notificationOptions = {
 		vapidDetails: vapidDetails
-		//,
-		//gcmAPIKey: '< GCM API Key >',
-		//vapidDetails:  {
-		// 	subject: 'mailto:vapidAdmin@ayvexllc.com',
-		// 	publicKey: '< URL Safe Base64 Encoded Public Key >',
-		// 	privateKey: '< URL Safe Base64 Encoded Private Key >'
-		// },
-		//TTL: <Number>,
-		//headers :{  '< header name >': '< header value >'  }
 	    };
 		
 	    //iterate all registrations and send msg to each
 	    db.find({"isRegistration":true},function(err,docs){
 		for (var ii = 0, len = docs.length; ii < len; ii++) {
 		    var reg = docs[ii];
-		    //userJsonObj.ii = ii;
 		    var payload=Object.assign({ii:ii},userJsonObj);
 		    payload=JSON.stringify(payload);
 		    logIt("payload="+payload);
@@ -244,15 +251,6 @@ function doBeepApi(req,res) {
 			    //logIt("body was="+obj.body);        // the body of the response from the push service.
 			});
 
-		    //old details from sendNotification args...
-		    //       { endpoint: reg.endpoint, //the backchannel to user's browser
-			 //      TTL: 10000000,   //roughly a month of seconds???
-			 //      keys: reg.keys
-			     //{
-			       //    p256dh: reg.getKeys('p256dh'),
-			       //    auth: reg.getKeys('auth')
-			       //}
-			 //    }, userJsonObj);  //the payload
 		}//end for
 	    });
 	};
@@ -284,12 +282,15 @@ function doBeepApi(req,res) {
 }
 
 
+
     
 function doGet(req,res) {
     const url = ""+req.url;
 
-    if (url=="/api/vapidpk/") {
+    if (url=="/api/beep/vapidpk/") {
 	return doVapidPk(res);
+    } else if (url=="/api/beep/convo/") {
+	return doConvo(res);
     } else if (url=="/api/bonk/") {
 	return doBonk(res);
     } else if (url=="/api/user/") {
