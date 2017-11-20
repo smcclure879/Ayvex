@@ -205,7 +205,7 @@ function doConvo(res) {
 		logIt( JSON.stringify(err) );
 	    logIt(JSON.stringify(docs));
 	    var tt = docs
-		.map( x => x.sendall.clientTime + "  " + x.createdAt + "  " + x.sendall.msg )
+		.map( x => x.sendall.clientTime + "  " + x.sendall.msg + "  //c=" + x.createdAt.getMinutes() )
 		.join( "\n" );
 	    
 	    res.write( JSON.stringify({'result':tt}) );
