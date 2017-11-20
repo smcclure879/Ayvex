@@ -22,7 +22,7 @@ db.ensureIndex({ fieldName: 'endpoint', unique: true, sparse: true }, function (
 
 
 const alertsDb = new datastore({ filename: 'alerts.db', autoload: true, timestampData: true});
-alertsDb.ensureIndex({ fieldName: 'sendall.createdAt', unique: false, sparse: true, expireAfterSeconds: 259200 }, function (err) {
+alertsDb.ensureIndex({ fieldName: 'createdAt.$$date', unique: false, sparse: true, expireAfterSeconds: 259200 }, function (err) {
     if (err)
 	logIt("problem creating index on alerts:"+err);
     else
@@ -198,14 +198,14 @@ function doConvo(res) {
     writeNormalHead(res);
     alertsDb
 	.find( {'sendall': { $exists:true }} )
-	.sort( {'sendall.createdAt':1} )
+	.sort( {'createdAt':1} )
 	//.projection( {'sendall.clientTime':1,'sendall.msg':1} )
 	.exec( function (err, docs) {
 	    if ( err )
 		logIt( JSON.stringify(err) );
 	    logIt(JSON.stringify(docs));
 	    var tt = docs
-		.map( x => x.sendall.clientTime + "  " + x.sendall.msg )
+		.map( x => x.sendall.clientTime + "  " + x.createdAt + "  " + x.sendall.msg )
 		.join( "\n" );
 	    
 	    res.write( JSON.stringify({'result':tt}) );
