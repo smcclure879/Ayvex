@@ -28,7 +28,7 @@ self.addEventListener('push', function(event) {
 
     //var payload = event.data ? event.data.text() : 'empty message: no payload';
     const userPacket = event.data.json();
-    const details = 'msg d ayvex v50 @'+userPacket.clientTime;
+    const details = ""+userPacket.clientTime+" srv52";
     
     //Keep the service worker alive until the notification is created.
     event.waitUntil(

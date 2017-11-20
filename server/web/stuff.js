@@ -172,13 +172,14 @@ function registerServiceWorker() {
 	    console.log('Boo!', err);
 	}).then(function(subscription) {
 	    //alert("with me"+JSON.stringify(subscription));
-	    
+	    convo.style.backgroundColor="pink";
 	    fetch('/api/beep/register', {
 		method: 'put',
 		headers: { 'Content-type': 'application/json' },
 		body: JSON.stringify(subscription)
 	    }).then(function(result) {
-		alert("ready for messaging"); //JSON.stringify(result));
+		//alert("ready for messaging"); //JSON.stringify(result));
+		convo.style.backgroundColor="#aaee99";
 	    });
 	});
     }).catch(function(err) {
