@@ -228,9 +228,17 @@ function doBeepApi(req,res) {
     if (subUrl.startsWith("register")) {
 	action = function(objFromUser) {
 	    //bugbug todo sterilize user input better..shouldn't just persist from enduser!
-	    var obj=Object.assign({},objFromUser);
+	    var obj=Object.assign({},[objFromUser.subscription,objFromUser.channels]);
+	    if (!obj['channels']) {
+		logIt("problem with register...no channels");
+		res.writeHead(400,  {'Content-Type': 'application/json'});
+		res.end('{response:"err810q: bad request, no channels given "}');
+		return;
+	    }
+
 	    obj["dateTime"] = myNow();
 	    obj["isRegistration"] = true;
+	    
 	    const findSameEndpoint = { endpoint:obj['endpoint'] };
 	    const options = { multi:false, upsert:true, returnUpdatedDocs:false };
 

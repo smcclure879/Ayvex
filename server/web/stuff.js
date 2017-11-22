@@ -88,17 +88,15 @@ function pad2(x) {
 function shortNow() {
     const x = new Date();
     return "" 
-    // starting Sunday: 日月火水木金土  <-- want to use this!!! one char each
-	+ ['Su','M','Tu','W','Th','F','Sa'][ x.getDay() ]
-	+ pad2(x.getHours()) + "L" + pad2(x.getMinutes()) ;      
+    //	+ "日月火水木金土".substr(x.getDay()) //need to fix encoding first.  want 1 char per day
+	+ ['Su','M','Tu','W','Th','F','Sa'][ x.getDay() ]  //oh well
+    	+ pad2(x.getHours()) + "L" + pad2(x.getMinutes()) ;    //L=local  
 }
 
 
 function sendMessages(evt) {
-
     if (!sendText.value)
 	return;
-
     
     fetch('/api/beep/sendall', {
 	method: 'put',
@@ -134,8 +132,7 @@ function apiCall(url) {
 }
 
 
-//bugbug need to get this from the server...it matches only because of my paste!!!
-//const vapidPublicKey="BKJ4qoXhzumDNe0-8z9guILYzmuYJdWzR5N3fAeSDKWEk9xnH3sfgG8uYwuWNDlERDOv5egThZSbTkU1QwxOJnE";
+
 var vapidPublicKey=apiCall("/api/beep/vapidpk/").publicKey;
 var applicationServerKey=urlBase64ToUint8Array(vapidPublicKey);
 var endpoint;
@@ -171,12 +168,14 @@ function registerServiceWorker() {
 	    alert('boo'+err);
 	    console.log('Boo!', err);
 	}).then(function(subscription) {
-	    //alert("with me"+JSON.stringify(subscription));
+	    var wrappedSubscription = {channels:chList, subscription:subscription};
+	    //alert("with me"+JSON.stringify(wrappedSubscription));
+	    
 	    convo.style.backgroundColor="pink";
 	    fetch('/api/beep/register', {
 		method: 'put',
 		headers: { 'Content-type': 'application/json' },
-		body: JSON.stringify(subscription)
+		body: JSON.stringify(wrappedSubscription)
 	    }).then(function(result) {
 		//alert("ready for messaging"); //JSON.stringify(result));
 		convo.style.backgroundColor="#aaee99";
@@ -194,8 +193,58 @@ function fillConvo() {
     convo.scrollTop = convo.scrollHeight;
 }
 
+
+function updateChannelsUI(chList) {
+    //bugbug sanitize
+    channel1.value=chList[0];
+    channel2.value=chList[1] || "";
+    channel3.value=chList[2] || "";
+    channel4.value=chList[3] || "";
+    channel5.value=chList[4] || "";
+
+    //radio selection how?
+}
+
+var channelText,chList;
 window.onload = function() {
-    setTimeout(registerServiceWorker,50);
+    var pkView = document.all("pkView");
+    pkView.innerText = vapidPublicKey;
+
+    channelText=window.localStorage.getItem("channelText");
+    if (channelText==null) {
+    	if (!confirm("I want to receive alerts")) {
+	    window.location.href="https://www.google.com";
+	    return;
+	} else {
+	    alert("legacy user: you are being placed in channel=public");
+	    channelText='public';  //must be comma separated list
+	    window.localStorage.setItem("channelText",channelText);
+	}
+    } //else it's ready already
+    
+    chList=channelText.split(",");
+    
+    updateChannelsUI(chList);
+    channelUI.onsubmit=function(evt) {
+	//bugbug sterlize here, but also at server
+	evt.preventDefault();
+	chList = [channel1.value, channel2.value];   //bugbug,ch2.v,ch3.v  etc
+	channelText = chList.join(",");
+	registerServiceWorker();
+	alert(channelText);
+	window.localStorage.setItem("channelText",channelText);
+	return false;
+    }
+
+
+
+    //bugbug not happy with this want to do it triggering off earlier events and triggering later ones
+    setTimeout(registerServiceWorker,50);  
+
+
+
+    fillConvo(chList);
+
     senderButton.onclick = sendMessages;
     sendText.onkeyup = function(evt) {
 	if (evt.keyCode==13) {
@@ -203,11 +252,19 @@ window.onload = function() {
 	}
     };
     sendText.focus();
-    fillConvo();
+    
 
-    var pkView = document.all("pkView");
-    pkView.innerText = vapidPublicKey;
+/*
 
+you monitor up 1-5 channels.
+you are set to talk in only 1 channel.
+
+one is "public"
+one is "carbon" for demos.
+one is "<not given>" used internally for family stuff
+
+*/
+    
     //geek buttons....
     button1.onclick = function() {
 	alert("yo");
