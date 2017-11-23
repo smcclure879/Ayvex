@@ -195,6 +195,7 @@ function fillConvo(channelData) {
 }
 
 
+
 function updateChannelUI(channelData) {
 
     var ll = channelData.channelList;
@@ -207,6 +208,9 @@ function updateChannelUI(channelData) {
     
     //radio selection how?
     //bugbug you are here
+    document.all['channelUI'].talkChannel.value = channelData.talk;
+    alert(JSON.stringify(channelData));
+
 }
 
 
@@ -227,12 +231,17 @@ function setStorageObject(k,vo) {
 function validateChannelConfigOrDie(channelData) {
     //bugbug--nyi
 }
+
+function vv(ch) {
+    if (ch.value) return ch.value;
+    return '';
+}
  
 
 let channelData = {
     isDefault:1,
     channelList:['public'],
-    talk:0
+    talk:1
 }
 
 
@@ -263,9 +272,13 @@ window.onload = function() {
     channelUI.onsubmit=function(evt) {
 	//bugbug sterlize here, but also at server
 	evt.preventDefault();
-	channelData = {channelList:[channel1.value,channel2.value],talk:0};  //bugbug etc if working
+	//alert(document.querySelector('input[name="talkChannel"]:checked').value);
+	channelData = {
+	    channelList:[vv(channel1),vv(channel2),vv(channel3),vv(channel4),vv(channel5)],
+	    talk:document.querySelector('input[name="talkChannel"]:checked').value
+	};
 	registerServiceWorker(channelData);  //re-register really    bugbug remove use of global variable here
-	alert("about to set key"+JSON.stringify(channelData));
+	//alert("about to set key"+JSON.stringify(channelData));
 	setStorageObject(channelKey,channelData);
 	return false;
     }
