@@ -111,7 +111,7 @@ function sendMessages(evt) {
     }).then(function(result) {
 	//alert(JSON.stringify(result));
 	sendText.value=null;
-	fillConvo();
+	fillConvo(channelData);  //bugbug just make this global or what????
     }).catch(function(reason){
 	alert(reason);
     });
@@ -137,7 +137,7 @@ var vapidPublicKey=apiCall("/api/beep/vapidpk/").publicKey;
 var applicationServerKey=urlBase64ToUint8Array(vapidPublicKey);
 var endpoint;
 
-function registerServiceWorker() {
+function registerServiceWorker(channelData) {
     //https://stackoverflow.com/a/27256165		    
     if (! ('serviceWorker' in navigator)) {
 	alert('this browser does not have serviceWorker capability');
@@ -168,7 +168,7 @@ function registerServiceWorker() {
 	    alert('boo'+err);
 	    console.log('Boo!', err);
 	}).then(function(subscription) {
-	    var wrappedSubscription = {channels:chList, subscription:subscription};
+	    var wrappedSubscription = {channelData:channelData, subscription:subscription};
 	    //alert("with me"+JSON.stringify(wrappedSubscription));
 	    
 	    convo.style.backgroundColor="pink";
@@ -186,64 +186,97 @@ function registerServiceWorker() {
     });
 }
 
-
-function fillConvo() {
+//bugbug it would be ideal if instead of this we'd pull the channel list from the reg/sub stuff
+//...but then we have to pass at least a ref to that info !   a user table emerges???
+function fillConvo(channelData) {
     var x = apiCall("/api/beep/convo/");
-    convo.innerHTML=x.result;
+    convo.innerHTML = x.result;
     convo.scrollTop = convo.scrollHeight;
 }
 
 
-function updateChannelsUI(chList) {
-    //bugbug sanitize
-    channel1.value=chList[0];
-    channel2.value=chList[1] || "";
-    channel3.value=chList[2] || "";
-    channel4.value=chList[3] || "";
-    channel5.value=chList[4] || "";
+function updateChannelUI(channelData) {
 
+    var ll = channelData.channelList;
+    channel1.value = ll[0];
+    channel2.value = ll[1] || "";
+    channel3.value = ll[2] || "";
+    channel4.value = ll[3] || "";
+    channel5.value = ll[4] || "";
+
+    
     //radio selection how?
+    //bugbug you are here
 }
 
-var channelText,chList;
+
+function getStorageObject(k,defaultVal) { //e.g. k="channelText"
+    const t=window.localStorage.getItem(k);
+    if (!t)
+	return defaultVal;
+    const o=JSON.parse(t);
+    return o;
+}
+
+function setStorageObject(k,vo) {
+    const vs = JSON.stringify(vo);
+    window.localStorage.setItem(k,vs);
+}
+
+
+function validateChannelConfigOrDie(channelData) {
+    //bugbug--nyi
+}
+ 
+
+let channelData = {
+    isDefault:1,
+    channelList:['public'],
+    talk:0
+}
+
+
 window.onload = function() {
     var pkView = document.all("pkView");
     pkView.innerText = vapidPublicKey;
 
-    channelText=window.localStorage.getItem("channelText");
-    if (channelText==null) {
-    	if (!confirm("I want to receive alerts")) {
+    const channelKey="channelKey";
+    channelData=getStorageObject(channelKey,channelData); 
+    
+    if (channelData.isDefault) {
+	delete channelData['isDefault']; //it is no longer default, just "starting out"
+
+	if (!confirm("I want to receive alerts")) {
 	    window.location.href="https://www.google.com";
 	    return;
 	} else {
-	    alert("legacy user: you are being placed in channel=public");
-	    channelText='public';  //must be comma separated list
-	    window.localStorage.setItem("channelText",channelText);
+	    //a new user who has accepted ... how much more welcome mat needed?
+	    alert("welcome legacy user: entering channel=public");
+	    setStorageObject(channelKey,channelData);
 	}
-    } //else it's ready already
+    } //else we got the channelData so we're good to proceed
+
+    validateChannelConfigOrDie(channelData); 
+
+    updateChannelUI(channelData);
     
-    chList=channelText.split(",");
-    
-    updateChannelsUI(chList);
     channelUI.onsubmit=function(evt) {
 	//bugbug sterlize here, but also at server
 	evt.preventDefault();
-	chList = [channel1.value, channel2.value];   //bugbug,ch2.v,ch3.v  etc
-	channelText = chList.join(",");
-	registerServiceWorker();
-	alert(channelText);
-	window.localStorage.setItem("channelText",channelText);
+	channelData = {channelList:[channel1.value,channel2.value],talk:0};  //bugbug etc if working
+	registerServiceWorker(channelData);  //re-register really    bugbug remove use of global variable here
+	alert("about to set key"+JSON.stringify(channelData));
+	setStorageObject(channelKey,channelData);
 	return false;
     }
 
 
-
     //bugbug not happy with this want to do it triggering off earlier events and triggering later ones
-    setTimeout(registerServiceWorker,50);  
-
-
-
-    fillConvo(chList);
+    setTimeout(function(){
+	registerServiceWorker(channelData);
+    },50);  
+    
+    fillConvo(channelData);
 
     senderButton.onclick = sendMessages;
     sendText.onkeyup = function(evt) {

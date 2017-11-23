@@ -228,21 +228,30 @@ function doBeepApi(req,res) {
     if (subUrl.startsWith("register")) {
 	action = function(objFromUser) {
 	    //bugbug todo sterilize user input better..shouldn't just persist from enduser!
-	    var obj=Object.assign({},[objFromUser.subscription,objFromUser.channels]);
-	    if (!obj['channels']) {
-		logIt("problem with register...no channels");
+	    if (!objFromUser['channelData'] || !objFromUser['channelData']['channelList']) {
+		logIt("\n\nproblem with register...no channels"+JSON.stringify(objFromUser)+"..."+JSON.stringify(obj)+"ppp\n\n");
 		res.writeHead(400,  {'Content-Type': 'application/json'});
 		res.end('{response:"err810q: bad request, no channels given "}');
 		return;
 	    }
 
+	    //the obj to write
+	    var obj=Object.assign({},objFromUser['subscription']);
+	    obj["channelData"] = objFromUser['channelData']
 	    obj["dateTime"] = myNow();
 	    obj["isRegistration"] = true;
+
+	    logIt("obj="+JSON.stringify(obj));
 	    
 	    const findSameEndpoint = { endpoint:obj['endpoint'] };
 	    const options = { multi:false, upsert:true, returnUpdatedDocs:false };
 
 	    db.update(findSameEndpoint, obj, options, function (err, numAffected, newDoc, upsert) { // optional
+
+		if (err) logIt(err);
+		logIt("numAffected="+numAffected);
+		logIt(upsert);
+		
 		//  Warning: above callback API was changed btwn v1.7.4 and v1.8. Please refer2 change log
 		//dumb logging ...find something better --  db.insert({"foobar":"saved to db--"+newDoc._id});
 	    });
@@ -257,6 +266,7 @@ function doBeepApi(req,res) {
 	    //iterate all registrations and send msg to each
 	    db.find({"isRegistration":true},function(err,docs){
 		for (var ii = 0, len = docs.length; ii < len; ii++) {
+		    logIt("ii="+ii);
 		    var reg = docs[ii];
 		    var payload=Object.assign({ii:ii},userJsonObj);
 		    payload=JSON.stringify(payload);
