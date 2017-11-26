@@ -111,7 +111,7 @@ function sendMessages(evt) {
     }).then(function(result) {
 	//alert(JSON.stringify(result));
 	sendText.value=null;
-	fillConvo(channelData);  //bugbug just make this global or what????
+	fillConvo(channelData);  
     }).catch(function(reason){
 	alert(reason);
     });
@@ -186,14 +186,29 @@ function registerServiceWorker(channelData) {
     });
 }
 
-//bugbug it would be ideal if instead of this we'd pull the channel list from the reg/sub stuff
-//...but then we have to pass at least a ref to that info !   a user table emerges???
+//bugbug it would be ideal if instead of passing channelData from userland,  we'd pull the server version
+//   of channel list from the reg/sub stuff
+//...but then we have to pass at least a ref to that info !   a user table emerges out of that, and logins etc.
+// only the conversation and the registrations NEED to be serverside i think.
 function fillConvo(channelData) {
-    var x = apiCall("/api/beep/convo/");
-    convo.innerHTML = x.result;
-    convo.scrollTop = convo.scrollHeight;
-}
 
+    fetch("/api/beep/convo/", {
+	method: 'put',
+	headers: {
+	    'Content-type': 'application/json'
+	},
+	body: JSON.stringify({  channelList:channelData.channelList })
+    }).then(function(response) {
+	return response.json();  //bugbug json()
+    }).then(function(bodyJson) {
+    	convo.innerHTML = ""+bodyJson.result;  
+	convo.scrollTop = convo.scrollHeight;
+    }).catch(function(err) {
+	alert("errCode227n:"+JSON.stringify(err));
+	convo.innerHTML = JSON.stringify(err);
+	convo.scrollTop = convo.scrollHeight;
+    });
+}
 
 
 function updateChannelUI(channelData) {

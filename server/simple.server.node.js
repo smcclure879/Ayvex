@@ -80,7 +80,7 @@ const noFsCheck = function(typeOfCheck) {
 noFsCheck('fatal');
 
 //this is dumb dumb dumb should be a utility module or something
-//even the INTENT is wrong,  it's really "exists and is a readable file".  probably best to just read it (bugbug you are here)
+//even the INTENT is wrong,  it's really "exists and is a readable file".  probably best to just read it
 const fsExists = (function() { 
     if ( functionExists( fs.exists ) ) 
 	return fs.exists;
@@ -194,37 +194,61 @@ function doVapidPk(res){
     res.end();
 }
 
-function doConvo(res) {
-    writeNormalHead(res);
-    alertsDb
-	.find( {'sendall': { $exists:true }} )
-	.sort( {'createdAt':1} )
-	//.projection( {'sendall.clientTime':1,'sendall.msg':1} )
-	.exec( function (err, docs) {
-	    if ( err )
-		logIt( JSON.stringify(err) );
-	    logIt(JSON.stringify(docs));
-	    var tt = docs
-		.map( x => x.sendall.clientTime + "  " + x.sendall.msg + "  //c=" + x.createdAt.getMinutes() )
-		.join( "\n" );
-	    
-	    res.write( JSON.stringify({'result':tt}) );
-	    res.end();
+//a best effort collect
+function collectBody(req,res) {
+    return new Promise(function(resolve,reject) {
+	var body='';
+	req.on('data',function(data){
+	    body+=data;
 	});
+	req.on('end',function(){
+	    body = "" + body;
+	    var userJson = JSON.parse(body);
+	    resolve(userJson);
+	});
+    });
 }
 
+function doConvo(req,res) {
+    var myRes=res;
+    collectBody(req,res).catch(function(err){
+	logIt("bugbug235:"+JSON.stringify(err));
+    }).then(function(jsonBody) {
 
-function validateJsonOrDie(str) {
-    //bugbug todo should throw if not valid json  NYI
-
-
+	var channelList = jsonBody.channelList;
+	
+	alertsDb
+	    .find( {'sendall': { $exists:true }} )
+	    .sort( {'createdAt':1} )
+	    //.projection( {'sendall.clientTime':1,'sendall.msg':1} )
+	    .exec( function (err, docs) {
+		if ( err )
+		    logIt( JSON.stringify(err) );
+		//logIt(JSON.stringify(docs));
+		var tt = docs
+		    .map( x => x.sendall.msg + " §      " + x.sendall.clientTime + " § " + (x.sendall.chan || '---') ) 
+		    .join( "\n" );
+		//logIt(tt);
+		writeNormalHead(myRes);
+		res.end(  JSON.stringify({result:tt})  );
+	    });
+    }).catch(function(err) {
+	logIt("errCode219s:"+err);
+    });
 }
+
 
 
 function doBeepApi(req,res) {
     const subUrl = (""+req.url).removeStart("/api/beep/");
 
+    if (subUrl.startsWith("convo")) {
+	return doConvo(req,res);
+    }
+
+    //the remaining actions have a fire-and-forget-best-effort, standard response pattern
     var action;
+
     if (subUrl.startsWith("register")) {
 	action = function(objFromUser) {
 	    //bugbug todo sterilize user input better..shouldn't just persist from enduser!
@@ -322,8 +346,8 @@ function doGet(req,res) {
 
     if (url=="/api/beep/vapidpk/") {
 	return doVapidPk(res);
-    } else if (url=="/api/beep/convo/") {
-	return doConvo(res);
+//    } else if (url=="/api/beep/convo/") {
+//	return doConvo(req,res);
     } else if (url=="/api/bonk/") {
 	return doBonk(res);
     } else if (url=="/api/user/") {
@@ -387,7 +411,7 @@ function doPut(req,res) {
 
 
 
-function writeNormalHead(res)  {   //response; 
+function writeNormalHead(res)  {   //response;
     res.writeHead(200, {'Content-Type': 'application/json'});
 }
 
