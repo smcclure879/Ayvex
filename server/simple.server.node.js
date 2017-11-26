@@ -209,6 +209,16 @@ function collectBody(req,res) {
     });
 }
 
+function chan(sendAllJson) {
+    const saj = sendAllJson;
+    const cd = saj.channelData;
+    if (!cd) return "---";
+    logIt("cl="+JSON.stringify(cd.channelList));
+    const talkChannel = cd.channelList[parseInt(cd.talk)-1];
+    return talkChannel || "-.-";
+}
+
+
 function doConvo(req,res) {
     var myRes=res;
     collectBody(req,res).catch(function(err){
@@ -226,7 +236,7 @@ function doConvo(req,res) {
 		    logIt( JSON.stringify(err) );
 		//logIt(JSON.stringify(docs));
 		var tt = docs
-		    .map( x => x.sendall.msg + " §      " + x.sendall.clientTime + " § " + (x.sendall.chan || '---') ) 
+		    .map( x => x.sendall.msg + " §      " + x.sendall.clientTime + " § " + chan(x.sendall) ) 
 		    .join( "\n" );
 		//logIt(tt);
 		writeNormalHead(myRes);

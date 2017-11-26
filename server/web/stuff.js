@@ -105,6 +105,7 @@ function sendMessages(evt) {
 	},
 	body: JSON.stringify({
 	    msg:sendText.value,
+	    channelData:channelData,
 	    type:'plain',
 	    clientTime:shortNow()
 	})
@@ -137,6 +138,7 @@ var vapidPublicKey=apiCall("/api/beep/vapidpk/").publicKey;
 var applicationServerKey=urlBase64ToUint8Array(vapidPublicKey);
 var endpoint;
 
+//remove channelData as arg since now global???? bugbug
 function registerServiceWorker(channelData) {
     //https://stackoverflow.com/a/27256165		    
     if (! ('serviceWorker' in navigator)) {
