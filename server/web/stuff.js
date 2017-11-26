@@ -94,6 +94,16 @@ function shortNow() {
 }
 
 
+function getTalkChannel() {
+    var cd = channelData;
+    if (!cd) return "---";
+    const talkChannel = cd.channelList[parseInt(cd.talk)-1];
+    return talkChannel || "-.-";
+}
+
+
+
+
 function sendMessages(evt) {
     if (!sendText.value)
 	return;
@@ -105,7 +115,7 @@ function sendMessages(evt) {
 	},
 	body: JSON.stringify({
 	    msg:sendText.value,
-	    channelData:channelData,
+	    talkChannel:getTalkChannel(),
 	    type:'plain',
 	    clientTime:shortNow()
 	})
@@ -114,7 +124,7 @@ function sendMessages(evt) {
 	sendText.value=null;
 	fillConvo(channelData);  
     }).catch(function(reason){
-	alert(reason);
+	alert("sendall fail:"+reason);
     });
 }
 
@@ -167,8 +177,9 @@ function registerServiceWorker(channelData) {
 		    ,applicationServerKey: applicationServerKey});
 	    
 	}).catch(function(err) {
-	    alert('boo'+err);
-	    console.log('Boo!', err);
+	    var msg = 'errCode1128u: (missing https?):'+err;
+	    alert(msg);
+	    console.log('errCode1128u:', err);
 	}).then(function(subscription) {
 	    var wrappedSubscription = {channelData:channelData, subscription:subscription};
 	    //alert("with me"+JSON.stringify(wrappedSubscription));
@@ -226,7 +237,7 @@ function updateChannelUI(channelData) {
     //radio selection how?
     //bugbug you are here
     document.all['channelUI'].talkChannel.value = channelData.talk;
-    alert(JSON.stringify(channelData));
+    
 
 }
 

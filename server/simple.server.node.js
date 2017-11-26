@@ -211,6 +211,10 @@ function collectBody(req,res) {
 
 function chan(sendAllJson) {
     const saj = sendAllJson;
+
+    if (saj.talkChannel)
+	return saj.talkChannel;
+    
     const cd = saj.channelData;
     if (!cd) return "---";
     logIt("cl="+JSON.stringify(cd.channelList));
@@ -228,7 +232,7 @@ function doConvo(req,res) {
 	var channelList = jsonBody.channelList;
 	
 	alertsDb
-	    .find( {'sendall': { $exists:true }} )
+	    .find( {'sendall': { $exists:true }, 'sendall.talkChannel': {$in:channelList}} )  
 	    .sort( {'createdAt':1} )
 	    //.projection( {'sendall.clientTime':1,'sendall.msg':1} )
 	    .exec( function (err, docs) {
@@ -293,39 +297,43 @@ function doBeepApi(req,res) {
     } else if (subUrl.startsWith("sendall")) {
 	action = function(userJsonObj) {
 	    alertsDb.insert({sendall:userJsonObj});  //best effort
-	    const notificationOptions = {
-		vapidDetails: vapidDetails
-	    };
+	    const notificationOptions = { vapidDetails: vapidDetails  };
+	    var talkChannel = userJsonObj.talkChannel;
 		
-	    //iterate all registrations and send msg to each
-	    db.find({"isRegistration":true},function(err,docs){
-		for (var ii = 0, len = docs.length; ii < len; ii++) {
-		    logIt("ii="+ii);
-		    var reg = docs[ii];
-		    var payload=Object.assign({ii:ii},userJsonObj);
-		    payload=JSON.stringify(payload);
-		    logIt("payload="+payload);
-		    logIt("about to send to:"+JSON.stringify(reg));
-		    webPush
-			.sendNotification(reg, payload, notificationOptions)
-			.catch(function(err){
-			    if ( Object.keys(err).length != 0 || err.constructor != Object) {  // !=emptyObject
-				logIt("pushReturnedErr="+JSON.stringify(err)+err);
-			    }
-			}).then(function(obj){
-			    //logIt(obj.statusCode);  // the status code of the response from the push service;
-			    logIt("return obj="+JSON.stringify(obj));  
-			    //logIt("body was="+obj.body);        // the body of the response from the push service.
-			});
-
-		}//end for
-	    });
+	    //iterate all registrations and send msg to each listening on that channel
+	    db.find({"isRegistration":true,
+		     "channelData.channelList":{$elemMatch:talkChannel}},  //the channel in which it was spoken
+		    function(err,docs){
+			if (docs.length<1) {
+			    logIt("\ndocs 000000000000000000000000000\n\n");
+			}
+			for (var ii = 0, len = docs.length; ii < len; ii++) {
+			    logIt("ii="+ii);
+			    var reg = docs[ii];
+			    var payload=Object.assign({ii:ii},userJsonObj);
+			    payload=JSON.stringify(payload);
+			    logIt("payload="+payload);
+			    logIt("about to send to:"+JSON.stringify(reg));
+			    webPush
+				.sendNotification(reg, payload, notificationOptions)
+				.catch(function(err){
+				    if ( Object.keys(err).length != 0 || err.constructor != Object) {  // !=emptyObject
+					logIt("pushReturnedErr="+JSON.stringify(err)+err);
+				    }
+				}).then(function(obj){
+				    //logIt(obj.statusCode);  // the status code of the response from the push service;
+				    logIt("return obj="+JSON.stringify(obj));  
+				    //logIt("body was="+obj.body);        // the body of the response from the push service.
+				});
+			    
+			}//end for
+		    });
 	};
     } else {
 	db.insert({debug:"bugbug how did we get here??",now:myNow()});  //best effort
     }
-	
-	
+    
+    
     var body='';
     req.on('data',function(data){
 	body+=data;
@@ -333,7 +341,7 @@ function doBeepApi(req,res) {
     req.on('end',function(){
 	body = "" + body;
 	logIt("body="+body);
-
+	
 	try {
 	    var userJson = JSON.parse(body);
 	    action(userJson);  //whichever beep action we are doing
@@ -347,7 +355,7 @@ function doBeepApi(req,res) {
     });
     
 }
-
+    
 
 
     
