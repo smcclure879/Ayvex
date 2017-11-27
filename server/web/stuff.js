@@ -234,11 +234,8 @@ function updateChannelUI(channelData) {
     channel5.value = ll[4] || "";
 
     
-    //radio selection how?
-    //bugbug you are here
     document.all['channelUI'].talkChannel.value = channelData.talk;
     
-
 }
 
 
@@ -261,7 +258,7 @@ function validateChannelConfigOrDie(channelData) {
 }
 
 function vv(ch) {
-    if (ch.value) return ch.value;
+    if (ch.value) return ch.value.toLowerCase();
     return '';
 }
  
