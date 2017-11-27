@@ -42,12 +42,10 @@ self.addEventListener('push', function(event) {
 	self.registration.showNotification(
 	    userPacket.msg,  //"title" ... really just most readable line!
 	    {
-		body: details,
-		vibrate: [500, 100, 500],	    
-		sound: '/web/beep.mp3',
-		silent: false,
-
-	    }  //more lines of text
+		body: details,  //more lines of text
+		vibrate: [400, 100, 400, 400, 400, 300, 200]	    
+		//sound: '/web/beep.mp3',
+	    }  
 	)
     );
 });
