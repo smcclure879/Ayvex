@@ -22,7 +22,7 @@ db.ensureIndex({ fieldName: 'endpoint', unique: true, sparse: true }, function (
 
 
 const alertsDb = new datastore({ filename: 'alerts.db', autoload: true, timestampData: true});
-alertsDb.ensureIndex({ fieldName: 'createdAt.$$date', unique: false, sparse: true, expireAfterSeconds: 259200 }, function (err) {
+alertsDb.ensureIndex({ fieldName: 'createdAt', unique: false, sparse: true, expireAfterSeconds: 60*60*48 }, function (err) {
     if (err)
 	logIt("problem creating index on alerts:"+err);
     else
