@@ -279,7 +279,7 @@ window.onload = function() {
 
     const channelKey="channelKey";
     channelData=getStorageObject(channelKey,channelData); 
-    
+
     if (channelData.isDefault) {
 	delete channelData['isDefault']; //it is no longer default, just "starting out"
 
@@ -293,6 +293,37 @@ window.onload = function() {
 	}
     } //else we got the channelData so we're good to proceed
 
+
+    var urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has('newChan')) {
+	var newChan=prompt("new channel name -- all lower case please");
+	if (newChan) {
+	
+	    //join the channel, but gotta find an open one first
+	    var newTalkChannel = 0;
+	    chanScan: while(newTalkChannel<5) {
+		if (newChan == channelData.channelList[newTalkChannel]) {
+		    break chanScan;
+		}
+		if ( ''     == channelData.channelList[newTalkChannel]) {
+		    channelData.channelList[newTalkChannel]=newChan;
+		    break chanScan;
+		}
+		newTalkChannel++;
+	    }
+	
+	    //if got a slot, set it as talk
+	    if (newTalkChannel<5)
+		channelData.talk=newTalkChannel+1;
+	    else
+		alert("no open channel slots could be found. you need to manually add/remove to change");
+	
+	}
+    }
+    
+
+
+    
     validateChannelConfigOrDie(channelData); 
 
     updateChannelUI(channelData);
