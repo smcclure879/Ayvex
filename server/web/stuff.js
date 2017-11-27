@@ -336,6 +336,7 @@ window.onload = function() {
 	registerServiceWorker(channelData);  //re-register really    bugbug remove use of global variable here
 	//alert("about to set key"+JSON.stringify(channelData));
 	setStorageObject(channelKey,channelData);
+	document.all.chanLight.innerText=getTalkChannel();
 	return false;
     }
 
@@ -346,7 +347,9 @@ window.onload = function() {
     },50);  
     
     fillConvo(channelData);
-
+    document.all.chanLight.innerText = getTalkChannel();
+    
+    
     senderButton.onclick = sendMessages;
     sendText.onkeyup = function(evt) {
 	if (evt.keyCode==13) {
@@ -354,18 +357,12 @@ window.onload = function() {
 	}
     };
     sendText.focus();
+
+
+
+
+
     
-
-/*
-
-you monitor up 1-5 channels.
-you are set to talk in only 1 channel.
-
-one is "public"
-one is "carbon" for demos.
-one is "<not given>" used internally for family stuff
-
-*/
     
     //geek buttons....
     button1.onclick = function() {
