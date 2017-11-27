@@ -14,32 +14,11 @@ self.addEventListener('activate', function(event) {
 });
 
 
-self.addEventListener('push2bugbugremove', function(event) {
-    //Retrieve the textual payload from event.data (a PushMessageData object).
-    //Other formats are supported (ArrayBuffer, Blob, JSON),
-    //check out the documentation on https://developer.mozilla.org/en-US/docs/Web/API/PushMessageData.
 
-    //var payload = event.data ? event.data.text() : 'empty message: no payload';
-    const userPacket = event.data.json();
-    const details = ""+userPacket.clientTime+" srv52";
-    
-    //Keep the service worker alive until the notification is created.
-    event.waitUntil(
-	self.registration.showNotification(
-	    userPacket.msg,
-	    { body: details }
-	)
-    );
-});
-
-
-
-
-// Register event listener for the 'push' event.
 self.addEventListener('push', function(event) {
     const userPacket = event.data.json();
     const details = ""+userPacket.clientTime+" srv58";
-	
+
     event.waitUntil(
 	// // Retrieve a list of the clients of this service worker.
 	// self.clients.matchAll().then(function(clientList) {
@@ -61,8 +40,14 @@ self.addEventListener('push', function(event) {
 
 	
 	self.registration.showNotification(
-	    userPacket.msg,
-	    { body: details }
+	    userPacket.msg,  //"title" ... really just most readable line!
+	    {
+		body: details,
+		vibrate: [500, 100, 500],	    
+		sound: '/web/beep.mp3',
+		silent: false,
+
+	    }  //more lines of text
 	)
     );
 });
