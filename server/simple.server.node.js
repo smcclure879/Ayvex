@@ -222,6 +222,15 @@ function chan(sendAllJson) {
     return talkChannel || "-.-";
 }
 
+const charLim = 10;
+const padding=Array(charLim).join('·');
+
+function padEndSpace(orig,goodLen) {
+    var l=orig.length;
+    if (l>goodLen)
+	return orig+padding.substr(0,1);
+    return (orig + padding).substr(0,goodLen);
+}
 
 function doConvo(req,res) {
     var myRes=res;
@@ -240,7 +249,7 @@ function doConvo(req,res) {
 		    logIt( JSON.stringify(err) );
 		//logIt(JSON.stringify(docs));
 		var tt = docs
-		    .map( x => x.sendall.msg + " §      " + x.sendall.clientTime + " § " + chan(x.sendall) ) 
+		    .map( x => padEndSpace(x.sendall.msg,40) +  chan(x.sendall)+"_"+x.sendall.clientTime ) 
 		    .join( "\n" );
 		//logIt(tt);
 		writeNormalHead(myRes);
