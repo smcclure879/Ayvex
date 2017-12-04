@@ -122,7 +122,9 @@ function sendMessages(evt) {
     }).then(function(result) {
 	//alert(JSON.stringify(result));
 	sendText.value=null;
-	fillConvo(channelData);  
+	setTimeout(function() {
+	    fillConvo(channelData);
+	}, 200);
     }).catch(function(reason){
 	alert("sendall fail:"+reason);
     });

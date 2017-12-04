@@ -17,7 +17,7 @@ self.addEventListener('activate', function(event) {
 
 self.addEventListener('push', function(event) {
     const userPacket = event.data.json();
-    const details = ""+userPacket.clientTime+" srv58";
+    const details = ""+userPacket.clientTime+" srv60";
 
     event.waitUntil(
 	// // Retrieve a list of the clients of this service worker.
@@ -44,7 +44,7 @@ self.addEventListener('push', function(event) {
 	    {
 		body: details,  //more lines of text
 		vibrate: [400, 100, 400, 400, 400, 300, 200]	    
-		//sound: '/web/beep.mp3',
+		//sound: '/web/beep.mp3',  //nyi in clients
 	    }  
 	)
     );
@@ -57,11 +57,23 @@ self.addEventListener('notificationclick', function(event) {
 	self.clients.matchAll().then(function(clientList) {
 	    // If there is at least one client, focus it.
 	    if (clientList.length > 0) {
-		return clientList[0].focus();
+		var retval =  clientList[0].focus();
+		fireReload();  
+		return retval;
 	    }
 
 	    // Otherwise, open a new page.
-	    return self.clients.openWindow('try.html');
+	    var retval = self.clients.openWindow('try.html');
+	    //window.location.reload();
+	    return retval;
 	})
     );
 });
+
+
+function fireReload() {
+    setTimeout( function() {
+	window.location.reload();
+    },500);
+}
+

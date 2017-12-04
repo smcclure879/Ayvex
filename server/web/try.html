@@ -1,114 +1,121 @@
-<body style="background-color:#4C000A; font-size:20pt; font-family:verdana">
-  <script src="stuff.js">  </script>
+<!DOCTYPE html>
+<html>
+  <head>
+    <style>
+      input[type='radio'] { transform: scale(3); }
+    </style>
 
-  <table align="center" width="95%" cellspacing="2" cellpadding="2" border="5" >
-    <tr>
-      <td align="center">
-
-	  <textarea id="convo" rows="10" style="width:100%; font-size:12pt; background-color:#d9d999">
-	    .   NOT YET CONNECTED    .
-	    .   (service starting)   .
-	  </textarea>
-      </td>
-    </tr>
-    <tr>
-      <td align="center">
-	<div style="background-color:#44cc66; border-color:black; border-width:2px; width:100%; font-size:30pt">
-	  <hr/>
-	  <input type=text id="sendText" style="width:90%;font-size:30pt" placeholder="type a message here"/>
-	  <hr/>
-	  
-	  <button id="senderButton" style="width:20%;font-size:30pt">
-	    <b>SEND</b>
-	  </button>
-	  <span id="chanLight" style="font-size:16pt">---</span>
-	  <hr/>
-	  
-	</div>
-      </td>
-    </tr>
-    <tr>
-      <td align="left" style="background-color:blue; font-size:18pt; width:100%; color:yellow">
-	<nobr>
-
-	  <form id="channelUI">
-
-	    NOW WORKING....Listen in 5 channels, talk in 1.
-	    <br/>
-	    just remember to *UPDATE* after changes!
-	    ...
-	    <input type="submit" id="channelChange" style="font-size:18pt;" value="UPDATE channels" />
-	    <br/><br/>
+    <body style="background-color:#4C000A; font-size:20pt; font-family:verdana">
+      <script src="stuff.js">  </script>
+      <br>      
+      <table align="center" width="95%" cellspacing="2" cellpadding="2" border="5" >
+	<tr>
+	  <td align="center">
+	    
+	    <textarea id="convo" rows="10" style="width:100%; font-size:12pt; background-color:#d9d999">
+	      .   NOT YET CONNECTED    .
+	      .   (service starting)   .
+	    </textarea>
+	  </td>
+	</tr>
+	<tr>
+	  <td align="center">
+	    <div style="background-color:#44cc66; border-color:black; border-width:2px; width:100%; font-size:30pt">
+	      <hr/>
+	      <input type=text id="sendText" style="width:90%;font-size:30pt" placeholder="type a message here"/>
+	      <hr/>
 	      
-	    <input type="radio" name="talkChannel" value="1" id="ch1" />
-	    <input style="width:10%; font-size:18pt" type="text" id="channel1" placeholder="---" />
-	    
-	    <input type="radio" name="talkChannel" value="2" id="ch2" />
-	    <input style="width:10%; font-size:18pt" type="text" id="channel2" placeholder="---" />
-	    
-	    <input type="radio" name="talkChannel" value="3" id="ch3" />
-	    <input style="width:10%; font-size:18pt" type="text" id="channel3" placeholder="---" />
-	    
-	    <input type="radio" name="talkChannel" value="4" id="ch4" />
-	    <input style="width:10%; font-size:18pt" type="text" id="channel4" placeholder="---" />
-	    
-	    <input type="radio" name="talkChannel" value="5" id="ch5" />
-	    <input style="width:10%; font-size:18pt" type="text" id="channel5" placeholder="---" />
-	    
-	    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-	    &nbsp;&nbsp;&nbsp;
-	    
-
-	  </form>
+	      <button id="senderButton" style="width:20%;font-size:30pt">
+		<b>SEND</b>
+	      </button>
+	      <span id="chanLight" style="font-size:16pt">---</span>
+	      <hr/>
+	      
+	    </div>
+	  </td>
+	</tr>
+	<tr>
+	  <td align="left" style="background-color:blue; font-size:18pt; width:100%; color:yellow">
+	    <nobr>
+	      
+	      <form id="channelUI">
+		
+		Listen in 5 channels, talk in 1:
+		just remember to *UPDATE* after changes!
+		...
+		<input type="submit" id="channelChange" style="font-size:18pt;" value="UPDATE channels" />
+		<br/><br/>
+		&nbsp;
+		<input type="radio" name="talkChannel" value="1" id="ch1" />
+		<input style="width:10%; font-size:18pt" type="text" id="channel1" placeholder="---" />
+		&nbsp;
+		<input type="radio" name="talkChannel" value="2" id="ch2" />
+		<input style="width:10%; font-size:18pt" type="text" id="channel2" placeholder="---" />
+		&nbsp;
+		<input type="radio" name="talkChannel" value="3" id="ch3" />
+		<input style="width:10%; font-size:18pt" type="text" id="channel3" placeholder="---" />
+		&nbsp;
+		<input type="radio" name="talkChannel" value="4" id="ch4" />
+		<input style="width:10%; font-size:18pt" type="text" id="channel4" placeholder="---" />
+		&nbsp;
+		<input type="radio" name="talkChannel" value="5" id="ch5" />
+		<input style="width:10%; font-size:18pt" type="text" id="channel5" placeholder="---" />
+		
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+		&nbsp;&nbsp;&nbsp;
+		
+		
+	      </form>
 	      <span style="font-size:16pt;color:yellow" align="left">
 		Code:
 		<code id="pkView" style="font-size:8pt;width:70%;color:yellow">---</code>
 	      </span>
-	
-
-	    
+	      
+	      
+	      
+	      <br/><br/>
+	      
+	    </nobr>
+	  </td>
+	</tr>
+	<tr>
+	  <td align="left">
+	    <br/>
 	    <br/><br/>
-	  
-	</nobr>
-      </td>
-    </tr>
-    <tr>
-      <td align="left">
-	<br/>
+	  </td>
+	</tr>
+      </table>
+      <br>
+      
+      <button id="button3" >resetServiceWorker</button><span style="color:yellow"> -- if problems this might help</span>
+      
+      <br/><br/>
+      <span id="explain" style="color:lightBlue" >
+	for alerting ... keep it short, 2 or 3 short words. 
 	<br/><br/>
-      </td>
-    </tr>
-  </table>
-  <br>
-
-  <button id="button3" >resetServiceWorker</button><span style="color:yellow"> -- if problems this might help</span>
-  
-  <br/><br/>
-  <span id="explain" style="color:lightBlue" >
-    for alerting ... keep it short, 2 or 3 short words. 
-    <br/><br/>
-    the alert you send is sent to EVERYONE who's been to this page and accepted notifications
-    <br/><br/>
-    testing for now--this is beta software
-    <br/>
-  </span>
-  
-  <br/>
-  <br/><br/><br/><br/><br/> 
-  <hr/>
-  <br/>
-  <hr/>
-  
-  <span style="color:white"><b>Geek Section -- do not use</b></style><br/>
-  <button id="button1" >testNotify</button>
-  <button id="button2" >testWorkerNotify</button>
-  <button id="button4" >what?</button>
-
-  <br/><br/>
-
-  <textarea id="result">blah</textarea>
-
-  <br/><br/>
-  <br/><br/>
-
-</body>
+	the alert you send is sent to EVERYONE who's been to this page and accepted notifications
+	<br/><br/>
+	testing for now--this is beta software
+	<br/>
+      </span>
+      
+      <br/>
+      <br/><br/><br/><br/><br/> 
+      <hr/>
+      <br/>
+      <hr/>
+      
+      <span style="color:white"><b>Geek Section -- do not use</b></span><br/>
+      <button id="button1" >testNotify</button>
+      <button id="button2" >testWorkerNotify</button>
+      <button id="button4" >what?</button>
+      
+      <br/><br/>
+      
+      <textarea id="result">blah</textarea>
+      
+      <br/><br/>
+      <br/><br/>
+      
+    </body>
+</html>
