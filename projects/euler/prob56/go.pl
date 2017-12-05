@@ -7,6 +7,9 @@
 #where <i>a, b</i> &lt; 100, what is the maximum digital sum?
 
 
+my $counta=0;
+my $countb=0;
+
 my $max=0; #max sum seen
 my $spl=1;
 my $ans='no answer found'; 
@@ -17,6 +20,8 @@ for (2..99).list.reverse -> $a {
     my $startb = round($spl/$loga)-1;
     say "$a,$loga,$startb, $spl";
     $startb = 0 if $startb < 1;
+    $counta++;
+    
     if $startb > 99 {
 	say "*****";
 	next;
@@ -34,6 +39,8 @@ for (2..99).list.reverse -> $a {
 	#     last;
 	# }
 
+	$countb++;
+	
 	my $result = $digits.map({0+$_}).sum;
 	if $result > $max {
 	    print "----$result   $a,$b   \n";
@@ -46,3 +53,4 @@ for (2..99).list.reverse -> $a {
 }
 
 say $ans;
+say $counta,$countb;

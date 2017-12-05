@@ -7,6 +7,7 @@ sub rev($x) {
     return 0+$x.comb.reverse.join();
 }
 
+
 sub isp($x) {
     my $rev=rev($x);
     #print " r=$rev  ";
