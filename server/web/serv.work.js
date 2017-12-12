@@ -1,4 +1,7 @@
 
+//iterate this every time you check in or make major change!
+const versionCode = "srv62";
+
 
 
 // Immediately take control of the page, see the 'Immediate Claim' recipe
@@ -15,30 +18,13 @@ self.addEventListener('activate', function(event) {
 
 
 
+
 self.addEventListener('push', function(event) {
+
     const userPacket = event.data.json();
-    const details = ""+userPacket.clientTime+" srv60";
+    const details = ""+userPacket.clientTime+" "+versionCode;
 
     event.waitUntil(
-	// // Retrieve a list of the clients of this service worker.
-	// self.clients.matchAll().then(function(clientList) {
-	//     // Check if there's at least one focused client.
-	//     var focused = clientList.some(function(client) {
-	// 	return client.focused;
-	//     });
-
-	//     var notificationMessage;
-	//     if (focused) {
-	// 	notificationMessage = 'You\'re still here, thanks!';
-	//     } else if (clientList.length > 0) {
-	// 	notificationMessage = 'You haven\'t closed the page, ' +
-	// 	    'click here to focus it!';
-	//     } else {
-	// 	notificationMessage = 'You have closed the page, ' +
-	// 	    'click here to re-open it!';
-	//    }
-
-	
 	self.registration.showNotification(
 	    userPacket.msg,  //"title" ... really just most readable line!
 	    {
@@ -50,6 +36,7 @@ self.addEventListener('push', function(event) {
     );
 });
 
+
 // Register event listener for the 'notificationclick' event.
 self.addEventListener('notificationclick', function(event) {
     event.waitUntil(
@@ -57,23 +44,23 @@ self.addEventListener('notificationclick', function(event) {
 	self.clients.matchAll().then(function(clientList) {
 	    // If there is at least one client, focus it.
 	    if (clientList.length > 0) {
-		var retval =  clientList[0].focus();
-		fireReload();  
+		var client = clientList[0];
+		var retval = client.focus();
+		client.postMessage({op:'reload'});
 		return retval;
 	    }
 
 	    // Otherwise, open a new page.
 	    var retval = self.clients.openWindow('try.html');
-	    //window.location.reload();
 	    return retval;
 	})
     );
 });
 
 
-function fireReload() {
-    setTimeout( function() {
-	window.location.reload();
-    },500);
+function log(x) {
+    console.log(x);
 }
+
+
 

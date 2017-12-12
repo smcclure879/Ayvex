@@ -1,5 +1,4 @@
 
-
 function notify() {
     var n = new Notification('Title', {
 	body: 'I am the body text!'
@@ -376,6 +375,18 @@ window.onload = function() {
     button2.onclick = testWorkerNotify;
     button3.onclick = registerServiceWorker;
     //button4.onclick = null;
+
+
+
+    //experiments
+    navigator.serviceWorker.onmessage = function(event) {
+	if (event.data.op=='reload') {
+	    window.location.reload();
+	} else {
+	    alert("got message:"+JSON.stringify(event.data));
+	}
+    }
+//    );
 }
 
 
