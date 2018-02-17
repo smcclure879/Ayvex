@@ -456,10 +456,18 @@ function writeNormalHead(res)  {   //response;
 }
 
 
-
-
-
-
+var reSafe = new RegExp('^[\\w\\d\\=]{5,30}$');
+function safeString(x) {
+    return reSafe.test(x);
+}
+if (!reSafe.test("ding=foobar")) {
+    process.exit(-4222);
+}
+logIt("passed 4222");
+if (reSafe.test("&%")) {
+    process.exit(-4128);
+}
+logIt("passed 4128");
 
 function doFancyApi(req,res) {    // strip off ?foo=bar so that the file can be served statically //
 
@@ -470,6 +478,13 @@ function doFancyApi(req,res) {    // strip off ?foo=bar so that the file can be 
 
     let mods = filePath.substr(brk+1);
     logIt("mods="+mods);
+
+    if (!safeString(mods)) {
+    	res.end("err914z");  //bugbug todo consolidate these N checks into doStaticBase
+	return;
+    }
+
+    
     if (mods.contains("ding")) {
 	fireAndForget('espeak "ding '+mods+'"');
     }  else  {
