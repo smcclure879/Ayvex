@@ -197,9 +197,9 @@ print("got serv")
 #print("------------")
 #print("")
 result=service.users().messages().list(
-    q="""  -is:starred  0420160822AAWR098767096WCVU   is:important   in:inbox  before:2017/09/01 """,
+    q="""  -is:starred  0420160822AAWR098767096WCVU   is:important   in:inbox  before:2017/08/01 """,
     userId=whoami,
-    maxResults=200
+    maxResults=500
 ).execute()
 
 
