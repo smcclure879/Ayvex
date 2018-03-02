@@ -1,3 +1,15 @@
+/*
+
+
+
+later pipe it to this (maybe can output json?) 
+  ....https://isbndb.com/search/books/9780787948030
+
+
+*/
+
+
+
 $(function() {
     var resultCollector = Quagga.ResultCollector.create({
         capture: true,
