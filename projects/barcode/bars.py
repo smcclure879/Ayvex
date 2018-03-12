@@ -88,6 +88,7 @@ sectionAbeCode=re.compile(r'<meta itemprop="isbn" content="(\d+)" />')
 sectionAbeProd=re.compile(r'<meta itemprop="name" content="([^"]+)" />')
 sectionAbeAuthor=re.compile(r'<meta itemprop="author" content="([^"]+)" />')
 
+
     
 def callBook(code):
 
@@ -133,7 +134,8 @@ def lookUpInfo(code):
 
 
     if len(code)==12:
-        return callGroc(code)
+        retval = callGroc(code)
+        return retval
     if len(code)==13:
         return callGroc(code)
     
