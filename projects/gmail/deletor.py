@@ -147,6 +147,15 @@ def check(threads):
             print(x)
 
 
+def prog(x):
+    sys.stdout.write("\r")
+    sys.stdout.write(x)
+    sys.stdout.write("\t")
+    sys.stdout.flush()
+
+
+            
+
 def dictify(arr):
     retval = dict()
     for x in arr:
@@ -197,7 +206,7 @@ print("got serv")
 #print("------------")
 #print("")
 result=service.users().messages().list(
-    q="""  -is:starred  0420160822AAWR098767096WCVU   is:important   in:inbox  before:2017/08/01 """,
+    q="""  -is:starred  0420160822AAWR098767096WCVU   is:important   in:inbox  before:2017/08/16 """,
     userId=whoami,
     maxResults=500
 ).execute()
@@ -206,6 +215,7 @@ result=service.users().messages().list(
 oldhour=-42
 hour=0
 deletes=[]
+ii=0
 for x in result['messages']:
     messageId=x['id']
     res2=service.users().messages().get(userId=whoami,format='full',id=messageId).execute()
@@ -219,13 +229,17 @@ for x in result['messages']:
     mm=date.minute
     #print((hour,mm),messageId,subj)
     if oldhour==hour:
+        ii+=1
         #print("should delete",messageId,subj )
+        progMsg="DELETES %d %s %s %s %s %s" % (ii, str(date),subj,hour,mm,messageId)
+        prog(progMsg)        #    bugbug you are here show date/time/sub/count of deletes
         deletes.append(messageId)
     else:
         print("RETAIN:",(hour,mm),messageId,date,subj )
         oldhour=hour
     
 print(deletes)
+print("number of deletes=",len(deletes))
 for dd in deletes:
     print(service.users().messages().trash(userId=whoami,id=dd).execute())
 
