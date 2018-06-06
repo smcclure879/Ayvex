@@ -8,6 +8,9 @@ const ext = /[\w\d_-]+\.[\w\d]+$/;
 const util = require("util");
 const datastore = require('nedb');
 
+const exec = require('child_process').exec;
+
+
 
 //early startup stuff----------------------
 
@@ -144,6 +147,16 @@ Object.prototype.contains = function (sought) {
 
 
 const dump=util.inspect;
+
+
+function fireAndForget(whatToRun) {
+
+    exec(whatToRun, function callback(error, stdout, stderr){
+	logIt("run of "+whatToRun)
+    });
+
+}
+
 
 
 //mime types
@@ -443,19 +456,47 @@ function writeNormalHead(res)  {   //response;
 }
 
 
-
-
-
-
+var reSafe = new RegExp('^[\\w\\d\\=]{5,30}$');
+function safeString(x) {
+    return reSafe.test(x);
+}
+if (!reSafe.test("ding=foobar")) {
+    process.exit(-4222);
+}
+logIt("passed 4222");
+if (reSafe.test("&%")) {
+    process.exit(-4128);
+}
+logIt("passed 4128");
 
 function doFancyApi(req,res) {    // strip off ?foo=bar so that the file can be served statically //
 
     logIt('fancy');
     //console.log('  ip:'+dump(req.connection.remoteAddress));
     let filePath = ""+req.url;
-    filePath = filePath.substr(0,filePath.indexOf("?"));
+    let brk = filePath.indexOf("?");
+
+    let mods = filePath.substr(brk+1);
+    logIt("mods="+mods);
+
+    if (!safeString(mods)) {
+    	res.end("err914z");  //bugbug todo consolidate these N checks into doStaticBase
+	return;
+    }
+
+    
+    if (mods.contains("ding")) {
+	fireAndForget('espeak "ding '+mods+'"');
+    }  else  {
+	//fireAndForget('espeak "nope nope'+mods+'"');
+    }
+
+
+    filePath = filePath.substr(0,brk);
     filePath = path.join(__dirname, filePath);
 
+
+        
     if (!ext.test(filePath))  {
 	res.end("err257c");  //bugbug todo consolidate these 3 checks into doStaticBase
 	return;
