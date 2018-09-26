@@ -4,27 +4,57 @@ while (<DATA>)  {
     $id or next;
     $t or next;
     
-    $d[$id]=$t;
+    $d{$id}=$t;
 }
 
+my $prev;
 while(1) {
     print "beep>";
     my $x=<STDIN>;
-    print "\n";
+    chomp($x);
+    $x = $x || $prev || 'xx';
 
-    my $a=int(10*rand());
-    my $b=int(10*rand());
-    my $n=$a.$b;
-
-    for my $q (reverse("00"..$n)) {
-	my $t=$d[$q];
-	if ($t) {
-	    print "$q: $t", "\n";
-	    last;
-	}
-	#print $q, $t, "\n";
+    $prev=$x;
+    if ($x eq 'artifact') {
+	$x = '9895xx';
     }
+    
 
+    if ($x eq 'q') {
+	exit(0);
+    
+    } elsif ($x =~ /x/) {
+
+	#substitute random digit for every x
+	$x =~ s/x/int(10*rand())/ge;
+
+	print $x,"\n";
+	for (my $q=int($x); $q>-1; $q--) {
+	    my $t=$d{$q};
+	    if ($t) {
+		print "$q: $t", "\n";
+		last;
+	    }
+	}
+
+    } elsif(0) {
+
+	my $a=int(10*rand());
+	my $b=int(10*rand());
+	my $n=$a.$b;
+	
+	for my $q (reverse("00"..$n)) {
+	    my $t=$d{$q};
+	    if ($t) {
+		print "$q: $t", "\n";
+		last;
+	    }
+	    #print $q, $t, "\n";
+	}
+
+    } else {
+	print "NYI-bugbug-\n";
+    }
 }
 
 __END__
@@ -39,6 +69,8 @@ __END__
 5102 fire/smell of smoke
 511 cold
 5110 weather temp falls
+5111 cool draft
+5112 frost sign or smell of cold
 
 
 
@@ -50,8 +82,8 @@ __END__
 90106 Grow Head (extra brain etc)
 90107 Grow Neck
 90108 Grow new limb (tentacle, etc)
-90109 One Sided Only Leg (dm choice)
-90110 Both Legs
+90109 Grow One Sided Only Leg (dm choice)
+90110 Grow Both Legs
 
 
 
@@ -62,4 +94,6 @@ __END__
 989501 The Lesser Crown of Raxaxala of which legends lie boldly.
 989502 Fry Pan of the Ancient Order of Saucerors
 989503 The mizutoyo   (really a Bilingual Japanese-english electronic dictionary, ca. 1999)
+989504 Pick of Density (-4 mental strength, +3 charisma)
+
 
