@@ -1,0 +1,109 @@
+Mutation List
+A mutation is an action to a part
+Action List:
+       Grow
+       Shrink 
+       Duplicate
+       Remove
+       Twist
+       Move
+       Discolor
+       Chymerate
+Part List:
+     Whole
+     Top half
+     Bottom half
+     Head
+     tail/bottom
+     Legs
+     Arms
+     Hands
+     Feet
+     Single-limb
+
+Skill List (((each skill has a range from 0 to infinity)))
+Ranged Weapons:
+Melee Weapons:
+Pick Locks:
+Climb Walls:
+Juggle:
+
+
+Gear List
+     Weapons
+	Sword
+	Dagger
+	Axe
+	Club
+	Bow
+	Crossbow
+	Black powder rifle/pistol
+	Cartridge firing gun
+	Light Machine gun
+																	      	    	    Grenade
+																					Laser rifle/pistol
+																						Flamethrower
+																								Plasma pulse rifle
+																								       	     Dynamite
+																											Force-field hand weapons
+
+																											Armor
+																													leather/hide
+																															Chainmail
+																																	Shield
+																																			Piecemeal plate mail (road signs etc riveted to leather/chain)
+																																				  	Bullet proof vest, soft
+																																					       	     Bullet proof vest, plate
+																																						     	    	  Bullet proof riot suit
+																																								  	       Powered Armor
+																																											Force-field Armor (the slow blade penetrates the shield)
+
+																																											Equipment
+																																													Geiger counter
+																																														Hazardous Chemical Sensor
+																																															  	   Hazardous Biological Sensor
+																																																   	     		Portal Mapping Unit (combined inertia/ lidar/radar/sonar)
+																																																			       	       Surveying equipment
+																																																							Portable radios
+																																																									Tool box (hand carpentry tools)
+																																																									     	 Misc. power tools
+																																																										       	     Welding equip
+																																																													Box of nails/screws
+																																																													       Handcuffs
+																																																															Auto jack
+																																																																Spool of wire/cord (misc gauge)
+																																																																      	 Tent
+																																																																			Rigid Shelter - collapsable
+																																																																			      	      Wheelbarrow/Dolly/cart
+
+Weather Effects List
+
+EM storm, mild - Long range radio communications down
+EM storm, med. - All radio comm. down
+EM storm, strong, rare - Hand-held electronics start glitching
+Lightning storm (ground strikes)
+Extreme thunderstorm
+Flash Flood
+Strong winds
+Tornado
+Dust devil
+Dust storm
+Blizzard
+Small hail - stinging hail, 0-1 damage/round
+Large hail - 1d6 dm/rd
+Sudden heat wave
+Sudden cold snap
+
+Random encounters:
+Wrecks - vehicles, war hulks, robots, buildings
+Fresh spring
+Outcast (diseased, heretic, insane)
+Trade caravan
+Hidden Cache (food, alcohol, money, weapons, ammo)
+
+Power sources:
+Chemical battery
+Atomic battery
+Generator/Fuel Cell (does gasoline still exist?) (alcohol fueled?)
+Sterling generator
+hydro/solar/wind

@@ -62,17 +62,21 @@ __END__
 #scan the list for the closest matching number.  
 00 All remains as before
 50 .
+
 51 External
+
 510 heat
 5100 weather temperature rises
 5101 warm draft
 5102 fire/smell of smoke
+
 511 cold
 5110 weather temp falls
 5111 cool draft
 5112 frost sign or smell of cold
 
-
+#many more lists could be imported and semi-automatically numbered,
+#  so that there are potentially millions of effects, items, etc
 
 
 90 Bodily Change/Mutation
