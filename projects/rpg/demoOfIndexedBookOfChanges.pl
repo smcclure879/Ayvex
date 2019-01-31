@@ -81,14 +81,15 @@ __END__
 
 90 Bodily Change/Mutation
 901 Grow
-90100 All over
-90105 .
+90100 in age
+90104 Grow 1.05x, All over 
 90106 Grow Head (extra brain etc)
 90107 Grow Neck
 90108 Grow new limb (tentacle, etc)
 90109 Grow One Sided Only Leg (dm choice)
 90110 Grow Both Legs
-
+90111 Grow Belly
+90112 Grow, other area
 
 
 98 Gain Treasure

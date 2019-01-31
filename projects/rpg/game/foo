@@ -1,0 +1,44 @@
+<html>
+<head>
+<style>
+	
+ol li {
+    color: #559933;
+    font-height: 10px;
+    xxwidth: 30px;
+    xxtext-align: right;
+    xxmargin-right: 10px;
+    xxdisplay: xxinline-block;
+    font-height:70px;
+}
+
+ol li span {
+    color: black;
+    font-height: 20px;
+}
+	
+</style>
+</head>
+<body>
+<ol>
+
+<li><span>dm. You are standing on the shifting sands of egypt, and quite lost, and not quite certain how you got here.</span></li>
+<li><span>dm. a giant pyramid that must be 100m high is in front of you.  The sun is quite intense.</span>/</li>
+<li><span>dm. done.</span></li>
+<br>
+<li><span>p1. i look for a door on the pyramid.</span></li>
+
+</ol>
+<hr>
+<code>
+
+dm. You are standing on the shifting sands of egypt, and quite lost, and not quite certain how you got here.
+dm. a giant pyramid that must be 100m high is in front of you.  The sun is quite intense.
+dm. done.
+
+p1. i look for a door on the pyramid.
+</code>
+
+
+</body>
+</html>
