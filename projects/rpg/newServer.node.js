@@ -1,16 +1,14 @@
-var connect = require('connect');
-var express = require('express');
-var serveStatic = require('serve-static');
-var vhost = require('vhost');  //sorting on domain name virtual host
-var morgan = require('morgan'); //logging
-var dispatch = require('dispatch');  //sorting on various parts of url except domain name
-var http = require('http');
-var path = require('path');
 
-/*
+const express = require('express');
+const vhost = require('vhost');  //sorting on domain name virtual host
+const morgan = require('morgan'); //logging
+const bodyParser = require("body-parser");
+const path = require('path');
+const util = require('util')
+const fs = require('fs');
+//quip didn't work I wrote my own below....
 
-      DESIGN: 
-
+/*      DESIGN notes: 
       1. goto https://<anything>.DOMAIN.com:PORT/whatever  goes to where it did before
           so we don't hurt VR or messaging
       2. if anything != rpg or apg then default
@@ -19,7 +17,7 @@ var path = require('path');
       5. later /roll/9400xx  patterns also work which means bring down data file(s) also
       6. if /game/gameName  then serve  /games/gameName.game to the user, just the last 10K or so,
            unless more args to say full range or something?  
-      7. some facility to search within a game, e.g. to look up a stat previously determined.
+      7. some facility to search within a game log, e.g. to look up a stat previously determined.
       8. over time can grow more state than just a file? (keep all mods to a user's strength, so can answer 
       "what is user strength" when DM queries.  Should we move to a DB  sooner?
       9. big lookup tables...access statically, they are stored as 100 or 1000 line files by number
@@ -30,95 +28,181 @@ var path = require('path');
 
       14. api vs. page calls....there's a page of html and js that hosts game and calls to api for game content and rolls and stuff within that game.
 
-
-
-
-
-
+      15. simple rolls can be local. game rolls should be in api or by dm. player can initiate a "standard saving throw, and the api has to do it to avoid cheat.  or for standard combat, it happens at server as part of much larger process. dm can roll any time, 
+16. in all cases a roll SHOWS. you know the DM rolled, maybe 1d6+3, maybe just "roll roll". 
 
 
 
 */
 
 
+const assert = (testCond, label) => {
+    if (testCond) return;
+    throw new Error(label);
+};
 
-//a static server for serving files that are clientside code, for example.
-//var serveFromFoo = serveStatic('foo',{'index':['index.html','index.htm']});
 
-var serveRollFile = express().use(function(req,res) {
-    var absPath = path.join(__dirname, "statics", "roll.htm");
-    res.sendFile(absPath);
-})
 
-var okGame = /\w{,8}/;
-var serveGameFile = function(req,res,next,gameName) {
-    if (okGame.test())
-	throw new Error('bugbug1739o');
+var okGame = /\w{3,8}/;   //is 3 to 8 word chars, ONLY !
+var serveGameFile = function(req,res,next) {
 
-    var absPath=path.join(__dirname,"game",gameName);
-    res.setHeader('Content-Type', 'text/html');
-    res.sendFile(absPath);
+    var gameName = req.params.gameName;  
+    if (!okGame.test()) {  //"test" does opposite of what you'd think!!
+	console.log("about to call next or throw or something...");
+	throw new Error('err1739o '+gameName);
+	//next();
+	//return;
+    }
+    var absPath=path.join(__dirname,"game",gameName+".game");
+    serveStaticAbsPartial(res,absPath,'text/html',4000,1);   //4000 bytes, use whole lines
 }
 
 
+var serveStaticAbs = function(res,absPath,mimeType) {
+    mimeType=mimeType || 'text/plain';
+    res.setHeader('Content-Type', mimeType);
+    res.sendFile(absPath);
+}
+
+function min(a,b) {
+    if (a<b) return a;
+    return b;
+}
+
+
+//don't call this unless it's a verified allowedFile!!
+var serveStaticAbsPartial = function(res,absPath,mimeType,bytesMax,useWholeLines) {
+
+    var stats=fs.statSync(absPath);
+    var bytesToSkip = min(0,stats.size-bytesMax);
+
+    fs.createReadStream(absPath, { start:bytesToSkip, end:bytesMax })
+	.pipe(res);
+};
+
+var appendToFileAsync = function(absPath,text,next){
+    var fhw = fs.createWriteStream(absPath, {flags: 'a'});
+
+    var x = fhw.write(text,function(q){
+	fhw.end();
+	console.log('x'+util.inspect(x));
+	console.log('q'+util.inspect(q));
+	next();
+    }, function(q) {
+
+	console.log("q2" + util.inspect(q));
+
+    });
+}
+
+
+
+
+const allowedFiles = "view.js     view.htm".split(/[^\w\.]+/);
+assert(   allowedFiles.indexOf("view.js")>-1 , "quick test of allowed Files" );
+
+//var serveStaticDir = serveStatic(path.join(__dirname));  wasn't working so well
+
+
+function last(x) {  //x is array
+    return x[x.length-1];
+}
+
+
+function getExtension(fileName) {
+    var parts=fileName.split('.');
+    return last(parts);
+}
+
+
+function typeFromExtension(fileName) {
+    var ext=getExtension(fileName);
+
+    switch(ext) {
+    case 'js':  	return  'text/javascript';
+    case 'htm':         return  'text/html';
+    }
+
+    throw new Error("unregistered file type");
+}
+
+
+var serveStaticDir = function(req,res,next){
+    
+    var sought = req.params.sought;
+    //console.log("sought="+sought);
+    
+    if (  allowedFiles.indexOf(sought) < 0  ) {
+	quip(res,"what the heck905..."+sought);
+	res.end();
+	next();
+	return;
+    }
+    var absPath=path.join(__dirname,"statics",sought);
+    var mimeType = typeFromExtension(sought);
+    serveStaticAbs(res,absPath,mimeType);
+}
+;
+
+var serveIconFile = function(req,res,next){
+    console.log("bugbug icon nyi");
+    res.status(404).send();
+    res.end();
+}
+
+var urlEncodedParser = bodyParser.urlencoded({ extended:true });
+var appendGameFile = function(req,res,next) {
+    var gameName = req.params.gameName;
+
+    if (!okGame.test()) {  //"test" does opposite of what you'd think!!
+	console.log("about to call next or throw or something...");
+	throw new Error('err1739o '+gameName);
+    }
+
+    //console.log(util.inspect(req.body));
+    var t = req.body.t+"\n";
+    
+    var absPath=path.join(__dirname,"game",gameName+".game");
+    appendToFileAsync(absPath,t,function(){
+	res.status(200).end();
+    });
+    //console.log("append to game="+absPath);
+    //console.log(''+t);
+    
+}
+//)
+;
+
+
+
+
+				    
 //a default app, will eventually pass to the old server.  maybe a watcher will insure it stays running.
 var badHostApp = express();
 badHostApp.use(function(req,res,next){
 	// res.setHeader('Content-Type', 'text/plain');
 	// res.end("bad host");
-    console.log("xxxxy");
-    //res.status(503).send();
+    console.log("xxxxy badhost");
     res.status(503).send();
-    //next();
-    
-    //return res.badRequest('go away!');
-});  //bugbug should be to serve an error !!
+    res.end();
+});
 
 
 
-
-
-function blah(res,x) {
+function quip(res,x) {
     res.setHeader('Content-Type', 'text/plain');
-    res.end('blah  '+x);
+    res.end('quip....  '+x);
 }
 
 
 var rpgApp = express();
-rpgApp.use(
-    dispatch({
-	'/roll/?.*': serveRollFile
-	,'GET /game/:gameName': serveGameFile
-	,'POST /game/:gameName': express().use(function(req,res,next,gameName){
-	    //append body to file indexed by gameName (after sanity and security checks)   bugbug
-	    //do not return tail....request it if wanted.
-
-	    blah(res,gameName+"posting foobar");
-	    
-	    //also, periodically try to persist to a backup location (github?)
-
-	    //do not call next we are done
-	    
-	})
-    })
-);
+rpgApp.use('/statics/:sought', serveStaticDir);
+rpgApp.get('/game/:gameName', serveGameFile);
+rpgApp.post('/game/:gameName', urlEncodedParser, appendGameFile);
+rpgApp.use('/favicon.ico', serveIconFile);
+//handle bad urls common cases
 
 
-
-
-// function(req,res,next){
-	    
-// 	    blah(res,something);///bugbug make a staticd fl for this  bugbug
-// 	    next();
-// 	}
-
-// rpgApp.use('/roll/',function(req,res,next){
-//     res.setHeader('Content-Type', 'text/plain')
-//     var re = /(\d+)d(\d+)/;
-//     x=req.url.match(re)
-//     res.end('rolling-fine'+x);
-//     next();
-// })
 
 
 
@@ -126,8 +210,8 @@ rpgApp.use(
 
 
 // create main app
-var app = connect();
-app.use(morgan('tiny'));
+var app = express();
+app.use(morgan('combined'));  //or 'tiny'
 
 
 // vhost dispatching
@@ -135,34 +219,10 @@ app.use(vhost('rpg.ayvexllc.com', rpgApp));
 app.use(vhost('www.ayvexllc.com', badHostApp));
 app.use(vhost('ayvexllc.com', badHostApp));
 
-app.use(vhost('rpg.localhost',rpgApp));
+app.use(vhost('rpg.localhost', rpgApp));
 app.use(vhost('localhost', badHostApp));
 app.use(vhost('*.localhost', badHostApp));
-
 
 app.listen(3000);
 
 //DONE
-
-
-    // create app that will server user content from public/{username}/
-// var userapp = connect()
-// userapp.use(function(req, res, next){
-//     var username = req.vhost[0] // username is the "*"
-
-//     // pretend request was for /{username}/* for file serving
-//     req.originalUrl = req.url
-//     req.url = '/' + username + req.url
-
-//     next()
-// })
-// userapp.use(serveStatic('public'))
-
-
-
-
-
-
-    
-// listen on all subdomains for user pages
-//app.use(vhost('*.userpages.local', userapp))
