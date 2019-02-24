@@ -1,0 +1,122 @@
+<?xml version="1.0" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+
+
+
+
+<svg width="12in" height="12in" version="1.1"
+     viewBox="0 0 2400 2400"  bugbug="set viewBox values correctly"
+     xmlns="http://www.w3.org/2000/svg"
+     xmlns:xlink="http://www.w3.org/1999/xlink">
+
+  <defs>
+
+    <rect id="sq" width="100" height="100"
+	  style="
+		 stroke: black;
+		 stroke-width: 3;
+		 fill: none;
+		 "
+	  />    
+    
+    <pattern id="gridPattern" x="50" y="50" width="100" height="100"      patternUnits="userSpaceOnUse" >
+      <use xlink:href="#sq" />      
+    </pattern>
+
+    <path id="rebel" d="M0,0 h10 z h-10 z v10 z v-10 z" style="fill:none; stroke:black; stroke-width:1" />
+
+    <path id="exit" d="M0,-20 h20 v40 h-40 v-40 z" style="fill:none; stroke: black; stroke-width:4" />
+    
+  </defs>
+
+
+<!-- units are hundredths of inches -->
+
+
+<rect id="paper"
+      x="10" y="10" width="1180" height="1180"
+      style="stroke-width: 2;
+	     stroke: blue;
+	     fill: none;
+	     "/>
+
+<rect id="grid"
+      x="50" y="50" width="1100" height="1100"
+      style="
+	     fill: url(#gridPattern);
+	     stroke-width:8;
+	     stroke: black;
+	     "
+      />
+
+<g style="fill:none; stroke:black; stroke-width:1" >
+  <circle id="crown" r="20" cx="600" cy="600" style="stroke-width:2"/>
+  <circle id="king"  r="10" cx="600" cy="600" />
+  <circle r="10" cx="500" cy="600" />
+  <circle r="10" cx="400" cy="600" />
+
+  <circle r="10" cx="700" cy="600" />
+  <circle r="10" cx="800" cy="600" />
+
+  <circle r="10" cx="600" cy="700" />
+  <circle r="10" cx="600" cy="800" />
+
+  <circle r="10" cx="600" cy="400" />
+  <circle r="10" cx="600" cy="500" />
+
+  <circle r="10" cx="500" cy="500" />
+  <circle r="10" cx="700" cy="700" />
+
+  <circle r="10" cx="500" cy="700" />
+  <circle r="10" cx="700" cy="500" />
+
+  
+
+  <use xlink:href="#rebel" x="1100" y="400"/>
+  <use xlink:href="#rebel" x="1100" y="500"/>
+  <use xlink:href="#rebel" x="1100" y="600"/>
+  <use xlink:href="#rebel" x="1100" y="700"/>
+  <use xlink:href="#rebel" x="1100" y="800"/>
+  <use xlink:href="#rebel" x="1000" y="600"/>
+
+  
+  <use xlink:href="#rebel" x="100" y="400"/>
+  <use xlink:href="#rebel" x="100" y="500"/>
+  <use xlink:href="#rebel" x="100" y="600"/>
+  <use xlink:href="#rebel" x="100" y="700"/>
+  <use xlink:href="#rebel" x="100" y="800"/>
+  <use xlink:href="#rebel" x="200" y="600"/>
+
+  
+  <use xlink:href="#rebel" x="400" y="100"/>
+  <use xlink:href="#rebel" x="500" y="100"/>
+  <use xlink:href="#rebel" x="600" y="100"/>
+  <use xlink:href="#rebel" x="700" y="100"/>
+  <use xlink:href="#rebel" x="800" y="100"/>
+  <use xlink:href="#rebel" x="600" y="200"/>
+
+  
+  <use xlink:href="#rebel" x="400" y="1100"/>
+  <use xlink:href="#rebel" x="500" y="1100"/>
+  <use xlink:href="#rebel" x="600" y="1100"/>
+  <use xlink:href="#rebel" x="700" y="1100"/>
+  <use xlink:href="#rebel" x="800" y="1100"/>
+  <use xlink:href="#rebel" x="600" y="1000"/>
+
+-->
+
+  
+  <addmorerebelteam/>
+
+  <use xlink:href="#exit" x="100" y="100"/>
+  <use xlink:href="#exit" x="1100" y="100" />
+  <use xlink:href="#exit" x="100" y="1100"/>
+  <use xlink:href="#exit" x="1100" y="1100" />
+  
+</g>
+
+
+
+
+</svg>
