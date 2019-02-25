@@ -12,13 +12,21 @@
 
   <defs>
 
-    <g id="spike1">
-      <rect width="80" height="399" style="fill:chartreuse; xxfill:#ff6ec7; stroke:black; stroke-width:1"/>
+    <g id="spike0">
+      <rect width="80" height="399" style="stroke:black; stroke-width:1"/>
       <path d="m0,0 v10 h10 v-10 z "/>
 	
     </g>
 
-    <use id="spike2" xlink:href="#spike1" transform="scale(1 -1)" />      
+    <use id="spike1a" xlink:href="#spike0" style="fill:chartreuse; stroke-width:3; stroke:black" />
+    <use id="spike1b" xlink:href="#spike0" style="fill:#ff6ec7; stroke-width:1; stroke:blue" />
+    <use id="spike2a" xlink:href="#spike1a" transform="scale(1 -1)" />
+    <use id="spike2b" xlink:href="#spike1b" transform="scale(1 -1)" />      
+
+    <g id="cola">
+      <use xlink:href="#spike1a" />
+      <use xlink:href="#spike2b" y="-50"/>
+    </g>
     
 
     <g id="ayvex"  >
@@ -47,11 +55,13 @@
 	     fill: none;
 	     "/>
 
-<rect id="boardOutline" x="49" width="1100" y="200" height="800" style="fill:none; stroke-width:1; stroke:black"/>
+<rect id="boardOutline" x="49" width="1102" y="199" height="802" style="fill:none; stroke-width:1; stroke:black"/>
 <svg id="board" x="50" width="1100" y="200" height="800" >
 
-  <use xlink:href="#spike1" x="100" y="400" />      
-  <use xlink:href="#spike2" x="200" y="400" />
+  <use xlink:href="#spike1a" x="100" y="300" />      
+  <use xlink:href="#spike1b" x="200" y="300" />
+
+  <use xlink:href="#cola" x="400" y="400" />
 </svg>
 
 
