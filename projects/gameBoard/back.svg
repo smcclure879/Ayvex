@@ -1,0 +1,89 @@
+<?xml version="1.0" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+
+
+
+
+<svg width="12in" height="12in" version="1.1"
+     viewBox="0 0 2400 2400"  bugbug="set viewBox values correctly"
+     xmlns="http://www.w3.org/2000/svg"
+     xmlns:xlink="http://www.w3.org/1999/xlink">
+
+  <defs>
+
+    <g id="spike1">
+      <rect width="80" height="399" style="fill:chartreuse; xxfill:#ff6ec7; stroke:black; stroke-width:1"/>
+      <path d="m0,0 v10 h10 v-10 z "/>
+	
+    </g>
+
+    <use id="spike2" xlink:href="#spike1" transform="scale(1 -1)" />      
+    
+
+    <g id="ayvex"  >
+      <path d="
+	       m0,-15
+	       l15,-20 l15,20 m0,-10
+	       m-8,-10 l15,20 l15,-20 l-27,36 m27,-36
+	       m0,0
+	       l15,20 l15,-20 
+	       h15 m-15,10 h15 m-15,10 h15 m0,-10 
+	       m0,-10 l20,20 m0,-20 l-20,20
+	       "
+	    style="fill:none; stroke: black; stroke-width:2" />
+      <text  y="-8" style="font: 0.1in serif; fill:gray;" >Light Industries, LLC</text>
+    </g>
+  </defs>
+
+
+<!-- units are hundredths of inches -->
+
+
+<rect id="paper"
+      x="10" y="10" width="1180" height="1180"
+      style="stroke-width: 2;
+	     stroke: blue;
+	     fill: none;
+	     "/>
+
+<rect id="boardOutline" x="49" width="1100" y="200" height="800" style="fill:none; stroke-width:1; stroke:black"/>
+<svg id="board" x="50" width="1100" y="200" height="800" >
+
+  <use xlink:href="#spike1" x="100" y="400" />      
+  <use xlink:href="#spike2" x="200" y="400" />
+</svg>
+
+
+
+
+
+<!--
+<g id="extras">
+  <use xlink:href="#ayvex" x="1025" y="1195"/>
+
+  <text x="50" y="1180"
+	style="fill:black;
+	       font:italic 25px sans;
+	       ">
+    https://www.BlackLodgeResearch.org/
+  </text>
+
+  <text x="570" y="640" style="
+			       font: 80 sans;
+			       fill:black;
+			       stroke:none;
+			       stroke-width:0">
+    Backgammon
+  </text>
+
+</g>
+-->
+
+
+
+
+
+
+
+</svg>
