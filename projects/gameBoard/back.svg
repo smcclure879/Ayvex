@@ -27,8 +27,28 @@
       <use xlink:href="#spike1a" />
       <use xlink:href="#spike2b" y="-50"/>
     </g>
+
+    <g id="colb">
+      <use xlink:href="#spike1b" />
+      <use xlink:href="#spike2a" y="-50"/>
+    </g>
     
 
+    <g id="seca"  transform="scale(0.75 1)" >
+      <use xlink:href="#cola" x="0" y="400" />
+      <use xlink:href="#colb" x="100" y="400" />
+      <use xlink:href="#cola" x="200" y="400" />
+    </g>
+
+    <g id="secb"  transform="scale(0.75 1)">
+      <use xlink:href="#colb" x="0" y="400" />
+      <use xlink:href="#cola" x="100" y="400" />
+      <use xlink:href="#colb" x="200" y="400" />
+    </g>
+
+
+
+    
     <g id="ayvex"  >
       <path d="
 	       m0,-15
@@ -58,12 +78,19 @@
 <rect id="boardOutline" x="49" width="1102" y="199" height="802" style="fill:none; stroke-width:1; stroke:black"/>
 <svg id="board" x="50" width="1100" y="200" height="800" >
 
-  <use xlink:href="#spike1a" x="100" y="300" />      
-  <use xlink:href="#spike1b" x="200" y="300" />
+  
+  <use xlink:href="#seca" x="10" y="0"/>
+  <use xlink:href="#secb" x="255" y="0" />
 
-  <use xlink:href="#cola" x="400" y="400" />
+  <rect id="theBar"       x="490" width="125" y="0" height="800" />
+
+  <use xlink:href="#seca" x="635" y="0" />
+  <use xlink:href="#secb" x="880" y="0" />
+
+ 
+
 </svg>
-
+</svg>
 
 
 
@@ -96,4 +123,3 @@
 
 
 
-</svg>
