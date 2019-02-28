@@ -13,9 +13,9 @@
   <defs>
 
     <g id="spike0">
-      <rect width="80" height="399" style="stroke:black; stroke-width:1"/>
+      <xrect width="80" height="399" style="stroke:black; stroke-width:1"/>
       <path d="m0,0 v10 h10 v-10 z "/>
-	
+      <path d="m0,400 l50,-350 l50,350 z "     />
     </g>
 
     <use id="spike1a" xlink:href="#spike0" style="fill:chartreuse; stroke-width:3; stroke:black" />
@@ -25,12 +25,12 @@
 
     <g id="cola">
       <use xlink:href="#spike1a" />
-      <use xlink:href="#spike2b" y="-50"/>
+      <use xlink:href="#spike2b" y="0"/>
     </g>
 
     <g id="colb">
       <use xlink:href="#spike1b" />
-      <use xlink:href="#spike2a" y="-50"/>
+      <use xlink:href="#spike2a" y="0"/>
     </g>
     
 
@@ -82,7 +82,7 @@
   <use xlink:href="#seca" x="10" y="0"/>
   <use xlink:href="#secb" x="255" y="0" />
 
-  <rect id="theBar"       x="490" width="125" y="0" height="800" />
+  <rect id="theBar"       x="487" width="125" y="0" height="800" />
 
   <use xlink:href="#seca" x="635" y="0" />
   <use xlink:href="#secb" x="880" y="0" />
