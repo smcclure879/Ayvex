@@ -14,12 +14,12 @@
 
     <g id="spike0">
       <xrect width="80" height="399" style="stroke:black; stroke-width:1"/>
-      <path d="m0,0 v10 h10 v-10 z "/>
-      <path d="m0,400 l50,-350 l50,350 z "     />
+      <path id="aligner" d="m0,0 v10 h10 v-10 z "/>
+      <path id="actualSpike" d="m0,400 l50,-350 l50,350 z "     />
     </g>
 
-    <use id="spike1a" xlink:href="#spike0" style="fill:chartreuse; stroke-width:3; stroke:black" />
-    <use id="spike1b" xlink:href="#spike0" style="fill:#ff6ec7; stroke-width:1; stroke:blue" />
+    <use id="spike1a" xlink:href="#spike0" style="fill: none; xxfill:chartreuse; stroke-width:3; stroke:black" />
+    <use id="spike1b" xlink:href="#spike0" style="fill: none; xxfill:#ff6ec7; stroke-width:5; stroke:black" />
     <use id="spike2a" xlink:href="#spike1a" transform="scale(1 -1)" />
     <use id="spike2b" xlink:href="#spike1b" transform="scale(1 -1)" />      
 
@@ -59,7 +59,7 @@
 	       h15 m-15,10 h15 m-15,10 h15 m0,-10 
 	       m0,-10 l20,20 m0,-20 l-20,20
 	       "
-	    style="fill:none; stroke: black; stroke-width:2" />
+	    style="fill:none; stroke: black; stroke-width:4" />
       <text  y="-8" style="font: 0.1in serif; fill:gray;" >Light Industries, LLC</text>
     </g>
   </defs>
@@ -79,13 +79,13 @@
 <svg id="board" x="50" width="1100" y="200" height="800" >
 
   
-  <use xlink:href="#seca" x="10" y="0"/>
-  <use xlink:href="#secb" x="255" y="0" />
+  <use xlink:href="#seca" x="0" y="0"/>
+  <use xlink:href="#secb" x="245" y="0" />
 
-  <rect id="theBar"       x="487" width="125" y="0" height="800" />
+  <rect id="theBar"       x="485" width="125" y="0" height="800" />
 
-  <use xlink:href="#seca" x="635" y="0" />
-  <use xlink:href="#secb" x="880" y="0" />
+  <use xlink:href="#seca" x="627" y="0" />
+  <use xlink:href="#secb" x="873" y="0" />
 
  
 
