@@ -6,7 +6,7 @@
 
 
 <svg width="12in" height="12in" version="1.1"
-     viewBox="0 0 2400 2400"  bugbug="set viewBox values correctly"
+     viewBox="0 0 1200 1200"  bugbug="set viewBox values correctly"
      xmlns="http://www.w3.org/2000/svg"
      xmlns:xlink="http://www.w3.org/1999/xlink">
 
@@ -24,9 +24,9 @@
       <use xlink:href="#sq" />      
     </pattern>
 
-    <path id="rebel" d="M0,0 h10 z h-10 z v10 z v-10 z" style="fill:none; stroke:black; stroke-width:1" />
+    <path id="rebel" d="M0,0 h10 z h-10 z v10 z v-10 z" style="fill:none; stroke:black; stroke-width:3" />
 
-    <path id="exit" d="M0,-20 h20 v40 h-40 v-40 z" style="fill:none; stroke: black; stroke-width:4" />
+    <path id="exit" d="M0,-20 h20 v40 h-40 v-40 z" style="fill:none; stroke: black; stroke-width:3" />
 
     <g id="ayvex"  >
       <path d="
@@ -38,7 +38,7 @@
 	       h15 m-15,10 h15 m-15,10 h15 m0,-10 
 	       m0,-10 l20,20 m0,-20 l-20,20
 	       "
-	    style="fill:none; stroke: black; stroke-width:2" />
+	    style="fill:none; stroke: black; stroke-width:4" />
       <text  y="-8" style="font: 0.1in serif; fill:gray;" >Light Industries, LLC</text>
     </g>
   </defs>
@@ -47,7 +47,7 @@
 <!-- units are hundredths of inches -->
 
 
-<rect id="paper"
+<xrect id="paper"
       x="10" y="10" width="1180" height="1180"
       style="stroke-width: 2;
 	     stroke: blue;
@@ -59,13 +59,13 @@
 
   <text x="50" y="1180"
 	style="fill:black;
-	       font:italic 25px sans;
+	       font:italic 25px arial;
 	       ">
     https://www.BlackLodgeResearch.org/
   </text>
 
   <text x="570" y="640" style="
-			       font: 80 sans;
+			       font: 12 arial;
 			       fill:black;
 			       stroke:none;
 			       stroke-width:0">
@@ -77,14 +77,31 @@
 <rect id="grid"
       x="50" y="50" width="1100" height="1100"
       style="
-	     fill: url(#gridPattern);
-	     stroke-width:8;
+	     fill: none;
+	     xxfill: url(#gridPattern);
+	     stroke-width:3;
 	     stroke: black;
 	     "
       />
 
-<g style="fill:none; stroke:black; stroke-width:1" >
-  <circle id="crown" r="20" cx="600" cy="600" style="stroke-width:2"/>
+
+<path id="vertGrid" style="stroke:black; stroke-width:3; fill:pink"
+      d="m150,50  v1100 m100,0 v-1100
+	 m100,0   v1100 m100,0 v-1100   m100,0 v1100 m100,0 v-1100
+	 m100,0   v1100 m100,0 v-1100   m100,0 v1100 m100,0 v-1100
+"  x="100" y="100"
+      />
+
+<path id="horizGrid" style="stroke:black; stroke-width:3; fill:pink"
+      d="m50,150  h1100 m0,100 h-1100
+	 m0,100   h1100 m0,100 h-1100   m0,100 h1100 m0,100 h-1100
+	 m0,100   h1100 m0,100 h-1100   m0,100 h1100 m0,100 h-1100
+"  x="100" y="100"
+   />
+
+
+<g style="fill:none; stroke:black; stroke-width:3" >
+  <circle id="crown" r="20" cx="600" cy="600" style="stroke-width:3"/>
   <circle id="king"  r="10" cx="600" cy="600" />
   <circle r="10" cx="500" cy="600" />
   <circle r="10" cx="400" cy="600" />
