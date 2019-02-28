@@ -1,0 +1,185 @@
+<?xml version="1.0" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+
+
+
+
+<svg width="6in" height="6in" version="1.1"
+     viewBox="0 0 1700 1700 "  bugbug="set viewBox values correctly"
+     xmlns="http://www.w3.org/2000/svg"
+     xmlns:xlink="http://www.w3.org/1999/xlink">
+
+  <defs>
+
+
+    <path id="rebel" d="M0,0 h10 z h-10 z v10 z v-10 z" style="fill:none; stroke:black; stroke-width:3" />
+
+    <path id="exit" d="M0,-20 h20 v40 h-40 v-40 z" style="fill:none; stroke: black; stroke-width:3" />
+
+    <g id="ayvex"  >
+      <path d="
+	       m0,-15
+	       l15,-20 l15,20 m0,-10
+	       m-8,-10 l15,20 l15,-20 l-27,36 m27,-36
+	       m0,0
+	       l15,20 l15,-20 
+	       h15 m-15,10 h15 m-15,10 h15 m0,-10 
+	       m0,-10 l20,20 m0,-20 l-20,20
+	       "
+	    style="fill:none; stroke: black; stroke-width:4" />
+      <text  y="-8" style="font: 0.1in serif; fill:gray;" >Light Industries, LLC</text>
+    </g>
+  </defs>
+
+
+<!-- units are hundredths of inches -->
+
+
+<rect id="paper"
+      x="10" y="10" width="1680" height="1680"
+      style="stroke-width: 2;
+	     stroke: blue;
+	     fill: none;
+	     "/>
+
+<g id="extras">
+  <use xlink:href="#ayvex" x="1480" y="1650"/>
+
+  <text x="100" y="1630"
+	style="fill:black;
+	       font:italic 25px arial;
+	       ">
+    https://www.BlackLodgeResearch.org/
+  </text>
+
+  <text x="825" y="890" style="
+			       font: 14 arial;
+			       fill:black;
+			       stroke:none;
+			       stroke-width:0">
+    THUD
+  </text>
+
+</g>
+  
+<rect id="edge"
+      x="100" y="100" width="1500" height="1500"
+      style="
+	     fill: none;
+	     stroke-width:3;
+	     stroke: black;
+	     "
+      />
+
+
+<path id="vertGrid" style="stroke:black; stroke-width:3; fill:pink"
+      d="m200,100  v1500
+	 m100,0    v-1500
+	 m100,0    v1500
+	 m100,0    v-1500
+	 m100,0    v1500
+	 m100,0    v-1500
+	 m100,0    v1500
+	 m100,0    v-1500
+	 m100,0    v1500
+	 m100,0    v-1500
+	 m100,0    v1500
+ 	 m100,0    v-1500
+	 m100,0    v1500
+	 m100,0    v-1500
+"  x="100" y="100"
+      />
+
+<path id="horizGrid" style="stroke:black; stroke-width:3; fill:pink"
+      d="m100,200  h1500
+	 m0,100    h-1500
+	 m0,100    h1500
+	 m0,100    h-1500
+	 m0,100    h1500
+	 m0,100    h-1500
+	 m0,100    h1500
+	 m0,100    h-1500
+	 m0,100    h1500
+	 m0,100    h-1500
+	 m0,100    h1500
+	 m0,100    h-1500
+	 m0,100    h1500
+	 m0,100    h-1500
+"  x="100" y="100"
+   />
+
+
+<path id="corner" style="fill:green" d="m100,100 v500 l500,-500 z" />
+<use xlink:href="#corner" transform="rotate(180 850 850)" />
+<use xlink:href="#corner" transform="rotate(90  850 850)" />
+<use xlink:href="#corner" transform="rotate(270 850 850)" />
+
+<!--
+<g style="fill:none; stroke:black; stroke-width:3" >
+  <circle id="crown" r="20" cx="600" cy="600" style="stroke-width:3"/>
+  <circle id="king"  r="10" cx="600" cy="600" />
+  <circle r="10" cx="500" cy="600" />
+  <circle r="10" cx="400" cy="600" />
+
+  <circle r="10" cx="700" cy="600" />
+  <circle r="10" cx="800" cy="600" />
+
+  <circle r="10" cx="600" cy="700" />
+  <circle r="10" cx="600" cy="800" />
+
+  <circle r="10" cx="600" cy="400" />
+  <circle r="10" cx="600" cy="500" />
+
+  <circle r="10" cx="500" cy="500" />
+  <circle r="10" cx="700" cy="700" />
+
+  <circle r="10" cx="500" cy="700" />
+  <circle r="10" cx="700" cy="500" />
+
+  
+
+  <use xlink:href="#rebel" x="1100" y="400"/>
+  <use xlink:href="#rebel" x="1100" y="500"/>
+  <use xlink:href="#rebel" x="1100" y="600"/>
+  <use xlink:href="#rebel" x="1100" y="700"/>
+  <use xlink:href="#rebel" x="1100" y="800"/>
+  <use xlink:href="#rebel" x="1000" y="600"/>
+
+  
+  <use xlink:href="#rebel" x="100" y="400"/>
+  <use xlink:href="#rebel" x="100" y="500"/>
+  <use xlink:href="#rebel" x="100" y="600"/>
+  <use xlink:href="#rebel" x="100" y="700"/>
+  <use xlink:href="#rebel" x="100" y="800"/>
+  <use xlink:href="#rebel" x="200" y="600"/>
+
+  
+  <use xlink:href="#rebel" x="400" y="100"/>
+  <use xlink:href="#rebel" x="500" y="100"/>
+  <use xlink:href="#rebel" x="600" y="100"/>
+  <use xlink:href="#rebel" x="700" y="100"/>
+  <use xlink:href="#rebel" x="800" y="100"/>
+  <use xlink:href="#rebel" x="600" y="200"/>
+
+  
+  <use xlink:href="#rebel" x="400" y="1100"/>
+  <use xlink:href="#rebel" x="500" y="1100"/>
+  <use xlink:href="#rebel" x="600" y="1100"/>
+  <use xlink:href="#rebel" x="700" y="1100"/>
+  <use xlink:href="#rebel" x="800" y="1100"/>
+  <use xlink:href="#rebel" x="600" y="1000"/>
+
+  
+
+  <use xlink:href="#exit" x="100" y="100"/>
+  <use xlink:href="#exit" x="1100" y="100" />
+  <use xlink:href="#exit" x="100" y="1100"/>
+  <use xlink:href="#exit" x="1100" y="1100" />
+  
+</g>
+
+-->
+
+
+</svg>
