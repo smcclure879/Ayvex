@@ -7,7 +7,7 @@ const path = require('path');
 const util = require('util')
 const htmlEncode = require('htmlencode').htmlEncode;
 const fs = require('fs');
-const nedb = require('nedb');
+
 
 //quip didn't work I wrote my own below....
 
@@ -68,10 +68,9 @@ var serveGameFile = function(req,res,next) {
 	//return;
     }
 
-    console.log("bugbug1620a:"+gameName);
-    
+        
     var absPath=path.join(__dirname,"game",gameName+".game");
-    serveStaticAbsPartial(res,absPath,'text/html',4000,1);   //4000 bytes, use whole lines
+    serveStaticAbsPartial(res,absPath,'text/html',1000,1);   //4000 bytes, use whole lines
 }
 
 
@@ -85,19 +84,16 @@ var serveStaticAbs = function(res,absPath,mimeType) {
     console.log("ssa2");
 }
 
-function min(a,b) {
-    if (a<b) return a;
-    return b;
-}
 
 
 //don't call this unless it's a verified allowedFile!!
 var serveStaticAbsPartial = function(res,absPath,mimeType,bytesMax,useWholeLines) {
 
     var stats=fs.statSync(absPath);
-    var bytesToSkip = min(0,stats.size-bytesMax);
-
-    fs.createReadStream(absPath, { start:bytesToSkip, end:bytesMax })
+    var bytesToSkip = stats.size-bytesMax;
+    if (bytesToSkip<0) bytesToSkip=0;
+    
+    fs.createReadStream(absPath, { start:bytesToSkip })
 	.pipe(res);
 };
 
@@ -199,13 +195,14 @@ var appendGameFile = function(req,res,next) {
     var timeCode= new Date().getTime();  //should be server time in UTC but verify
     
     try{
-	validate(who1,"who1",/\w{2,15}/);
-	validate(who2,"who2",/\w{2,15}/);
-	validate(c,"color",/black|red/);
-	validate(t,"text", /.{2,140}/);
+	validate(who1,"who1",/^\w{2,15}$/);
+	validate(who2,"who2",/^\w{0,15}$/);
+	validate(c,"color",/^black|red|$/);
+	validate(t,"text", /^[^\\|]{2,140}$/);
     }catch(ex) {
 	console.log(ex);
 	res.status(422).end('error:'+ex);
+	return;
     }
 
     
