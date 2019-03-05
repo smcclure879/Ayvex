@@ -196,7 +196,8 @@ var appendGameFile = function(req,res,next) {
     var who2=htmlEncode(req.body.who2);
     var c=htmlEncode(req.body.color);
     var t=htmlEncode(req.body.t);
-
+    var timeCode= new Date().getTime();  //should be server time in UTC but verify
+    
     try{
 	validate(who1,"who1",/\w{2,15}/);
 	validate(who2,"who2",/\w{2,15}/);
@@ -208,7 +209,7 @@ var appendGameFile = function(req,res,next) {
     }
 
     
-    var lineToPersist=[who1,who2,c,t].join("|");
+    var lineToPersist=[timeCode,who1,who2,c,t].join("|") + "\n";
     console.log(lineToPersist);
     
     var absPath=path.join(__dirname,"game",gameName+".game");
