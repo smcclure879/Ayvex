@@ -5,7 +5,14 @@
   <script src="/statics/view.js"></script>
 
   <style>
-	
+
+
+    .optionalInput {
+    color:#222222;
+    background-color:#eeeeee;
+    font-size:0.85em;
+    }
+    
     ol li {
     color: #559933;
     font-height: 10px;
@@ -54,8 +61,13 @@
       
     </table>
     <form id="theForm">
-      <input type="text" id="t" name="t">your input here</input>
-      <input type="button" id="submitButton" name="enter">enter</input>
+      <textarea id="t" name="t" rows="4" cols="75" >your input here</textarea>
+      <span class="optionalInput" >
+	<br><input type="text" id="color" name="color" class="optionalInput" value="black"> -- text color</input>
+	<br><input type="text" id="who1"  name="who1"  class="optionalInput" value="who1"> -- who1</input>
+	<br><input type="text" id="who2"  name="who2"  class="optionalInput" value="who2"> -- who2</input>
+      </span>
+      <br><input type="button" id="submitButton" name="enter" value="send">enter</input>
     </form>
       
       

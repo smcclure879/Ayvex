@@ -5,7 +5,10 @@ const morgan = require('morgan'); //logging
 const bodyParser = require("body-parser");
 const path = require('path');
 const util = require('util')
+const htmlEncode = require('htmlencode').htmlEncode;
 const fs = require('fs');
+const nedb = require('nedb');
+
 //quip didn't work I wrote my own below....
 
 /*      DESIGN notes: 
@@ -29,7 +32,15 @@ const fs = require('fs');
       14. api vs. page calls....there's a page of html and js that hosts game and calls to api for game content and rolls and stuff within that game.
 
       15. simple rolls can be local. game rolls should be in api or by dm. player can initiate a "standard saving throw, and the api has to do it to avoid cheat.  or for standard combat, it happens at server as part of much larger process. dm can roll any time, 
-16. in all cases a roll SHOWS. you know the DM rolled, maybe 1d6+3, maybe just "roll roll". 
+
+      16. in all cases a roll SHOWS. you know the DM rolled, maybe 1d6+3, maybe just "roll roll". 
+
+      17. to support color and stuff..... fields in message: 
+          IP sent, local time, server time, local claimed identity 1 and 2  (eg dm speaking as ragnar)
+          , crypt id from the messaging system??, color, whether italic, whether bold, and most importantly
+          : which game.  index on game and time
+      18. we've gone to file to store everything.  we don't allow much formatting in text. certainly we would roundtrip html rather than executing it.
+
 
 
 
@@ -43,25 +54,35 @@ const assert = (testCond, label) => {
 
 
 
+
+
+
 var okGame = /\w{3,8}/;   //is 3 to 8 word chars, ONLY !
 var serveGameFile = function(req,res,next) {
 
     var gameName = req.params.gameName;  
-    if (!okGame.test()) {  //"test" does opposite of what you'd think!!
+    if (!okGame.test(gameName)) {  //"test" does opposite of what you'd think!!
 	console.log("about to call next or throw or something...");
 	throw new Error('err1739o '+gameName);
 	//next();
 	//return;
     }
+
+    console.log("bugbug1620a:"+gameName);
+    
     var absPath=path.join(__dirname,"game",gameName+".game");
     serveStaticAbsPartial(res,absPath,'text/html',4000,1);   //4000 bytes, use whole lines
 }
 
 
+
 var serveStaticAbs = function(res,absPath,mimeType) {
+    console.log("serveStaticAbs");
     mimeType=mimeType || 'text/plain';
     res.setHeader('Content-Type', mimeType);
     res.sendFile(absPath);
+    //res.end();  bugbug why having this is bad??? already ended once?
+    console.log("ssa2");
 }
 
 function min(a,b) {
@@ -83,15 +104,11 @@ var serveStaticAbsPartial = function(res,absPath,mimeType,bytesMax,useWholeLines
 var appendToFileAsync = function(absPath,text,next){
     var fhw = fs.createWriteStream(absPath, {flags: 'a'});
 
-    var x = fhw.write(text,function(q){
+    var x = fhw.write(text,function(){
 	fhw.end();
-	console.log('x'+util.inspect(x));
-	console.log('q'+util.inspect(q));
 	next();
-    }, function(q) {
-
-	console.log("q2" + util.inspect(q));
-
+    }, function() {
+	//bugbug anything goes here??
     });
 }
 
@@ -130,9 +147,10 @@ function typeFromExtension(fileName) {
 var serveStaticDir = function(req,res,next){
     
     var sought = req.params.sought;
-    //console.log("sought="+sought);
+    console.log("sought="+sought);
     
     if (  allowedFiles.indexOf(sought) < 0  ) {
+	console.log("bugbug905:"+sought);
 	quip(res,"what the heck905..."+sought);
 	res.end();
 	next();
@@ -141,6 +159,7 @@ var serveStaticDir = function(req,res,next){
     var absPath=path.join(__dirname,"statics",sought);
     var mimeType = typeFromExtension(sought);
     serveStaticAbs(res,absPath,mimeType);
+    console.log("youve been served"+absPath);
 }
 ;
 
@@ -150,41 +169,71 @@ var serveIconFile = function(req,res,next){
     res.end();
 }
 
+
+const validate = function(val,label,reg){
+    if (val.match(reg)) return;
+
+    throw new Error("cannot validate "+label+"   "+reg);
+}
+
+
+
 var urlEncodedParser = bodyParser.urlencoded({ extended:true });
 var appendGameFile = function(req,res,next) {
     var gameName = req.params.gameName;
 
-    if (!okGame.test()) {  //"test" does opposite of what you'd think!!
+    if (!okGame.test(gameName)) {  //"test" does opposite of what you'd think!!
 	console.log("about to call next or throw or something...");
 	throw new Error('err1739o '+gameName);
     }
 
-    //console.log(util.inspect(req.body));
-    var t = req.body.t+"\n";
+    //bugbug options below do not work!!!
+    var xamin = util.inspect(req.body,{breakLength:Infinity,compact:true});
+    console.log(xamin);
+
+    //bugbug validate, take apart, put back together HTMLEncoded etc etc
+    var who1=htmlEncode(req.body.who1);
+    var who2=htmlEncode(req.body.who2);
+    var c=htmlEncode(req.body.color);
+    var t=htmlEncode(req.body.t);
+
+    try{
+	validate(who1,"who1",/\w{2,15}/);
+	validate(who2,"who2",/\w{2,15}/);
+	validate(c,"color",/black|red/);
+	validate(t,"text", /.{2,140}/);
+    }catch(ex) {
+	console.log(ex);
+	res.status(422).end('error:'+ex);
+    }
+
+    
+    var lineToPersist=[who1,who2,c,t].join("|");
+    console.log(lineToPersist);
     
     var absPath=path.join(__dirname,"game",gameName+".game");
-    appendToFileAsync(absPath,t,function(){
+    appendToFileAsync(absPath,lineToPersist,function(){
 	res.status(200).end();
     });
     //console.log("append to game="+absPath);
     //console.log(''+t);
     
 }
-//)
+
 ;
 
 
 
 
 				    
-//a default app, will eventually pass to the old server.  maybe a watcher will insure it stays running.
 var badHostApp = express();
 badHostApp.use(function(req,res,next){
-	// res.setHeader('Content-Type', 'text/plain');
-	// res.end("bad host");
-    console.log("xxxxy badhost");
+    if (req.vhost[0]=='rpg') {
+	return next();
+    }
+    
+    console.log("err729i: badhost:"+util.inspect(req.vhost));
     res.status(503).send();
-    res.end();
 });
 
 
@@ -199,6 +248,7 @@ var rpgApp = express();
 rpgApp.use('/statics/:sought', serveStaticDir);
 rpgApp.get('/game/:gameName', serveGameFile);
 rpgApp.post('/game/:gameName', urlEncodedParser, appendGameFile);
+
 rpgApp.use('/favicon.ico', serveIconFile);
 //handle bad urls common cases
 
@@ -219,8 +269,9 @@ app.use(vhost('rpg.ayvexllc.com', rpgApp));
 app.use(vhost('www.ayvexllc.com', badHostApp));
 app.use(vhost('ayvexllc.com', badHostApp));
 
-app.use(vhost('rpg.localhost', rpgApp));
 app.use(vhost('localhost', badHostApp));
+
+app.use(vhost('rpg.localhost', rpgApp));
 app.use(vhost('*.localhost', badHostApp));
 
 app.listen(3000);
