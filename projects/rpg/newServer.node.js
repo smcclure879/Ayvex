@@ -41,8 +41,10 @@ const fs = require('fs');
           : which game.  index on game and time
       18. we've gone to file to store everything.  we don't allow much formatting in text. certainly we would roundtrip html rather than executing it.
 
-
-
+19. we should record the user IP v4&6 in the game too
+20. we should develop connect.ayvexllc.com  domain just for "ping" type network recording and reconnectivity
+21. prioritize splitting to multiple files 
+22. prioritize to splitting to multiple processes that can be restarted independently?  
 
 */
 
@@ -193,6 +195,14 @@ var appendGameFile = function(req,res,next) {
     var c=htmlEncode(req.body.color);
     var t=htmlEncode(req.body.t);
     var timeCode= new Date().getTime();  //should be server time in UTC but verify
+    var ip = req.ip;
+    var ips = req.ips;
+    var ipx = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+    if (ipx.substr(0, 7) == "::ffff:") {
+	ipx = ipx.substr(7);
+    }
+    //console.log("IP INFO:"+ip+"  --   "+ips+"  --   "+ipx);
+
     
     try{
 	validate(who1,"who1",/^\w{2,15}$/);
@@ -205,8 +215,8 @@ var appendGameFile = function(req,res,next) {
 	return;
     }
 
-    
-    var lineToPersist=[timeCode,who1,who2,c,t].join("|") + "\n";
+    var timeCodeAndIp = [timeCode,ip,ips,ipx].join(" ");
+    var lineToPersist=[timeCodeAndIp,who1,who2,c,t].join("|") + "\n";
     console.log(lineToPersist);
     
     var absPath=path.join(__dirname,"game",gameName+".game");
