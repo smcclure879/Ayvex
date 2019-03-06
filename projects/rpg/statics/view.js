@@ -87,6 +87,7 @@ function fillInGame(gameName) {
 	lines=lines.map(processLine);
 	var content =  prepend + lines.join(prepend); 
 	document.all.main.innerHTML=content;
+	document.all.mainDiv.scrollTop = document.all.mainDiv.scrollHeight;
     });
     
 }
