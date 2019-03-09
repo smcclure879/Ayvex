@@ -1,0 +1,20 @@
+sudo nginx emacs my_nginx.conf
+sudo cp my_nginx.conf /usr/share/nginx
+sudo nginx -c my_nginx.conf  //set this config file (in the -p prefix dir already defaulted to)
+
+the sites-avail.blah.blah file is older and ny_nginx.conf is a broader config file that
+subsumes it.
+here's how i was working with it on main server... more bash history...
+
+1535  sudo nginx -s quit                  //signal old one to quit
+1532  sudo nginx -t                          //test current config
+1533  sudo nginx -t -c my_nginx.conf      //test another config (and switch to it???, within prefix dir)
+
+
+sudo nginx    to start it up after being "quit"
+
+1537  curl localhost
+1538  curl https://localhost
+1539  curl https://ayvexllc.com
+1540  sudo nginx -s stop
+1541  curl localhost
