@@ -1,0 +1,4 @@
+at bash prompt
+
+sudo sh -c "DEBUG=express:*   nodejs newServer.node.js"
+

@@ -201,50 +201,78 @@ http = credentials.authorize(httplib2.Http())
 service = discovery.build('gmail', 'v1', http=http)
 print("got serv")
 
-#print (service.users().getProfile(userId=whoami).execute())
-#print(service.users().labels().list(userId=whoami).execute())
-#print("------------")
-#print("")
-result=service.users().messages().list(
-    q="""  -is:starred  0420160822AAWR098767096WCVU   is:important   in:inbox  before:2017/08/16 """,
-    userId=whoami,
-    maxResults=500
-).execute()
 
 
-oldhour=-42
-hour=0
-deletes=[]
-ii=0
-for x in result['messages']:
-    messageId=x['id']
-    res2=service.users().messages().get(userId=whoami,format='full',id=messageId).execute()
-    headers=dictify(res2['payload']['headers'])
-    #print((messageId,headers['Date'],res2['snippet'],headers['Subject']))
-    #bugbug you are here
-    #want to keep only one message like this per hour
-    date=dateparser.parse(headers['Date'])
-    subj=headers['Subject']
-    hour=date.hour
-    mm=date.minute
-    #print((hour,mm),messageId,subj)
-    if oldhour==hour:
-        ii+=1
-        #print("should delete",messageId,subj )
-        progMsg="DELETES %d %s %s %s %s %s" % (ii, str(date),subj,hour,mm,messageId)
-        prog(progMsg)        #    bugbug you are here show date/time/sub/count of deletes
-        deletes.append(messageId)
-    else:
-        print("RETAIN:",(hour,mm),messageId,date,subj )
-        oldhour=hour
-    
-print(deletes)
-print("number of deletes=",len(deletes))
-for dd in deletes:
-    print(service.users().messages().trash(userId=whoami,id=dd).execute())
 
-    
+
+def deleteOneBatch():
+    #print (service.users().getProfile(userId=whoami).execute())
+    #print(service.users().labels().list(userId=whoami).execute())
+    #print("------------")
+    #print("")
+    result=service.users().messages().list(
+        q="""  -is:starred  0420160822AAWR098767096WCVU   is:important   in:inbox  after:2018/06/30 before:2018/07/07 """,
+        userId=whoami,
+        maxResults=500
+    ).execute()
+
+
+    oldhour=-42
+    hour=0
+    deletes=[]
+    ii=0
+    for x in result['messages']:
+        messageId=x['id']
+        res2=service.users().messages().get(userId=whoami,format='full',id=messageId).execute()
+        headers=dictify(res2['payload']['headers'])
+        #print((messageId,headers['Date'],res2['snippet'],headers['Subject']))
+        #bugbug you are here
+        #want to keep only one message like this per hour
+        date=dateparser.parse(headers['Date'])
+        subj=headers['Subject']
+        hour=date.hour
+        mm=date.minute
+        #print((hour,mm),messageId,subj)
+        if oldhour==hour:
+            ii+=1
+            #print("should delete",messageId,subj )
+            progMsg="DELETES %d %s %s %s %s %s" % (ii, str(date),subj,hour,mm,messageId)
+            prog(progMsg)        #    bugbug you are here show date/time/sub/count of deletes
+            deletes.append(messageId)
+        else:
+            print("RETAIN:",(hour,mm),messageId,date,subj )
+            oldhour=hour
+
+
+            
+    print(deletes)
+    print("number of deletes=",len(deletes))
+    for dd in deletes:
+        print(service.users().messages().trash(userId=whoami,id=dd).execute())
+    return len(deletes)
+
+
+
+while deleteOneBatch() > 0:
+    print("-------------------------------------------------------------------------------------------")
+
 sys.exit()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 #query I want:
 #from me
@@ -423,16 +451,6 @@ sys.exit()
 
 
 
-def main():
-    """should be a program to copy critter cam files from SD card to google drive, and organize them
-    """
-    #doSdCardInput()
-    #doMasterStick()
-    #doGoogleDrive()
-
-        
-if __name__ == '__main__':
-    main()
 
 
 
