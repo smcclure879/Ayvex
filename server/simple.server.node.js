@@ -621,7 +621,7 @@ function mainHandler (req, res) {
 
 
 
-http.createServer(mainHandler).listen(80);  //http
+http.createServer(mainHandler).listen(3080);  //http
 startIt('started http:');
 doneIt();
 
@@ -633,7 +633,7 @@ try {
 	key:  fs.readFileSync(keyPath),
 	cert: fs.readFileSync(chainPath)
     };
-    https.createServer(tlsOptions,mainHandler).listen(443);  //https
+    https.createServer(tlsOptions,mainHandler).listen(3443);  //https
     startIt('started httpSSS');
     doneIt();
 } catch (ex) {
