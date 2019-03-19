@@ -283,5 +283,5 @@ app.use(vhost('rpg.localhost', rpgApp));
 app.use(vhost('*.localhost', badHostApp));
 
 app.listen(3001);
-
+console.log("started");
 //DONE
