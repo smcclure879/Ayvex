@@ -182,7 +182,7 @@ def get_credentials():
     store = Storage(credential_path)
     #print(dir(store))
     credentials = store.get()
-    print(repr(credentials))
+    print("creds="+repr(credentials))
     if not credentials or credentials.invalid:
         flow = client.flow_from_clientsecrets(CLIENT_SECRET_FILE, SCOPES)
         flow.user_agent = APPLICATION_NAME
@@ -211,7 +211,7 @@ def deleteOneBatch():
     #print("------------")
     #print("")
     result=service.users().messages().list(
-        q="""  -is:starred  0420160822AAWR098767096WCVU   is:important   in:inbox  after:2018/06/30 before:2018/07/07 """,
+        q="""  -is:starred  0420160822AAWR098767096WCVU   is:important   in:inbox  after:2018/12/30 before:2019/02/01 """,
         userId=whoami,
         maxResults=500
     ).execute()
