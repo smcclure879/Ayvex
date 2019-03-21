@@ -72,10 +72,32 @@ var serveGameFile = function(req,res,next) {
 
         
     var absPath=path.join(__dirname,"game",gameName+".game");
-    serveStaticAbsPartial(res,absPath,'text/html',1000,1);   //4000 bytes, use whole lines
+
+    forceExist(absPath,function() {    
+	serveStaticAbsPartial(res,absPath,'text/html',1000,1);   //4000 bytes, use whole lines
+    });
+
 }
 
 
+const touch = (filename, callback) => {
+    fs.open(filename, 'w', (err, fd) => {
+	if (err) 
+	    return callback(err);
+	else
+	    return fs.close(fd, callback);
+    });
+};
+
+var forceExist=function(absPath,thenFn) {
+    fs.exists(absPath,function(exists) {
+	if (exists) {
+	    thenFn();
+	} else {
+	    touch(absPath,thenFn);
+	}
+    });
+};
 
 var serveStaticAbs = function(res,absPath,mimeType) {
     console.log("serveStaticAbs");
@@ -97,6 +119,7 @@ var serveStaticAbsPartial = function(res,absPath,mimeType,bytesMax,useWholeLines
     
     fs.createReadStream(absPath, { start:bytesToSkip })
 	.pipe(res);
+
 };
 
 var appendToFileAsync = function(absPath,text,next){
@@ -113,7 +136,7 @@ var appendToFileAsync = function(absPath,text,next){
 
 
 
-const allowedFiles = "view.js     view.htm".split(/[^\w\.]+/);
+const allowedFiles = "view.js     view.htm   tinyview.htm".split(/[^\w\.]+/);
 assert(   allowedFiles.indexOf("view.js")>-1 , "quick test of allowed Files" );
 
 //var serveStaticDir = serveStatic(path.join(__dirname));  wasn't working so well
@@ -236,6 +259,7 @@ var appendGameFile = function(req,res,next) {
 				    
 var badHostApp = express();
 badHostApp.use(function(req,res,next){
+    console.log("err1656j: badhost start");
     if (req.vhost[0]=='rpg') {
 	return next();
     }

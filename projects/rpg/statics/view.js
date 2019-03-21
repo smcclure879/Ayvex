@@ -21,21 +21,30 @@ function htmlDecode(value){
 }
 
 
-var justOnce = 0;
+var _gameName = '';
 function initApplication() {
-    if (justOnce) return;
-    justOnce++;
-    
-    //get game name from the url or fake if 
-    var gameName='foo';
 
+
+    //just run once, bugbug need to grab the gameName from the URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const gameName = urlParams.get('game');
+    if (gameName!='mom' && gameName !='foo')
+	return;
+
+    //just run once...
+    if (_gameName)
+	return;
+    else
+	_gameName = gameName;
+
+    
     //own the page
-    document.all.theForm.action="/game/"+gameName;
-    document.title=gameName;
+    document.all.theForm.action="/game/"+_gameName;
+    document.title=_gameName;
     document.all.submitButton.onclick=runThisWhenButtonPressed;
     
 
-    fillInGame(gameName);
+    fillInGame(_gameName);
 }
 
 
@@ -83,9 +92,12 @@ function fillInGame(gameName) {
 	url:document.all.theForm.action,
 	type:'get'
     }).done(function(data) {
-	var lines = data.split(/\r?\n/);
-	lines=lines.map(processLine);
-	var content =  prepend + lines.join(prepend); 
+	var content = '--empty--';
+	if (data!='') {
+	    var lines = data.split(/\r?\n/);
+	    lines=lines.map(processLine);
+	    content =  prepend + lines.join(prepend);
+	}
 	document.all.main.innerHTML=content;
 	document.all.mainDiv.scrollTop = document.all.mainDiv.scrollHeight;
     });
