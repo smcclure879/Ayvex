@@ -1,0 +1,88 @@
+<html>
+<head>
+
+  <script src="http://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+  <script src="/statics/view.js"></script>
+
+  <style>
+
+    .tiny {
+    color:#333344;
+    font-size:0.75em;
+    }
+
+    .optionalInput {
+    color:#222222;
+    background-color:#eeeeee;
+    font-size:0.85em;
+    }
+    
+    ul li {
+    xxcolor: #559933;
+    font-size: 1em;
+    xxwidth: 30px;
+    xxtext-align: right;
+    xxmargin-right: 10px;
+    xxdisplay: xxinline-block;
+    font-height:70px;
+    }
+    
+    ul li span {
+    color: black;
+    font-height: 20px;
+    }
+	
+</style>
+</head>
+<body  valign="top">
+  <table width="90%"  cellspacing="2">
+    <tr><td width="80%">
+     <!-- <tr><td width="80%"></td><td width="50%" bgcolor="red"></td><td width="15%"></td></tr>
+      <tr><td id='mainTd' border="2">-->
+
+<div id="mainDiv" style="width:700px; 
+			 height:400px;
+			 overflow-y:scroll;  
+			 border: 5px solid brown;">
+  <ul style="text-indent:-2em; list-style-type:none;">
+    <span id='main'>
+    </span>
+  </ul>
+</div>
+    </td></tr>
+    
+<!--
+the above will be filled in (by js) with something like...
+<li><span>dm. You are standing on the shifting sands of egypt, and quite lost, and not quite certain how you got here.</span></li>
+<li><span>dm. a giant pyramid that must be 100m high is in front of you.  The sun is quite intense.</span>/</li>
+<li><span>dm. done.</span></li>
+<br>
+<li><span>p1. i look for a door on the pyramid.</span></li>
+
+</ol>
+-->
+
+
+
+<!--
+
+	</td><td></td><td></td></tr>
+      <tr><td></td><td></td><td></td></tr>
+    -->  
+    </table>
+    <form id="theForm">
+      <textarea id="t" name="t" rows="4" cols="75" >your input here</textarea>
+      <span class="optionalInput" >
+	<br><input type="text" id="color" name="color" class="optionalInput" value=""> -- text color</input>
+	<br><input type="text" id="who1"  name="who1"  class="optionalInput" value="who1"> -- who1</input>
+	<br><input type="text" id="who2"  name="who2"  class="optionalInput" value="who2"> -- who2</input>
+      </span>
+      <br><input type="button" id="submitButton" name="enter" value="send">enter</input>
+    </form>
+      
+      
+
+
+
+</body>
+</html>
