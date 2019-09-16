@@ -210,8 +210,9 @@ def deleteOneBatch():
     #print(service.users().labels().list(userId=whoami).execute())
     #print("------------")
     #print("")
+    #    you are here     2018 2019 2020   search/find    alter date below
     result=service.users().messages().list(
-        q="""  -is:starred  0420160822AAWR098767096WCVU   is:important   in:inbox  after:2018/12/30 before:2019/02/01 """,
+        q="""  -is:starred  0420160822AAWR098767096WCVU   is:important   in:inbox  after:2018/02/30 before:2019/08/01 """,
         userId=whoami,
         maxResults=500
     ).execute()
@@ -221,7 +222,7 @@ def deleteOneBatch():
     hour=0
     deletes=[]
     ii=0
-    for x in result['messages']:
+    for x in result.get('messages',[]):
         messageId=x['id']
         res2=service.users().messages().get(userId=whoami,format='full',id=messageId).execute()
         headers=dictify(res2['payload']['headers'])
