@@ -1,0 +1,8 @@
+
+step1: do not use deletor.py anymore
+step2: use grabber.py
+step3: over in the dest directory...do this for each month folder
+tar -cvf c2013-10.tar  2013-10/
+rm -rf 2013-10
+step4: to empty out the actual cloud gmail folder....do NOT use the list of id's from the tars.  that would include things marked (personal, put in special archive folders, unstarred to mean "important", etc etc).  instead we'll refine grabber query to uninclude a bunch of stuff. that will be del2.py
+

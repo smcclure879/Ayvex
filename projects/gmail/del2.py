@@ -2,9 +2,12 @@ import os,sys
 import httplib2
 import subprocess
 import binascii
+import base64
 import datetime
 import re
 import dateparser
+import hashlib
+import time
 from apiclient import discovery
 from oauth2client import client
 from oauth2client import tools
@@ -12,16 +15,14 @@ from oauth2client.file import Storage
 from apiclient import errors
 
 
-
 # If modifying these scopes, delete your previously saved credentials
 # at ~/.credentials/drive-python-quickstart.json
 #SCOPES = 'https://www.googleapis.com/auth/drive.metadata.readonly'
 #SCOPES = 'https://mail.google.com/'
-SCOPES = ['https://www.googleapis.com/auth/gmail.modify']
+SCOPES = ['https://mail.google.com/']
 APPLICATION_NAME = 'gmail manager'
-CLIENT_SECRET_FILE = 'gmail_secret_appkey.json'
-
-
+CLIENT_SECRET_FILE = 'client_secret_180806803438-0cjpkbekmnqdvk4fulannm72ues8qhp9.apps.googleusercontent.com.json'
+dest="/media/removable/SD Card/sec-cam-arch/"
 
 whoami=input("enter gmail: ").strip()
 if len(whoami)<8:
@@ -29,16 +30,13 @@ if len(whoami)<8:
     sys.exit()
 whoamiclean=str(binascii.crc32(bytes(whoami,"utf-8")))
     
-
-
-
+if not os.path.isdir(dest):
+    print("nope1208:"+dest)
+    sys.exit()
 
 try:
     import argparse
     flags = argparse.ArgumentParser(parents=[tools.argparser]).parse_args()
-
-
-
 except ImportError:
     flags = None
 
@@ -48,65 +46,40 @@ def die(x,y=""):
   print(x,y)
   sys.exit(1)
 
-def report(x):
-    print(x)
-
-
-
-
-
-#def print_about():
-#    """Print information about the user along with the Drive API settings.
-    
-    # Args:
-    # service: Drive API service instance.
-    # """
-    # #try:
-
-    # about = drive.about().get(fields="*").execute()
-    # print(about);
-    # exit(0);
-    # print('Current user name: %s' % about['name'])
-    # print('Root folder ID: %s' % about['rootFolderId'])
-    # print('Total quota (bytes): %s' % about['quotaBytesTotal'])
-    # print('Used quota (bytes): %s' % about['quotaBytesUsed'])
-    # #except errors.HttpError, error:
-    # #    print('An error occurred: %s' % error)
-
 
 
 
     
-def getFolderIdByName(name):
-    """
-    give a name as string, get an id as string
-    """
-    results = drive.files().list(
-        pageSize=25
-        ,q="name='"+name+"'"
-#better not be a         ,pageToken=nextPageToken
-        ,fields="nextPageToken, files(*)"
-    ).execute()
+# def getFolderIdByName(name):
+#     """
+#     give a name as string, get an id as string
+#     """
+#     results = drive.files().list(
+#         pageSize=25
+#         ,q="name='"+name+"'"
+# #better not be a         ,pageToken=nextPageToken
+#         ,fields="nextPageToken, files(*)"
+#     ).execute()
 
-    #can remove???
-    nextPageToken = results.get('nextPageToken')
+#     #can remove???
+#     nextPageToken = results.get('nextPageToken')
     
-    items = results.get('files', [])
-    if not items:
-        raise Exception("cannot find 1"+name+"  "+str(results))
-    if len(items) != 1:
-        print(items)
-        raise Exception("cannot find 2..."+str(items))
+#     items = results.get('files', [])
+#     if not items:
+#         raise Exception("cannot find 1"+name+"  "+str(results))
+#     if len(items) != 1:
+#         print(items)
+#         raise Exception("cannot find 2..."+str(items))
 
-    item = items[0]
-    return item.get('id',None)
+#     item = items[0]
+#     return item.get('id',None)
 
 
-    #md5=item.get('md5Checksum','--')
-    #parents = item.get('parents',['--'])[0]
-    #modifiedTime=item.get('modifiedTime','--')
-    #print('{0},{1},{2},{3}'.format(item['name'], item['id'], md5,parents))
-    #item['viewedByMeTime'], item.get('owners','x')))
+#     #md5=item.get('md5Checksum','--')
+#     #parents = item.get('parents',['--'])[0]
+#     #modifiedTime=item.get('modifiedTime','--')
+#     #print('{0},{1},{2},{3}'.format(item['name'], item['id'], md5,parents))
+#     #item['viewedByMeTime'], item.get('owners','x')))
 
 
 
@@ -162,7 +135,59 @@ def dictify(arr):
         retval[x['name']] = x['value']
 
     return retval
+
+
+def myHash(x):
+    #return hash(x)
+    return hashlib.md5(x).hexdigest()[-8:]
+
+
+
+def retry( ff ):
+    attempt=0
+    while 1:
+        attempt += 1
+        try:
+            return ff()
+        except (Exception,PermissionError) as ex:
+            print("forcing retry"+str(ex))
+            #sys.exit()
+            time.sleep(1.4**attempt * 2)
+
+def parseDate(x):
+    x=x.strip()
+    print("about to parse date",x)
+    if x is None or x=='':
+        return None
+    #retval = dateparser.parse(x)
+    #if retval is not None   and   'day' in retval:
+        return retval
+    
+    
+    for formatString in [
+            '%a, %d %b %Y %H:%M:%S %z',
+            '%a, %d %b %Y %H:%M:%S %z (%Z)'    #""" Tue, 17 Jan 2017 23:12:20 +0000 (UTC) """
+    ]:
+        rv2=None
+        try:
+            print(formatString)
+            rv2=datetime.datetime.strptime(x,formatString)
+            if rv2 is not None:
+                return rv2
+        except:
+            pass
+    
+
+    print("wierdDate="+x)
+    print("bugbug713w--why is date none above")
+    sys.exit()
+
+    return retval
             
+def singleWrite(path,fileData):
+    with open(path, 'bw') as f:
+        f.write(fileData)                
+
 
 def get_credentials():
     """Gets valid user credentials from storage.
@@ -176,7 +201,7 @@ def get_credentials():
     home_dir = os.path.expanduser('~')
     credential_dir = os.path.join(home_dir, '.credentials')
     if not os.path.exists(credential_dir):
-        os.makedirs(credential_dir)
+        os.mkdir(credential_dir)
     credential_path = os.path.join(credential_dir, 'gmail.'+whoamiclean+'.mgr')
 
     store = Storage(credential_path)
@@ -198,66 +223,62 @@ credentials = get_credentials()
 http = credentials.authorize(httplib2.Http())
 #drive = discovery.build('drive', 'v3', http=http)
 
-service = discovery.build('gmail', 'v1', http=http)
+service = retry(lambda: discovery.build('gmail', 'v1', http=http))
 print("got serv")
 
+#should just search for the start and endDates
+#startDate = datetime.date(1999,1,1)
+#endDate = datetime.date(2020,1,1)  #bugbug not futureproof
+startDate = datetime.date(2017,5,1)
+endDate = datetime.date(2017,12,30)  #bugbug not futureproof
+oneDay = datetime.timedelta(days=1)
+
+howManyDays=endDate-startDate
+ids=dict()
+for dd in range(howManyDays.days):
+    dateSought=startDate + dd * oneDay
+    date1=dateSought     #bugbug you are here did this work to  collapse window to 1 day?
+    date2=dateSought+oneDay
 
 
+    #         2018 2019 2020   search/find    alter date below    dateformate: yyyy/mm/dd
+    ymd="%Y/%m/%d"  #  0420160822AAWR098767096WCVU    important flag is opposite what it would ideally be for these mails!!
+    q="0420160822AAWR098767096WCVU is:important -is:archived -is:starred  after:%s  before:%s " %   (date1.strftime(ymd),date2.strftime(ymd)),
+    print("  {}  {}".format(dateSought,q))
+
+    result=retry(
+        service.users().messages().list( q=q,  userId=whoami, maxResults=500  ).execute
+        )
 
 
-def deleteOneBatch():
-    #print (service.users().getProfile(userId=whoami).execute())
-    #print(service.users().labels().list(userId=whoami).execute())
-    #print("------------")
-    print(whoami)
-    #    you are here     2018 2019 2020   search/find    alter date below
-    result=service.users().messages().list(
-        #q="""  -is:starred  0420160822AAWR098767096WCVU   is:important   in:inbox after:2019/02/30 before:2019/09/20 """,
-        q="""  -is:starred  0420160822AAWR098767096WCVU   is:important   in:inbox  after:2018/01/01 before:2019/07/13 """,
-        userId=whoami,
-        maxResults=500
-    ).execute()
-
-
-    oldhour=-42
-    hour=0
-    deletes=[]
     ii=0
-    messages=result.get('messages',[])
-    for x in messages:
+    dupCount=0
+    #print(result.get('messages'));
+
+    for x in result.get('messages',[]):
+        ii+=1
+        if ii>2000:
+            print('how did we get here??')
+            sys.exit()
         messageId=x['id']
-        res2=service.users().messages().get(userId=whoami,format='full',id=messageId).execute()
-        headers=dictify(res2['payload']['headers'])
-        #print((messageId,headers['Date'],res2['snippet'],headers['Subject']))
-        #bugbug you are here
-        #want to keep only one message like this per hour
-        date=dateparser.parse(headers['Date'])
-        subj=headers['Subject']
-        hour=date.hour
-        mm=date.minute
-        #print((hour,mm),messageId,subj)
-        if oldhour==hour:
-            ii+=1
-            #print("should delete",messageId,subj )
-            progMsg="DELETES %d %s %s %s %s %s" % (ii, str(date),subj,hour,mm,messageId)
-            prog(progMsg)        #    bugbug you are here show date/time/sub/count of deletes
-            deletes.append(messageId)
-        else:
-            print("RETAIN:",(hour,mm),messageId,date,subj )
-            oldhour=hour
 
+        res2=retry(
+            service.users().messages().delete(userId=whoami,id=messageId).execute
+        )
+        print(messageId,res2)
 
+        print("done, waiting ")
+        time.sleep(0.7)
+        #sys.exit()
             
-    print(deletes)
-    print("number of deletes=",len(deletes))
-    for dd in deletes:
-        print(service.users().messages().trash(userId=whoami,id=dd).execute())
-    return len(deletes)
+    #for dd in deletes:
+            #    print(service.users().messages().trash(userId=whoami,id=dd).execute())
+    
 
 
 
-while deleteOneBatch() > 0:
-    print("-------------------------------------------------------------------------------------------")
+#while processOneBatch() > 0:
+#    print("-------------------------------------------------------------------------------------------")
 
 sys.exit()
 
@@ -272,7 +293,7 @@ sys.exit()
 
 
 
-
+"""
 
 
 
@@ -317,7 +338,7 @@ while 'nextPageToken' in response:
 
 
 sys.exit()
-
+"""
 
 # ids=results.get('id',[])
 # if not ids:
@@ -451,6 +472,27 @@ sys.exit()
 
     #old code still below and needed to make above pseudocode work
 
+
+
+     
+
+#def print_about():
+#    """Print information about the user along with the Drive API settings.
+    
+    # Args:
+    # service: Drive API service instance.
+    # """
+    # #try:
+
+    # about = drive.about().get(fields="*").execute()
+    # print(about);
+    # exit(0);
+    # print('Current user name: %s' % about['name'])
+    # print('Root folder ID: %s' % about['rootFolderId'])
+    # print('Total quota (bytes): %s' % about['quotaBytesTotal'])
+    # print('Used quota (bytes): %s' % about['quotaBytesUsed'])
+    # #except errors.HttpError, error:
+    # #    print('An error occurred: %s' % error)
 
 
 
