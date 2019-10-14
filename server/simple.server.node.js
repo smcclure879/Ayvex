@@ -656,7 +656,7 @@ function periodicMaintainence(){
 const MINUTES=60*1000;
 const SECONDS=1000;
 setTimeout(periodicMaintainence, 1 * SECONDS);
-setInterval(periodicMaintainence, 2*MINUTES);
+setInterval(periodicMaintainence, 20*MINUTES);
 
 
 

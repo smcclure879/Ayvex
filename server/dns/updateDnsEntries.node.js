@@ -39,7 +39,11 @@ async function setIpForDomain(dom,ip){
     // optional........+"&myip="+ip
 
     var result = await grabx( url ,"setIp for "+dom.name );
-    console.log("result="+result);
+    if (result==911) {
+	console.log("911 means error on google end. bugbug2053x.");
+	//  suspect they require a newMANUAL login from same IP before they'll accept this.  so automation pretty useless ??
+    }
+    console.log("result="+result);  //a result of 911 is on their end....see https://support.google.com/domains/answer/6147083?hl=en
 }
     
 
