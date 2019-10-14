@@ -150,9 +150,11 @@ const dump=util.inspect;
 
 
 function fireAndForget(whatToRun) {
-
     exec(whatToRun, function callback(error, stdout, stderr){
-	logIt("run of "+whatToRun)
+	logIt("run of "+whatToRun);
+	logIt("result1 of--"+stdout);
+	logIt("res2 of:"+error);
+	logIt("res3="+stderr);
     });
 
 }
@@ -640,6 +642,21 @@ try {
     startIt('SKIPPING https-->'+ex);
     doneIt();
 }  
+
+
+//---------periodic maintainance----------
+
+function periodicMaintainence(){
+    //bugbug also fireAndForget(secondServiceRpg.raku)
+    console.log("start periodic maint.");
+    fireAndForget("python3 ipMail/sendIpMail.py > foo.foo <../projects/gmail/pw");
+    console.log("done with periodic maint.");
+}
+
+const MINUTES=60*1000;
+const SECONDS=1000;
+setTimeout(periodicMaintainence, 1 * SECONDS);
+setInterval(periodicMaintainence, 2*MINUTES);
 
 
 
