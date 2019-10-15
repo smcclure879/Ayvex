@@ -77,7 +77,7 @@ async function readJsonFile(path) {
 }
 
 function canonicalize(path) {
-    return pathlib.normalize(path);
+    return pathlib.normalize(pathlib.join(__dirname,path));
 }
 
 
