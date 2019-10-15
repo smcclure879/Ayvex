@@ -7,13 +7,27 @@ import email.mime.text
 import time
 
 
-from apiclient import discovery
+from googleapiclient import discovery
 from oauth2client import client
 from oauth2client import tools
 from oauth2client.file import Storage
 
 import uuid
 import hashlib
+
+
+
+
+try:
+    import argparse
+    flags = argparse.ArgumentParser(parents=[tools.argparser]).parse_args()
+except ImportError:
+    flags = None
+
+
+
+
+
 
 script_dir = os.path.dirname(__file__) #<-- absolute dir the script is in
 relPath = "names.txt"
@@ -34,15 +48,18 @@ nick=myNick()
 #SCOPES = 'https://mail.google.com/'
 SCOPES = ['https://www.googleapis.com/auth/gmail.modify']
 APPLICATION_NAME = 'gmail manager'
-CLIENT_SECRET_FILE = 'gmail_secret_appkey.json'
+CLIENT_SECRET_FILE = os.path.join(
+    os.path.dirname(script_dir),   #"parent"
+    'client_secret_180806803438-fv70l97rdi4lbrn0epqg5kc70lfv0a6v.json')
 
 
 
-whoami=input("enter gmail: ").strip()
-if len(whoami)<8:
-    print("nope")
-    sys.exit()
-whoamiclean=str(binascii.crc32(bytes(whoami,"utf-8")))
+#bugbug trying without this..
+#whoami=input("enter gmail: ").strip()
+#if len(whoami)<8:
+#    print("nope")
+#    sys.exit()
+#whoamiclean=str(binascii.crc32(bytes(whoami,"utf-8")))
     
 
 
@@ -70,12 +87,17 @@ def get_credentials():
     Returns:
         Credentials, the obtained credential.
     """
-    home_dir = os.path.expanduser('~')
-    credential_dir = os.path.join(home_dir, '.credentials')
-    if not os.path.exists(credential_dir):
-        os.mkdir(credential_dir)
-    credential_path = os.path.join(credential_dir, 'gmail.'+whoamiclean+'.mgr')
 
+    #bugbug this section should be restored if moving the file to a different place wasn't good
+    # home_dir = os.path.expanduser('~')
+    # credential_dir = os.path.join(home_dir, '.credentials')
+    # if not os.path.exists(credential_dir):
+    #     os.mkdir(credential_dir)
+    # credential_path = os.path.join(credential_dir, 'gmail.'+whoamiclean+'.mgr')
+
+    #bugbug we are trying this instead
+    credential_path = '/home/ayvex/.credentials/current.mgr'
+    
     store = Storage(credential_path)
     #print(dir(store))
     credentials = store.get()
@@ -83,10 +105,8 @@ def get_credentials():
     if not credentials or credentials.invalid:
         flow = client.flow_from_clientsecrets(CLIENT_SECRET_FILE, SCOPES)
         flow.user_agent = APPLICATION_NAME
-        if flags:
-            credentials = tools.run_flow(flow, store, flags)
-        else: # Needed only for compatibility with Python 2.6
-            credentials = tools.run(flow, store)
+
+        credentials = tools.run_flow(flow, store)
         print('Storing credentials to ' + credential_path)
     return credentials
 
@@ -101,7 +121,7 @@ http = credentials.authorize(httplib2.Http())
 service = retry(lambda: discovery.build('gmail', 'v1', http=http))
 print("got serv")
 
-tofrom = 'tookatoucan@ayvexllc.com'
+tofrom = 'powerwizard@gmail.com'
 
 text='machineIP:'+nick+":"+ip
 message = email.mime.text.MIMEText(text)
