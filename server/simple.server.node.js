@@ -649,8 +649,9 @@ try {
 function periodicMaintainence(){
     //bugbug also fireAndForget(secondServiceRpg.raku)
     console.log("start periodic maint.");
-    fireAndForget("python3 ipMail/sendIpMail.py > foo.foo <../projects/gmail/pw");
-    fireAndForget("node dns/updateDnsEntries.node.js > foo2.foo ");
+    fireAndForget("python3 subJobs/sendIpMail.py > log.sim.log <../projects/gmail/pw");
+    fireAndForget("python3 subJobs/insureRpgRuns.py >log.irr.log");
+    fireAndForget("node dns/updateDnsEntries.node.js > log.ude.log ");
     console.log("done with periodic maint.");
 }
 
