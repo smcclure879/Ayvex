@@ -1,0 +1,4 @@
+emacs trial.ng.conf
+sudo nginx -s stop; sudo ./copy.sh; sudo nginx -c trial.ng.conf
+curl --cacert localhost.crt https://localhost 
+curl --cacert localhost.crt http://localhost 
