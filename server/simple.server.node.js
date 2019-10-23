@@ -380,19 +380,28 @@ function doBeepApi(req,res) {
     });
     
 }
-    
+   
 
-
+function keep(numChars,src) {
+    // return up to 400 chars of source string 
+    if (!src) return 'nil-nil';
+    if (src.length<numChars) return src;
+    return src.substring(0,numChars)
+}
     
 function doGet(req,res) {
     const url = ""+req.url;
 
     if (url=="/api/beep/vapidpk/") {
 	return doVapidPk(res);
-//    } else if (url=="/api/beep/convo/") {
-//	return doConvo(req,res);
+    }
+    else if (url.startsWith("/api/locrep/")) {
+	const locRep = decodeURIComponent( keep(400,url.removeStart("/api/locrep/")) ) + "\n" ;
+	fs.appendFileSync("/home/ayvex/gitstuff/ayvex/server/location.reports",locRep);  //bugbug revisit use of sync
+	writeNormalHead(res);
+	res.end("thanks");
     } else if (url=="/api/bonk/") {
-	return doBonk(res);
+	return doBonk(res); //clears entire user list
     } else if (url=="/api/user/") {
 	writeNormalHead(res);
 	const userList = getUserList();
