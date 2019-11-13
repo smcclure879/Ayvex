@@ -1,0 +1,144 @@
+user www-data;
+worker_processes auto;
+pid /run/nginx.pid;
+include /etc/nginx/modules-enabled/*.conf;
+
+events {
+	worker_connections 768;
+	# multi_accept on;
+}
+
+
+
+http {
+	##
+	# Basic Settings
+	##
+	sendfile on;
+	tcp_nopush on;
+	tcp_nodelay on;
+	keepalive_timeout 65;
+	types_hash_max_size 2048;
+	# server_tokens off;
+
+	# server_names_hash_bucket_size 64;
+	# server_name_in_redirect off;
+
+	include /etc/nginx/mime.types;
+	default_type application/octet-stream;
+
+	##
+	# SSL Settings
+	##
+
+	ssl_protocols TLSv1 TLSv1.1 TLSv1.2; # Dropping SSLv3, ref: POODLE
+	ssl_ciphers   HIGH:!aNULL:!MD5;
+	ssl_prefer_server_ciphers on;
+	#	ssl_certificate     localhost.crt;  #bugbug get correct name and insure the files are there in nginx -P dir
+	#	ssl_certificate_key localhost.key;
+	ssl_certificate		    /etc/letsencrypt/live/ayvexllc.com/fullchain.pem;
+	ssl_certificate_key	    /etc/letsencrypt/live/ayvexllc.com/privkey.pem;
+
+	##
+	# Logging Settings
+	##
+
+	access_log /var/log/nginx/access.log;
+	error_log /var/log/nginx/error.log;
+
+	##
+	# Gzip Settings
+	##
+
+	gzip on;
+	gzip_disable "msie6";
+
+	# gzip_vary on;
+	# gzip_proxied any;
+	# gzip_comp_level 6;
+	# gzip_buffers 16 8k;
+	# gzip_http_version 1.1;
+	# gzip_types text/plain text/css application/json application/javascript text/xml application/xml application/xml+rss text/javascript;
+
+	##
+	# Virtual Host Configs
+	##
+
+	include /etc/nginx/conf.d/*.conf;
+	#include /etc/nginx/sites-enabled/*;     #bugbug i have inlined it instead....
+
+        server {
+	       listen 80 ;
+	       listen [::]:80 ;
+
+	       listen 443 ssl;
+	       listen [::]:443 ssl ;
+
+	       default_type text/plain;
+	       expires -1;
+	       return  503   '\n\ngtfo--503\n\n';
+        }
+	
+
+	server {
+	       listen 80;
+	       listen [::]:80;
+
+	       listen 443 ssl;
+	       listen [::]:443 ssl;
+	       # ssl_certificate     localhost.crt;  #bugbug get correct name and insure the files are there in nginx -P dir
+	       # ssl_certificate_key localhost.key;
+				
+	       server_name tst.localhost tst.ayvexllc.com;
+	       location / {
+			 proxy_pass      http://127.0.0.1:3000;
+			 proxy_set_header   Host             $host;	 #where they thought they were going
+			 proxy_set_header   X-Real-IP        $remote_addr;  #who they were
+			 proxy_set_header   https            $https;          #and if they were secured or not 
+	       }
+	}
+	
+        server {   #for serving the old site....
+      	        listen 80 ;
+		listen [::]:80 ;
+		listen 443 ssl;
+		listen [::]:443 ssl;
+				
+		server_name localhost www.localhost ayvexllc.com www.ayvexllc.com dev.ayvexllc.com;
+		location / {
+			 proxy_pass      http://127.0.0.1:3080;
+			 proxy_set_header   Host             $host;	 #where they thought they were going
+			 proxy_set_header   X-Real-IP        $remote_addr;  #who they were
+			 proxy_set_header   https            $https;          #and if they were secured or not 
+			 }
+	}
+
+
+	server {
+       	       listen 80 ;
+	       listen [::]:80 ;
+	       listen 443 ssl;
+	       listen [::]:443 ssl;
+	
+	       server_name rpg.localhost rpg.ayvexllc.com;
+	       location / {
+       	       		proxy_pass      http://127.0.0.1:3001;
+			proxy_set_header   Host             $host;	
+                	proxy_set_header   X-Real-IP        $remote_addr;
+       		}
+	}
+
+	server {
+	       listen 3000;
+	       location / {
+               		default_type text/plain;
+			expires -1;
+			return  200 'Server address: $server_addr:$server_port\nServer name(hostname): $hostname
+				    \n\nDate: $time_local\nURI: $request_uri\nserver (host): $host\n
+			    	    \nHttps: $http_https\nReal-IP: $http_X_Real_IP\n';
+				    	    #  didn't work.........Request ID: $request_id\n';
+	        }
+	}
+
+
+}

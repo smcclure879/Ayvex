@@ -1,0 +1,25 @@
+was trying to run as separate service, had to integrate into simpleServer for expediency,
+which led to work with ngssl project.
+
+so now i am back here to make loc (and soon wol) run as separate little subservices or
+like the "fireAndForget" things called from simpleServer.
+(but will also want to avoid lots of subprocesses...maybe look at dietjs?)
+
+
+1. service worker....can i get it working for this laptop, all local? (smaller nginx.conf, smaller nodejs, and  a simple_test_servWorker.js )
+   bugbug you are here.......
+   a. shoudl I go off into a branch to figure it out them come back??? no
+   b. this sw special to localhost
+   c. simpler? newer code? polyfil?
+   d. only real goals: is easy to upgrade on all clients?  maybe a way to grab a client machine back if sub is lost?  machine ID?  not related to crypto id?  like rand cookie?  friendly, not particularly secure
+
+
+2. can service worker query the location? and transmit it back?
+
+3. get wol callable as web service.
+
+4. cert needs more domains for more experiments, although i think i can use the "folders" part of url now
+
+
+
+
