@@ -2,19 +2,19 @@
 // sqliteAsync.js
 // ========
 const print= function(x){	process.stdout.write(""+x+"\n");    /*log to a file here?   sqa requires this*/    };
+const proj = function(obj,arrPropNames){
+    //bugbugconsole.log(arrPropNames);
+    return arrPropNames.map( function(x) {
+	if (typeof obj[x] == 'undefined')
+	    throw('bugbug-err0024m-undefined-'+x+JSON.stringify(obj));
+	return obj[x];
+    });
+};
+      
 module.exports = {
-
-
     
     //turn obj to array with column order specified
-    proj: function(obj,arrPropNames){
-	console.log(arrPropNames);
-	return arrPropNames.map( function(x) {
-	    if (typeof obj[x] == 'undefined')
-		throw('bugbug-err0024m-undefined-'+x+JSON.stringify(obj));
-	    return obj[x];
-	});
-    },
+    proj: proj,
 
     promote: function(db) {
 	//it gains all these functions below...
@@ -77,9 +77,17 @@ module.exports = {
 		retval[key]=row;		
 	    }
 	    return retval;
-	}
+	};
 
 	
+	db.insertJson = async function(tbl,colSql,obj) {
+	    let cols = colSql.split(",");
+	    let placeholders = cols.map( (X)=>"?" ).join(",");
+	    let vals = proj(obj,cols);
+	    let sql = `insert into ${tbl} (${colSql})\nvalues (${placeholders});\n`;
+	    return await db.runAsync(sql,vals);
+	};
+	    
 
 	db.forceTable = async function (tbl,cols){
 	    let colSql=cols.join(',\n');
