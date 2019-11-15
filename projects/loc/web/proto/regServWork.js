@@ -185,7 +185,7 @@ function startup() {
 
 function registerServiceWorker() {
     //bugbug get tehse from form...
-    var userNick='steve';
+    var userName='steve';
     var userDev='laptop';
         
     var machineId='bugbug1126';
@@ -226,9 +226,9 @@ function registerServiceWorker() {
 	    //bugbug you are here build otherInfo earlier in process and have ready here  !!!!!!!!!!!
 	    var wrappedSubscription = {
 		'subscription':subscription,
-		'userNick':userNick,
+		'userName':userName,
 		'userDev':userDev
-		//will happen on server...'hashOfSub':myHash(userNick+userDev+subscription.endpoint) 
+		//will happen on server...'hashOfSub':myHash(userName+userDev+subscription.endpoint) 
 	    };
 	    pageLog(wrappedSubscription);
 	    fetch('/api/beep/register/', {    //bugbug you are here need to send the subscription info to server and store it there.

@@ -6,7 +6,7 @@ const proj = function(obj,arrPropNames){
     //bugbugconsole.log(arrPropNames);
     return arrPropNames.map( function(x) {
 	if (typeof obj[x] == 'undefined')
-	    throw('bugbug-err0024m-undefined-'+x+JSON.stringify(obj));
+	    throw('missing '+x+' bugbug-err0024m-undefined-'+x+JSON.stringify(obj)+'\n'+arrPropNames.join(".."));
 	return obj[x];
     });
 };
@@ -55,7 +55,7 @@ module.exports = {
 	//no return value expected
 	db.runAsync=function (sql,vals) {    
 	    return new Promise(function (resolve, reject) {
-		//console.log("running");
+		console.log("running:"+sql);
 		db.run(sql, vals, function(err,rows) {
 		    if (err) {
 			//if (verbose)
@@ -82,9 +82,10 @@ module.exports = {
 	
 	db.insertJson = async function(tbl,colSql,obj) {
 	    let cols = colSql.split(",");
-	    let placeholders = cols.map( (X)=>"?" ).join(",");
+	    let placeholders = cols.map( (_)=>"?" ).join(",");
 	    let vals = proj(obj,cols);
 	    let sql = `insert into ${tbl} (${colSql})\nvalues (${placeholders});\n`;
+	    print(sql);
 	    return await db.runAsync(sql,vals);
 	};
 	    

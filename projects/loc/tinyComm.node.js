@@ -24,45 +24,27 @@ Object.prototype.startsWith = function (sought) {
 
 const dbx = new sqlite.Database('uniMsg.db');  //bugbug do i need code to insure stays with script (same dir)???
 const db = sqa.promote(dbx);
-//build tables here bugbug you are here
+
 (async function(){
-    
     await dbx.forceTable('subs',[
-	"subscription   varchar(2000)    primary key",    
-	"id             varchar(20)      ",                //like a hash of the sub+, but mapped to a name (not chosen)
-	"userNick       varchar(20)      not null",       //their "name" on the system, chosen by them
-	"userDev        varchar(20)      not null",       //the function of the device like "acer-laptop"
+	"subscription   varchar(400)     primary key ",    
+	"codeName       varchar(20)                  ",       //like a hash of the sub+, but mapped to a name (not chosen)
+	"userName       varchar(20)      not null    ",       //their "name" on the system, chosen by them
+	"userDev        varchar(20)      not null    ",       //the function of the device like "acer-laptop"
     ]);
-    await dbx.runAsync('CREATE INDEX if not exists findByNick ON subs(userNick);');
-    await dbx.runAsync('CREATE INDEX if not exists findById   ON subs(id      );');
+    await dbx.runAsync('CREATE INDEX if not exists findByName ON subs(userName);');
+    await dbx.runAsync('CREATE INDEX if not exists findByCode ON subs(codeName);');
 
     
     await dbx.forceTable('msg',[
-	"rndId     varchar(20)    primary key",  //provided by client, is OK because only needs to be a rnd guid  (bugbug needs be hash?)
-	//"sender    varchar(2000)    references(subs)",
-	//"receiver  varchar(2000)    references(subs)",
-	"text      varchar(200)   not null",
-	//"oob       varchar(200)   null ",
-	"state     integer        not null"
+	"rndId     varchar(20)     primary key",  //provided by client, is OK because only needs to be a rnd guid  (bugbug needs be hash?)
+	"sender    varchar(400)    references subs(subscription)",
+	"receiver  varchar(400)    references subs(subscription)",
+	"text      varchar(200)    not null",
+	"oob       varchar(200)    null ",
+	"state     integer         not null"
     ]);
     await dbx.runAsync('CREATE INDEX if not exists msgByState ON msg(state);');
-
-    process.exit(1);
-
-`
-
-create table if not exists player (
-       playerid integer primary key,  --mastered elsewhere???
-       uniquename varchar(20) not null
-);
-
-create table if not exists playergame (  --can player play game, etc
-       playerid integer player,
-       gameid integer game references game,
-       canPlay varchar(10) not null,
-       primary key (playerId,gameid)
-);
-    `;
 
     
 })();
@@ -92,11 +74,19 @@ var relPath = "../../server/subJobs/names.txt";
 function fileAsLines(path) {
     return fs.readFileSync(path).toString().split("\n");
 }
-const nicks=fileAsLines(relPath);
-function lookupNick(index) {
-    let y = intdiv(index,2);
-    let x = 1 + index%2;
-    return nicks[y].split('\t')[x].trim();    //  +1 for skipping the 0th column which is enumeration
+const codeNames=fileAsLines(relPath);
+function lookupCodeName(stuff) {
+
+    const hash = ""+crypto.createHash('sha256').update(stuff).digest('hex');
+    const hashd= BigInt("0x"+hash);
+    const ind=parseInt(hashd)%2000;
+
+
+    
+    let y = intdiv(ind,2);
+    let x = 1 + ind%2;
+    let retval = codeNames[y].split('\t')[x].trim();    //  +1 for skipping the 0th column which is enumeration
+    return retval.toLowerCase();
 }
 
 
@@ -110,30 +100,23 @@ async function reg(req,res,path) {
     var body = await receivePut(req,res);
     print(body);
     var b=JSON.parse(body);
-    var stuff=b.userNick+b.userDev+b.subscription;
-    const hash = ""+crypto.createHash('sha256').update(stuff).digest('hex');
-    const hashd= BigInt("0x"+hash);
-    const ind=parseInt(hashd)%2000;
-    const id=lookupNick(ind);
-    b.id=id;
 
-    //write it to a database here  bugbug
+    //hashes wrong without stringification...
+    b.subscription=JSON.stringify(b.subscription);
     
+    var stuff=b.userName+b.userDev+b.subscription;
+    b.codeName=lookupCodeName(stuff);
     
+    dbx.insertJson('subs','subscription,codeName,userName,userDev',b);    
 
     var outstuff="b="+dump(b);
-    writeSub(b);
-    print(outstuff);
-
-
-
+    print("outstuff="+b);
     res.end(outstuff);
-    
     return 1;
 }
 
-async function queryNick(req,res,path) {
-    var results = await db.query("nick=="+path);
+async function queryName(req,res,path) {
+    var results = await db.query("userName=="+path);
     print(results);
     res.end(results);
     return 1;
@@ -148,6 +131,7 @@ async function send(req,res,path) {
 }
 
 function wol() {
+    fireAndForget("wakeUpDobby.sh");
     return 0;
 }
 function sendall() {
@@ -168,13 +152,13 @@ function defaultHandler(req,res,path) {
 
 //in keeping with goal of replicating the "big" server on the laptop
 		    //two goals here 1. get beep api to work as before including convo
-		    //but mostly want 2. new beep api register/send/queryName(name)/queryNick(nick)
+		    //but mostly want 2. new beep api register/send/queryName(name)/queryCode(code)
 		    //later wol might move elsewhere...
 function beepApiHandler (req, res) {
     let path=""+req.url;
     return prefixHandler(req,res,path,"/api/beep/",function(req,res,path) {
 	return prefixHandler(req,res,path,"register/",reg)
-	    || prefixHandler(req,res,path,"queryNick",queryNick)
+	    || prefixHandler(req,res,path,"queryName",queryName)
 	    || prefixHandler(req,res,path,"send",send)
 	    || prefixHandler(req,res,path,"wol/",wol)  //might move out of the "beep" api?
 	    || prefixHandler(req,res,path,"sendall/",sendall)
