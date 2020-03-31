@@ -56,7 +56,9 @@
         ii++;
         if (ii>6) ii=1;
         var b = document.querySelector('#blunty');
-        b.setAttribute('src',"/blunty/blunty_"+ii+".jpg");
+        b.setAttribute('src',"blunty/blunty_"+ii+".jpg");
+        let ang = 130 + ii*6;
+        b.setAttribute('rotation',"10 "+ang+" 0");
       }
 
       window.onload = function(){
