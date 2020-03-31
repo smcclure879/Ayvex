@@ -1,0 +1,46 @@
+<html>
+  <head>
+    <script src="https://aframe.io/releases/1.0.4/aframe.min.js"></script>
+    <script src="demo.js"></script>
+  </head>
+  <body>
+    <a-scene  light="defaultLightsEnabled: false" >
+
+      <a-assets>
+    	<video id="demo0" autoplay loop="true" src="small.mp4"></video>
+<!--
+	<video id="demo1" autoplay crossorigin="sameSite" loop="true" src="http://127.0.0.1:8000/test-mpeg_512kb.mp4"></video>
+-->
+	
+      </a-assets>
+    
+      <a-box position="0 4 -8" rotation="0 0 0" width="16" height="8" depth="0.001" color="#5C3349"></a-box>
+      <a-box position="0 4 8" rotation="0 0 0" width="16" height="8" depth="0.001" color="#2dd389"></a-box>
+      <a-box position="8 4 0" rotation="0 90 0" width="16" height="8"  depth="0.001" color="#5d5329"></a-box>
+      <a-box position="-8 4 0" rotation="0 90 0" width="16" height="8"  depth="0.001" color="#60a3e0"></a-box>
+
+      <a-box position="0 0 0" rotation="90 0 0" width="16" height="16"  depth="0.001" color="#222222"></a-box> <!--floor-->
+      <a-box position="0 8 0" rotation="90 0 0" width="16" height="16"  depth="0.001" color="#d0a946"></a-box> <!--ceiling-->
+
+      
+      <a-cylinder position="4 0.5 -3" radius="0.1" height="1" color="#FFC65D"></a-cylinder>
+      <a-plane position="0 0 0" rotation="-90 0 0" width="47" height="47" color="#7BC8A4"></a-plane>
+
+      <a-entity light="color: #AFA; intensity: 1.5" position="-1 2 0"></a-entity>
+      <a-entity light="type: ambient; color: #644"></a-entity>
+
+      
+      <a-video position="0 4 -7.9" src="#demo0" width="11" height="6"></a-video>
+
+      <a-sky color="#7EC0eE"></a-sky>
+    </a-scene>
+
+    <!--
+    <a-sphere position="0 1.25 -5" radius="1.25" color="#EF2D5E"></a-sphere>
+    <a-cylinder position="1 0.75 -3" radius="0.5" height="1.5" color="#FFC65D"></a-cylinder>
+    <a-plane position="0 0 -4" rotation="-90 0 0" width="4" height="4" color="#7BC8A4"></a-plane>
+
+    -->
+    
+  </body>
+</html>
