@@ -169,7 +169,8 @@ function getContentType(someFile) {
     if (someFile.endsWith('.work.js' )) return 'text/javascript;';
     if (someFile.endsWith('.js'  )) return 'script/javascript';
     if (someFile.endsWith('.svg' )) return 'image/svg+xml';
-
+    if (someFile.endsWith('.jpg' )) return 'image/jpeg';
+    if (someFile.endsWith('.mp4' )) return 'video/mp4';
     return 'text/plain';
 }
 
