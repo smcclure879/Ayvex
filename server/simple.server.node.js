@@ -206,7 +206,7 @@ function doBonk(res){
 
 function doVapidPk(res){
     writeNormalHead(res);
-    res.write(JSON.stringify({ publicKey : vapidDetails.publicKey }));
+    res.write(JSON.stringify({ publicKey : vapidDetails.publicKey }));  // watch this...ONLY the public key should go
     res.end();
 }
 
@@ -300,7 +300,7 @@ function doBeepApi(req,res) {
 
 	    //the obj to write
 	    var obj=Object.assign({},objFromUser['subscription']);
-	    obj["channelData"] = objFromUser['channelData']
+	    obj["channelData"] = objFromUser['channelData'];
 	    obj["dateTime"] = myNow();
 	    obj["isRegistration"] = true;
 
