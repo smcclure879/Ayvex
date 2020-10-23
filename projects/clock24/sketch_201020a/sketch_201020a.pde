@@ -35,8 +35,14 @@ float xctr=400;
 float yctr=400;
 float xmag=400;
 float ymag=400;
-
+PFont[] f;
 void setup() {
+  
+  //println(PFont.list());
+  
+  f=new PFont[2];
+  f[1] = createFont("Mono",12,true);
+  f[0] = createFont("Mono",36,true);
   frameRate(12);
   size(800,800); // = 2x  xctr,yctr   
   String[] items = loadStrings("../worldcities.csv");
@@ -67,17 +73,24 @@ void setup() {
   imax=ii;
 }
 
+float xof(double t, double r) { return (float)(xctr+Math.cos(t)*r); }
+float yof(double t, double r) { return (float)(yctr+Math.sin(t)*r); }
+
+
 int timeCount = 0;
 void draw() {
+  background(0);
+  
+  
   timeCount++;
   while (timeCount>36000) {
     timeCount-=36000;
   }
-  background(0);
-  stroke(200,0,0);
-  
+  stroke(255,100,0);
+  noFill();
   if (imax>8000) imax=8000;  //bugbug !!
   
+    
   for(int ii=0; ii<imax; ii++){
     
     //mercator
@@ -87,8 +100,8 @@ void draw() {
     
     //polar warp
     double r = lats[ii] + 180.0;
-    double vlng=(lngs[ii]+Math.floor(24.0*lngs[ii]/360)*360.0/24)/2;
-    double phaseDeg = vlng + timeCount;
+    double vlng=(2*lngs[ii]+Math.floor(24.0*lngs[ii]/360)*360.0/24)/3;
+    double phaseDeg = vlng + timeCount/10;
     //double phaseDegC=Math.floor(24*phaseDeg/360)*360/24;
     double t = phaseDeg /360 * TAU;
     
@@ -97,16 +110,31 @@ void draw() {
     
     //polar projection
     
-    double x=xctr+Math.cos(t)*r;
+    double x=xof(t,r); 
     double y=yctr+Math.sin(t)*r;
     
     float xx=(float)x;
     float yy=(float)y;
-    point(xx,yy); //lngs[ii],lats[ii]); 
- 
+    //point(xx,yy); //lngs[ii],lats[ii]); 
+    circle(xx,yy,1);
   }
   //circle((float)xmag,(float)ymag,20.0); 
   //stroke(0,250,0);
   //float seattle=(58.0+timeCount)/360*TAU ;
   //line(mag, mag, mag+(float)Math.cos(seattle)*mag*0.9, mag+(float)Math.sin(seattle)*mag*0.9);
+  
+  
+  fill(0,200,100);
+  textAlign(CENTER,CENTER);
+  for(int hr=0; hr<24; hr++) {
+    double t=TAU*(hr+6)/24;
+    double r=xmag*2/3;
+   
+    float x = xof(t,r);
+    float y = yof(t,r);
+    textFont(f[hr%2]);
+    text(""+hr,x,y);
+  }
+  
+
 }
