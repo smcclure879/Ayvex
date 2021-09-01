@@ -1,0 +1,105 @@
+Press any key...
+You pressed the "/" key
+
+{ sequence: '/',
+  name: undefined,
+  ctrl: false,
+  meta: false,
+  shift: false }
+
+You pressed the "*" key
+
+{ sequence: '*',
+  name: undefined,
+  ctrl: false,
+  meta: false,
+  shift: false }
+
+You pressed the "" key
+
+{ sequence: '',
+  name: 'backspace',
+  ctrl: false,
+  meta: false,
+  shift: false }
+
+You pressed the "7" key
+
+{ sequence: '7',
+  name: '7',
+  ctrl: false,
+  meta: false,
+  shift: false }
+
+You pressed the "8" key
+
+{ sequence: '8',
+  name: '8',
+  ctrl: false,
+  meta: false,
+  shift: false }
+
+You pressed the "-" key
+
+{ sequence: '-',
+  name: undefined,
+  ctrl: false,
+  meta: false,
+  shift: false }
+
+You pressed the "4" key
+
+{ sequence: '4',
+  name: '4',
+  ctrl: false,
+  meta: false,
+  shift: false }
+
+You pressed the "6" key
+
+{ sequence: '6',
+  name: '6',
+  ctrl: false,
+  meta: false,
+  shift: false }
+
+You pressed the "+" key
+
+{ sequence: '+',
+  name: undefined,
+  ctrl: false,
+  meta: false,
+  shift: false }
+
+You pressed the "2" key
+
+{ sequence: '2',
+  name: '2',
+  ctrl: false,
+  meta: false,
+  shift: false }
+
+You pressed the "3" key
+
+{ sequence: '3',
+  name: '3',
+  ctrl: false,
+  meta: false,
+  shift: false }
+
+You pressed the "" key
+
+{ sequence: '\r',
+  name: 'return',
+  ctrl: false,
+  meta: false,
+  shift: false }
+
+You pressed the "." key
+
+{ sequence: '.',
+  name: undefined,
+  ctrl: false,
+  meta: false,
+  shift: false }
+
