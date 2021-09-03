@@ -7,8 +7,8 @@ const qw = function (s) {
 const keysToWords={
     '.':qw("--not in use for words--"),
     'o':qw("ocho mommy daddy abby"),
-    'h':qw("food hamburger hotdog kibble water"),
-    '5':qw("one two five ten fifteen half"),
+    'h':qw("food hamburger kibble water treat"),
+    '5':qw("one two five ten fifteen half minute hour"),
     'c':qw("play frisbee ball outside"),
     'z':qw("no yucky bad"),
     'q':qw("yes very please good")
@@ -56,26 +56,52 @@ function currentWord() {
     return keysToWords[currentKey][0+currentCount]; 
 }
 
-function quiet() {
-    console.log("quiet    "+x);
-    var x= currentWord();
-    
-    //bad way use computer speak....use aplay and wav files or simliar  bugbug
-    
-    exec('espeak -a 50 -p 75 -v en-scottish  "'+x+'"');
-    ///uplift$ espeak -v en-scottish "ohcho wants treat" -a 200 -p 80
-    
 
+const fs = require('fs')  //bugbug move
+function fileExists(path) {
+    try{
+	if (fs.existsSync(path)) {
+	    return true;
+	}
+    } catch(err) {
+	console.error(err)
+    }
+    console.log(path);
+    return false;
 }
 
+function quiet() {
+    var x= currentWord();
+    playWord(x,90,28,'quiet');
+}
 
 function louder() {
     var x= currentWord();
-    console.log("louder    "+x);
-    if (!x) return;
-    exec('espeak -a 200 -p 75 -v en-scottish  "'+x+'"');
-    
+    playWord(x,180,90,'louder');
 }
+
+function playWord(word,vol1,vol2,label) {
+    var filePath='nocheck-audio/'+word+'.wav';
+    var cmd='uninit';
+    if (fileExists(filePath)){
+	cmd = 'mplayer -volume '+vol1+' "'+filePath+'"';
+	console.log(label+"\n    "+cmd);
+    }else{
+	cmd='espeak -a '+vol2+' -p 75 -v en-scottish  "'+word+'"';
+	console.log(label+"  bad way use computer speak....use aplay and wav files or simliar bugbug=\n   "+cmd);
+    }
+    
+    exec(cmd);
+}
+
+
+// function louder() {
+//     var x= currentWord();
+//     //var cmd='aplay "nocheck-audio/'+x+'.wav"';
+//     var cmd = 'mplayer -volume 180 "nocheck-audio/'+x+'.wav"';
+//     console.log("louder    "+cmd);
+//     exec(cmd);
+// }
 
 
 
